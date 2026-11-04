@@ -14,6 +14,20 @@ Telas:
 
 Os filtros (`recorte`, `municipio` repetível, `ano`/`mes`, `pagina`, `ordem`) ficam na URL. Sem `ano`/`mes`, as telas usam o último mês com dados do SIAFE.
 
+As telas ficam à direita de uma barra lateral de navegação. Em telas estreitas, a barra lateral vira uma gaveta aberta pelo botão "Menu". Visão geral, Municípios e Convênios têm o bloco de filtros no topo.
+
+Os recortes aparecem pelo nome, do maior para o menor (cada um está contido no anterior), e a URL continua usando o número:
+
+| URL | Nome na tela |
+|---|---|
+| `recorte=342` | Histórico inicial |
+| `recorte=89` | Primeiro realinhamento |
+| `recorte=31` | Vigentes (padrão) |
+
+A quantidade de convênios ao lado de cada nome vem da API, e não fica no código. É o `convenios` de `GET /painel/resumo?recorte=…` sem município nem mês, e não muda com o filtro de município. O 342 reaproveita o pedido que as telas já fazem para o mês padrão. Se a contagem falhar, o seletor mostra só o nome.
+
+As cores ficam em `src/index.css` (tokens `gelo` e `marca`). As das séries do gráfico ficam em `src/series.ts`, validadas com o validador de paleta da skill de dataviz.
+
 > **A API não tem autenticação, e o botão de carga faz login no SIAFE.** Logins repetidos já bloquearam temporariamente o IP desta máquina. Rode a API e o front só na rede interna. O servidor de desenvolvimento escuta apenas em `localhost`; não use `--host`.
 
 ## Requisitos
