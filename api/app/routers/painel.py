@@ -109,6 +109,9 @@ class Municipios(BaseModel):
     ano: int
     mes: int
     municipios: list[str]
+    pagina: int
+    tamanho: int
+    total: int
     itens: list[LinhaMunicipio]
 
 
@@ -127,6 +130,9 @@ class Convenios(BaseModel):
     ano: int
     mes: int
     municipios: list[str]
+    pagina: int
+    tamanho: int
+    total: int
     itens: list[LinhaConvenio]
 
 
@@ -158,9 +164,32 @@ def get_mes(
     return ano, mes
 
 
+def _get_pagina(permitidos: tuple[str, ...]):
+    """Dependência de `pagina`, `tamanho` e `ordem`, com a whitelist de campos do endpoint."""
+    campos = ", ".join(permitidos)
+
+    def dependencia(
+        pagina: Annotated[int, Query(ge=1, description="A partir de 1")] = 1,
+        tamanho: Annotated[int, Query(ge=1, le=100, description="Itens por página")] = 20,
+        ordem: Annotated[
+            str | None, Query(description=f"Campo, com `-` para decrescente. Aceitos: {campos}")
+        ] = None,
+    ) -> Q.Pagina:
+        if Q.campo_de_ordem(ordem, permitidos) is None:
+            raise HTTPException(
+                status_code=422,
+                detail={"msg": "Campo de ordenação não aceito", "ordem": ordem, "campos": list(permitidos)},
+            )
+        return Q.Pagina(pagina, tamanho, ordem)
+
+    return dependencia
+
+
 FiltroDep = Annotated[Q.Filtro, Depends(get_filtro)]
 MesDep = Annotated[tuple[int, int], Depends(get_mes)]
 EngineDep = Annotated[Engine, Depends(get_engine)]
+PaginaRankingDep = Annotated[Q.Pagina, Depends(_get_pagina(Q.ORDEM_RANKING))]
+PaginaListaDep = Annotated[Q.Pagina, Depends(_get_pagina(Q.ORDEM_LISTA))]
 
 
 def _saldos(conn: Connection, filtro: Q.Filtro, ano: int, mes: int) -> Saldos | None:
@@ -224,16 +253,34 @@ def serie(filtro: FiltroDep, engine: EngineDep):
 
 
 @router.get("/municipios", response_model=Municipios)
-def municipios(filtro: FiltroDep, referencia: MesDep, engine: EngineDep):
+def municipios(filtro: FiltroDep, referencia: MesDep, pagina: PaginaRankingDep, engine: EngineDep):
     ano, mes = referencia
     with engine.connect() as conn:
-        itens = Q.ranking_municipios(conn, filtro, ano, mes)
-    return Municipios(recorte=filtro.recorte, ano=ano, mes=mes, municipios=filtro.municipios or [], itens=itens)
+        resultado = Q.ranking_municipios(conn, filtro, ano, mes, pagina)
+    return Municipios(
+        recorte=filtro.recorte,
+        ano=ano,
+        mes=mes,
+        municipios=filtro.municipios or [],
+        pagina=pagina.pagina,
+        tamanho=pagina.tamanho,
+        total=resultado.total,
+        itens=resultado.itens,
+    )
 
 
 @router.get("/convenios", response_model=Convenios)
-def convenios(filtro: FiltroDep, referencia: MesDep, engine: EngineDep):
+def convenios(filtro: FiltroDep, referencia: MesDep, pagina: PaginaListaDep, engine: EngineDep):
     ano, mes = referencia
     with engine.connect() as conn:
-        itens = Q.lista_convenios(conn, filtro, ano, mes)
-    return Convenios(recorte=filtro.recorte, ano=ano, mes=mes, municipios=filtro.municipios or [], itens=itens)
+        resultado = Q.lista_convenios(conn, filtro, ano, mes, pagina)
+    return Convenios(
+        recorte=filtro.recorte,
+        ano=ano,
+        mes=mes,
+        municipios=filtro.municipios or [],
+        pagina=pagina.pagina,
+        tamanho=pagina.tamanho,
+        total=resultado.total,
+        itens=resultado.itens,
+    )

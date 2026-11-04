@@ -12,6 +12,7 @@ from sqlalchemy import insert, text
 
 from app.main import app
 from app.models import TABELAS_PLANILHA, EtlExecucao, PlanilhaImportacao
+from app.planilha.dominios import MUNICIPIOS_RJ
 from app.routers.etl import get_engine
 from app.routers.painel import get_hoje
 from tests.test_cruzamento import A31, A89, A342, Carga
@@ -282,6 +283,7 @@ def test_ranking_sem_filtro(api, carga):
     _carteira(carga)
     corpo = api.get("/painel/municipios", params={"recorte": "342"}).json()
     assert [(i["municipio"], i["convenios"]) for i in corpo["itens"]] == [("Niterói", 5), ("Paraty", 4), ("Resende", 1)]
+    assert (corpo["pagina"], corpo["tamanho"], corpo["total"]) == (1, 20, 3)
     assert all(i["valor_total"] is None for i in corpo["itens"])
 
 
@@ -298,16 +300,133 @@ def test_ranking_com_codigo_compartilhado(api, carga):
 
 def test_lista_filtrada(api, carga):
     _carteira(carga)
-    itens = api.get("/painel/convenios", params={"recorte": "89", "municipio": "Paraty"}).json()["itens"]
+    corpo = api.get("/painel/convenios", params={"recorte": "89", "municipio": "Paraty"}).json()
+    itens = corpo["itens"]
     assert [i["numero_convenio"] for i in itens] == ["R0", "R1", "R2", "V1"]
+    assert (corpo["pagina"], corpo["tamanho"], corpo["total"]) == (1, 20, 4)
     assert {i["fase"] for i in itens} == {"realinhado", "vigente"}
 
 
 def test_lista_com_convenio_sem_codigo(api, carga):
     _carteira(carga)
-    itens = api.get("/painel/convenios", params={"recorte": "342", "municipio": "Niterói"}).json()["itens"]
-    assert len(itens) == 5
+    corpo = api.get("/painel/convenios", params={"recorte": "342", "municipio": "Niterói"}).json()
+    itens = corpo["itens"]
+    assert len(itens) == corpo["total"] == 5
     assert all(i["a_pagar"] is None and i["codigo_seobras"] is None for i in itens)
+
+
+# --- paginação ---
+
+
+def _83_municipios(carga: Carga) -> None:
+    """Um convênio do 342 em cada um de 83 municípios."""
+    for i, municipio in enumerate(MUNICIPIOS_RJ[:83]):
+        carga.planilha(A342, f"{i}/2020", municipio)
+
+
+def test_tamanho_padrao(api, carga):
+    _83_municipios(carga)
+    corpo = api.get("/painel/municipios", params={"recorte": "342"}).json()
+    assert (len(corpo["itens"]), corpo["pagina"], corpo["tamanho"], corpo["total"]) == (20, 1, 20, 83)
+
+
+def test_ultima_pagina(api, carga):
+    _83_municipios(carga)
+    corpo = api.get("/painel/municipios", params={"recorte": "342", "pagina": 2, "tamanho": 50}).json()
+    assert (len(corpo["itens"]), corpo["total"]) == (33, 83)
+
+
+def test_pagina_alem_do_fim(api, carga):
+    _83_municipios(carga)
+    for rota in ("/painel/municipios", "/painel/convenios"):
+        corpo = api.get(rota, params={"recorte": "342", "pagina": 5, "tamanho": 50}).json()
+        assert (corpo["itens"], corpo["pagina"], corpo["total"]) == ([], 5, 83)
+
+
+def test_limites_invalidos(api):
+    for rota in ("/painel/municipios", "/painel/convenios"):
+        for params in ({"tamanho": 0}, {"tamanho": 101}, {"pagina": 0}):
+            assert api.get(rota, params=params).status_code == 422, (rota, params)
+        assert api.get(rota, params={"tamanho": 100}).status_code == 200
+
+
+def test_paginas_concatenadas_iguais_a_lista_inteira(api, carga):
+    _83_municipios(carga)
+    paginas = [
+        api.get("/painel/convenios", params={"recorte": "342", "pagina": n, "tamanho": 30}).json()["itens"]
+        for n in (1, 2, 3)
+    ]
+    inteira = api.get("/painel/convenios", params={"recorte": "342", "tamanho": 100}).json()["itens"]
+    assert [i["numero_convenio"] for p in paginas for i in p] == [i["numero_convenio"] for i in inteira]
+    assert len(inteira) == 83
+
+
+def test_serie_sem_paginacao(api, carga):
+    carga.planilha(A342, "1/2020", "Paraty", "900001")
+    meses = [(ano, mes) for ano in range(2023, 2027) for mes in range(1, 13) if (ano, mes) <= (2026, 11)]
+    for ano, mes in meses:
+        carga.siafe(ano, mes, "900001", a_pagar="1")
+    corpo = api.get("/painel/serie", params={"recorte": "342", "tamanho": 10, "pagina": 2}).json()
+    assert len(corpo["pontos"]) == len(meses) == 47
+    assert "total" not in corpo
+
+
+# --- ordenação ---
+
+
+def _saldos_por_municipio(carga: Carga) -> None:
+    """12 municípios com a_pagar 10, 20, ..., 120 e 2 sem código (a_pagar nulo)."""
+    for i, municipio in enumerate(MUNICIPIOS_RJ[:14]):
+        codigo = f"9{i:05d}" if i < 12 else None
+        carga.planilha(A342, f"{i}/2020", municipio, codigo)
+        if codigo:
+            carga.siafe(2026, 11, codigo, a_pagar=str(10 * (i + 1)))
+
+
+def test_ranking_pelo_maior_saldo_a_pagar(api, carga):
+    _saldos_por_municipio(carga)
+    itens = api.get("/painel/municipios", params={"recorte": "342", "ordem": "-a_pagar", "tamanho": 10}).json()["itens"]
+    assert [i["a_pagar"] for i in itens] == [120, 110, 100, 90, 80, 70, 60, 50, 40, 30]
+    ultima = api.get(
+        "/painel/municipios", params={"recorte": "342", "ordem": "-a_pagar", "tamanho": 10, "pagina": 2}
+    ).json()["itens"]
+    assert [i["a_pagar"] for i in ultima] == [20, 10, None, None]
+
+
+def test_ordem_crescente_com_nulos_por_ultimo(api, carga):
+    for numero, municipio, valor in (("A", "Paraty", "300"), ("B", "Resende", None), ("C", "Niterói", "100")):
+        carga.planilha(A342, numero, municipio)
+        carga.planilha(A89, numero, municipio)
+        extra = {"valor_total_inicial": Decimal(valor)} if valor else {}
+        carga.planilha(A31, numero, municipio, **extra)
+    itens = api.get("/painel/convenios", params={"recorte": "31", "ordem": "valor_total"}).json()["itens"]
+    assert [(i["numero_convenio"], i["valor_total"]) for i in itens] == [("C", 100), ("A", 300), ("B", None)]
+
+
+def test_paginas_estaveis(api, carga):
+    for numero, municipio, codigo in (("2/2020", "Paraty", "900001"), ("1/2020", "Paraty", "900002"),
+                                      ("3/2020", "Angra dos Reis", "900003")):
+        carga.planilha(A342, numero, municipio, codigo)
+        carga.siafe(2026, 11, codigo, a_pagar="50")
+    esperado = ["3/2020", "1/2020", "2/2020"]  # empate: município, depois número
+    for _ in range(2):
+        paginas = [
+            api.get(
+                "/painel/convenios", params={"recorte": "342", "ordem": "-a_pagar", "tamanho": 1, "pagina": n}
+            ).json()["itens"]
+            for n in (1, 2, 3)
+        ]
+        assert [i["numero_convenio"] for p in paginas for i in p] == esperado
+
+
+def test_campo_de_ordem_invalido(api):
+    for rota in ("/painel/municipios", "/painel/convenios"):
+        resposta = api.get(rota, params={"ordem": "senha"})
+        assert resposta.status_code == 422
+        assert resposta.json()["detail"]["ordem"] == "senha"
+    # campo da lista não vale no ranking
+    assert api.get("/painel/municipios", params={"ordem": "numero_convenio"}).status_code == 422
+    assert api.get("/painel/convenios", params={"ordem": "-numero_convenio"}).status_code == 200
 
 
 # --- só leitura ---
