@@ -153,16 +153,34 @@ def contar_convenios(conn: Connection, filtro: Filtro) -> int:
     return conn.scalar(text(f"WITH {_CONV} SELECT count(*) FROM conv"), filtro.params())
 
 
-def saldos(conn: Connection, filtro: Filtro, ano: int, mes: int) -> dict[str, Decimal | None]:
-    """Os 4 saldos do mês sobre os códigos distintos do recorte e do filtro."""
-    sql = f"""
-WITH {_CONV}, {_COD}
+def _sql_saldos(conv: str) -> str:
+    """Os 4 saldos do mês sobre os códigos distintos dos convênios do CTE `conv`."""
+    return f"""
+WITH {conv}, {_COD}
 SELECT {_SOMA_SALDOS}
 FROM siafe_flexvision s
 JOIN cod ON cod.codigo = s.conta_corrente
 WHERE s.ano = :ano AND s.mes = :mes
 """
-    return _uma(conn, sql, {**filtro.params(), "ano": ano, "mes": mes})
+
+
+def _sql_serie(conv: str) -> str:
+    """Os 4 saldos de cada mês carregado, sobre os códigos distintos do CTE `conv`."""
+    return f"""
+WITH {conv}, {_COD},
+meses AS (SELECT DISTINCT ano, mes FROM siafe_flexvision)
+SELECT m.ano, m.mes, {_SOMA_SALDOS}
+FROM meses m
+LEFT JOIN (siafe_flexvision s JOIN cod ON cod.codigo = s.conta_corrente)
+    ON s.ano = m.ano AND s.mes = m.mes
+GROUP BY m.ano, m.mes
+ORDER BY m.ano, m.mes
+"""
+
+
+def saldos(conn: Connection, filtro: Filtro, ano: int, mes: int) -> dict[str, Decimal | None]:
+    """Os 4 saldos do mês sobre os códigos distintos do recorte e do filtro."""
+    return _uma(conn, _sql_saldos(_CONV), {**filtro.params(), "ano": ano, "mes": mes})
 
 
 def saldos_total_siafe(conn: Connection, ano: int, mes: int) -> dict[str, Decimal | None]:
@@ -202,17 +220,7 @@ ORDER BY count(*) DESC, r.{coluna} NULLS LAST
 
 def serie(conn: Connection, filtro: Filtro) -> list[dict]:
     """Os 4 saldos de cada mês carregado no SIAFE, em ordem cronológica."""
-    sql = f"""
-WITH {_CONV}, {_COD},
-meses AS (SELECT DISTINCT ano, mes FROM siafe_flexvision)
-SELECT m.ano, m.mes, {_SOMA_SALDOS}
-FROM meses m
-LEFT JOIN (siafe_flexvision s JOIN cod ON cod.codigo = s.conta_corrente)
-    ON s.ano = m.ano AND s.mes = m.mes
-GROUP BY m.ano, m.mes
-ORDER BY m.ano, m.mes
-"""
-    return _todas(conn, sql, filtro.params())
+    return _todas(conn, _sql_serie(_CONV), filtro.params())
 
 
 def ranking_municipios(
@@ -320,6 +328,11 @@ WHERE r.recorte = :recorte
 
 # --- detalhe de um convênio (chave já normalizada) ---
 
+# CTE `conv` com um único convênio, no lugar de _CONV. A chave pode não existir: aí `cod`
+# fica vazio e as somas, nulas.
+_CONV_UM = """
+conv AS (SELECT CAST(:numero AS text) AS numero_convenio, CAST(:municipio AS text) AS municipio)"""
+
 
 def convenio(conn: Connection, numero: str, municipio: str) -> dict | None:
     """Identificação do convênio, com a linha da 342 e os recortes; None se a chave não existe."""
@@ -356,6 +369,34 @@ JOIN v_convenio_codigo o
     ON o.codigo = m.codigo AND (o.numero_convenio, o.municipio) <> (m.numero_convenio, m.municipio)
 WHERE m.numero_convenio = :numero AND m.municipio = :municipio
 ORDER BY o.municipio, o.numero_convenio, o.codigo
+"""
+    return _todas(conn, sql, {"numero": numero, "municipio": municipio})
+
+
+def saldos_convenio(conn: Connection, numero: str, municipio: str, ano: int, mes: int) -> dict[str, Decimal | None]:
+    """Os 4 saldos do convênio no mês, com cada código contado uma vez."""
+    return _uma(conn, _sql_saldos(_CONV_UM), {"numero": numero, "municipio": municipio, "ano": ano, "mes": mes})
+
+
+def serie_convenio(conn: Connection, numero: str, municipio: str) -> list[dict]:
+    """Os 4 saldos do convênio em cada mês carregado no SIAFE, em ordem cronológica."""
+    return _todas(conn, _sql_serie(_CONV_UM), {"numero": numero, "municipio": municipio})
+
+
+def contratual_convenio(conn: Connection, numero: str, municipio: str) -> list[dict]:
+    """Um bloco de valores contratuais por aba de recorte (31, 89) em que o convênio está."""
+    sql = """
+SELECT
+    v.recorte,
+    round(v.valor_total, 2) AS valor_total,
+    round(v.repasse_estado, 2) AS repasse_estado,
+    round(v.contrapartida, 2) AS contrapartida,
+    round(v.investido_estado, 2) AS investido_estado,
+    round(v.a_repassar, 2) AS a_repassar,
+    round(100 * v.investido_estado / nullif(v.repasse_estado, 0), 2) AS execucao_pct
+FROM v_valor_contratual v
+WHERE v.numero_convenio = :numero AND v.municipio = :municipio
+ORDER BY v.recorte::int
 """
     return _todas(conn, sql, {"numero": numero, "municipio": municipio})
 

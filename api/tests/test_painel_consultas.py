@@ -393,3 +393,64 @@ def test_sem_compartilhamento(carga):
 
     assert _rodar(carga, Q.compartilhamentos, "010/2020", "Paraty") == []
 
+
+def test_saldos_do_convenio_contam_codigo_repetido_uma_vez(carga):
+    carga.planilha(A342, "001/2020", "Paraty", "900001", "900001")
+    carga.planilha(A342, "002/2020", "Paraty", "900001")  # outro convênio com o mesmo código
+    carga.siafe(2026, 10, "900001", a_pagar="100", aprovados="3")
+
+    s = _rodar(carga, Q.saldos_convenio, "001/2020", "Paraty", 2026, 10)
+    assert s == {"a_pagar": Decimal("100.00"), "a_comprovar": Decimal("0.00"),
+                 "a_aprovar": Decimal("0.00"), "aprovados": Decimal("3.00")}
+
+
+def test_saldos_do_convenio_em_mes_sem_dados(carga):
+    carga.planilha(A342, "001/2020", "Paraty", "900001")
+    carga.siafe(2026, 10, "900001", a_pagar="100")
+
+    assert set(_rodar(carga, Q.saldos_convenio, "001/2020", "Paraty", 2026, 11).values()) == {None}
+
+
+def test_serie_do_convenio_com_nulos_antes_da_primeira_linha(carga):
+    carga.planilha(A342, "001/2020", "Paraty", "900001")
+    carga.planilha(A342, "002/2020", "Paraty", "900002")
+    carga.siafe(2026, 8, "900002", a_pagar="1")  # mês carregado sem linha do convênio
+    carga.siafe(2026, 9, "900001", a_pagar="7")
+    carga.siafe(2026, 10, "900001", a_pagar="5")
+
+    serie = _rodar(carga, Q.serie_convenio, "001/2020", "Paraty")
+    assert [(p["ano"], p["mes"], p["a_pagar"]) for p in serie] == [
+        (2026, 8, None),
+        (2026, 9, Decimal("7.00")),
+        (2026, 10, Decimal("5.00")),
+    ]
+
+
+def test_serie_de_convenio_sem_codigo(carga):
+    carga.planilha(A342, "001/2020", "Paraty")
+    carga.siafe(2026, 9, "900009", a_pagar="7")
+    carga.siafe(2026, 10, "900009", a_pagar="5")
+
+    serie = _rodar(carga, Q.serie_convenio, "001/2020", "Paraty")
+    assert [(p["ano"], p["mes"]) for p in serie] == [(2026, 9), (2026, 10)]
+    assert {p[c] for p in serie for c in Q.SALDOS} == {None}
+
+
+def test_contratual_do_convenio_por_aba(carga):
+    carga.planilha(A342, "001/2020", "Paraty")
+    carga.planilha(A89, "001/2020", "Paraty", valor_total_inicial=Decimal("120"),
+                   repasse_inicial=Decimal("100"), total_investido_estado=Decimal("50"))
+    carga.planilha(A31, "001/2020", "Paraty", valor_total_inicial=Decimal("100"),
+                   repasse_inicial=Decimal("80"), total_investido=Decimal("20"))
+
+    blocos = _rodar(carga, Q.contratual_convenio, "001/2020", "Paraty")
+    assert [(b["recorte"], b["valor_total"], b["execucao_pct"]) for b in blocos] == [
+        ("31", Decimal("100.00"), Decimal("25.00")),
+        ("89", Decimal("120.00"), Decimal("50.00")),
+    ]
+
+
+def test_contratual_de_convenio_historico(carga):
+    carga.planilha(A342, "001/2020", "Paraty")
+
+    assert _rodar(carga, Q.contratual_convenio, "001/2020", "Paraty") == []
