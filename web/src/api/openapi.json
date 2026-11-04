@@ -1,0 +1,2117 @@
+{
+  "components": {
+    "schemas": {
+      "Cobertura": {
+        "properties": {
+          "total_siafe": {
+            "$ref": "#/components/schemas/Saldos"
+          },
+          "vinculado": {
+            "$ref": "#/components/schemas/Saldos"
+          }
+        },
+        "required": [
+          "vinculado",
+          "total_siafe"
+        ],
+        "title": "Cobertura",
+        "type": "object"
+      },
+      "Contagem": {
+        "properties": {
+          "convenios": {
+            "title": "Convenios",
+            "type": "integer"
+          },
+          "valor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor"
+          }
+        },
+        "required": [
+          "valor",
+          "convenios"
+        ],
+        "title": "Contagem",
+        "type": "object"
+      },
+      "Contratual": {
+        "properties": {
+          "a_repassar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Repassar"
+          },
+          "contrapartida": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contrapartida"
+          },
+          "execucao_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Execucao Pct"
+          },
+          "investido_estado": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Investido Estado"
+          },
+          "repasse_estado": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repasse Estado"
+          },
+          "valor_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor Total"
+          }
+        },
+        "required": [
+          "valor_total",
+          "repasse_estado",
+          "contrapartida",
+          "investido_estado",
+          "a_repassar",
+          "execucao_pct"
+        ],
+        "title": "Contratual",
+        "type": "object"
+      },
+      "ContratualRecorte": {
+        "properties": {
+          "a_repassar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Repassar"
+          },
+          "contrapartida": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contrapartida"
+          },
+          "execucao_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Execucao Pct"
+          },
+          "investido_estado": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Investido Estado"
+          },
+          "recorte": {
+            "enum": [
+              "31",
+              "89"
+            ],
+            "title": "Recorte",
+            "type": "string"
+          },
+          "repasse_estado": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repasse Estado"
+          },
+          "valor_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor Total"
+          }
+        },
+        "required": [
+          "valor_total",
+          "repasse_estado",
+          "contrapartida",
+          "investido_estado",
+          "a_repassar",
+          "execucao_pct",
+          "recorte"
+        ],
+        "title": "ContratualRecorte",
+        "type": "object"
+      },
+      "ConvenioCompartilhado": {
+        "properties": {
+          "codigo": {
+            "title": "Codigo",
+            "type": "string"
+          },
+          "municipio": {
+            "title": "Municipio",
+            "type": "string"
+          },
+          "numero_convenio": {
+            "title": "Numero Convenio",
+            "type": "string"
+          }
+        },
+        "required": [
+          "numero_convenio",
+          "municipio",
+          "codigo"
+        ],
+        "title": "ConvenioCompartilhado",
+        "type": "object"
+      },
+      "Convenios": {
+        "properties": {
+          "ano": {
+            "title": "Ano",
+            "type": "integer"
+          },
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/LinhaConvenio"
+            },
+            "title": "Itens",
+            "type": "array"
+          },
+          "mes": {
+            "title": "Mes",
+            "type": "integer"
+          },
+          "municipios": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Municipios",
+            "type": "array"
+          },
+          "pagina": {
+            "title": "Pagina",
+            "type": "integer"
+          },
+          "recorte": {
+            "enum": [
+              "31",
+              "89",
+              "342"
+            ],
+            "title": "Recorte",
+            "type": "string"
+          },
+          "tamanho": {
+            "title": "Tamanho",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "recorte",
+          "ano",
+          "mes",
+          "municipios",
+          "pagina",
+          "tamanho",
+          "total",
+          "itens"
+        ],
+        "title": "Convenios",
+        "type": "object"
+      },
+      "DetalheConvenio": {
+        "properties": {
+          "codigo_compartilhado": {
+            "title": "Codigo Compartilhado",
+            "type": "boolean"
+          },
+          "codigo_seiop": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Seiop"
+          },
+          "codigo_seobras": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Seobras"
+          },
+          "compartilhado_com": {
+            "items": {
+              "$ref": "#/components/schemas/ConvenioCompartilhado"
+            },
+            "title": "Compartilhado Com",
+            "type": "array"
+          },
+          "contratual": {
+            "items": {
+              "$ref": "#/components/schemas/ContratualRecorte"
+            },
+            "title": "Contratual",
+            "type": "array"
+          },
+          "fase": {
+            "title": "Fase",
+            "type": "string"
+          },
+          "mes_anterior": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Saldos"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "municipio": {
+            "title": "Municipio",
+            "type": "string"
+          },
+          "numero_convenio": {
+            "title": "Numero Convenio",
+            "type": "string"
+          },
+          "objeto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Objeto"
+          },
+          "recortes": {
+            "items": {
+              "enum": [
+                "31",
+                "89",
+                "342"
+              ],
+              "type": "string"
+            },
+            "title": "Recortes",
+            "type": "array"
+          },
+          "referencia": {
+            "$ref": "#/components/schemas/Mes"
+          },
+          "saldos": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Saldos"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "serie": {
+            "items": {
+              "$ref": "#/components/schemas/PontoSerie"
+            },
+            "title": "Serie",
+            "type": "array"
+          },
+          "situacao_vigencia": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Situacao Vigencia"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "vigencia_final": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vigencia Final"
+          }
+        },
+        "required": [
+          "numero_convenio",
+          "municipio",
+          "fase",
+          "status",
+          "situacao_vigencia",
+          "vigencia_final",
+          "objeto",
+          "recortes",
+          "codigo_seobras",
+          "codigo_seiop",
+          "codigo_compartilhado",
+          "compartilhado_com",
+          "referencia",
+          "saldos",
+          "mes_anterior",
+          "contratual",
+          "serie"
+        ],
+        "title": "DetalheConvenio",
+        "type": "object"
+      },
+      "ExecucaoIniciada": {
+        "properties": {
+          "execucao_id": {
+            "title": "Execucao Id",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "execucao_id",
+          "status"
+        ],
+        "title": "ExecucaoIniciada",
+        "type": "object"
+      },
+      "ExecucaoStatus": {
+        "properties": {
+          "erro": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Erro"
+          },
+          "fim": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fim"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "inicio": {
+            "format": "date-time",
+            "title": "Inicio",
+            "type": "string"
+          },
+          "origem": {
+            "title": "Origem",
+            "type": "string"
+          },
+          "registros": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registros"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "origem",
+          "status",
+          "inicio",
+          "fim",
+          "registros",
+          "erro"
+        ],
+        "title": "ExecucaoStatus",
+        "type": "object"
+      },
+      "Execucoes": {
+        "properties": {
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/ExecucaoStatus"
+            },
+            "title": "Itens",
+            "type": "array"
+          },
+          "pagina": {
+            "title": "Pagina",
+            "type": "integer"
+          },
+          "tamanho": {
+            "title": "Tamanho",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "pagina",
+          "tamanho",
+          "total",
+          "itens"
+        ],
+        "title": "Execucoes",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "LinhaConvenio": {
+        "properties": {
+          "a_aprovar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Aprovar"
+          },
+          "a_comprovar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Comprovar"
+          },
+          "a_pagar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Pagar"
+          },
+          "a_repassar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Repassar"
+          },
+          "aprovados": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aprovados"
+          },
+          "codigo_compartilhado": {
+            "title": "Codigo Compartilhado",
+            "type": "boolean"
+          },
+          "codigo_seiop": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Seiop"
+          },
+          "codigo_seobras": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Seobras"
+          },
+          "contrapartida": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contrapartida"
+          },
+          "execucao_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Execucao Pct"
+          },
+          "fase": {
+            "title": "Fase",
+            "type": "string"
+          },
+          "investido_estado": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Investido Estado"
+          },
+          "municipio": {
+            "title": "Municipio",
+            "type": "string"
+          },
+          "numero_convenio": {
+            "title": "Numero Convenio",
+            "type": "string"
+          },
+          "repasse_estado": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repasse Estado"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "valor_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor Total"
+          }
+        },
+        "required": [
+          "valor_total",
+          "repasse_estado",
+          "contrapartida",
+          "investido_estado",
+          "a_repassar",
+          "execucao_pct",
+          "a_pagar",
+          "a_comprovar",
+          "a_aprovar",
+          "aprovados",
+          "numero_convenio",
+          "municipio",
+          "status",
+          "fase",
+          "codigo_seobras",
+          "codigo_seiop",
+          "codigo_compartilhado"
+        ],
+        "title": "LinhaConvenio",
+        "type": "object"
+      },
+      "LinhaMunicipio": {
+        "properties": {
+          "a_aprovar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Aprovar"
+          },
+          "a_comprovar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Comprovar"
+          },
+          "a_pagar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Pagar"
+          },
+          "a_repassar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Repassar"
+          },
+          "aprovados": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aprovados"
+          },
+          "codigo_compartilhado": {
+            "title": "Codigo Compartilhado",
+            "type": "boolean"
+          },
+          "contrapartida": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contrapartida"
+          },
+          "convenios": {
+            "title": "Convenios",
+            "type": "integer"
+          },
+          "execucao_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Execucao Pct"
+          },
+          "investido_estado": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Investido Estado"
+          },
+          "municipio": {
+            "title": "Municipio",
+            "type": "string"
+          },
+          "repasse_estado": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repasse Estado"
+          },
+          "valor_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor Total"
+          }
+        },
+        "required": [
+          "valor_total",
+          "repasse_estado",
+          "contrapartida",
+          "investido_estado",
+          "a_repassar",
+          "execucao_pct",
+          "a_pagar",
+          "a_comprovar",
+          "a_aprovar",
+          "aprovados",
+          "municipio",
+          "convenios",
+          "codigo_compartilhado"
+        ],
+        "title": "LinhaMunicipio",
+        "type": "object"
+      },
+      "Mes": {
+        "properties": {
+          "ano": {
+            "title": "Ano",
+            "type": "integer"
+          },
+          "mes": {
+            "title": "Mes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ano",
+          "mes"
+        ],
+        "title": "Mes",
+        "type": "object"
+      },
+      "Municipios": {
+        "properties": {
+          "ano": {
+            "title": "Ano",
+            "type": "integer"
+          },
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/LinhaMunicipio"
+            },
+            "title": "Itens",
+            "type": "array"
+          },
+          "mes": {
+            "title": "Mes",
+            "type": "integer"
+          },
+          "municipios": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Municipios",
+            "type": "array"
+          },
+          "pagina": {
+            "title": "Pagina",
+            "type": "integer"
+          },
+          "recorte": {
+            "enum": [
+              "31",
+              "89",
+              "342"
+            ],
+            "title": "Recorte",
+            "type": "string"
+          },
+          "tamanho": {
+            "title": "Tamanho",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "recorte",
+          "ano",
+          "mes",
+          "municipios",
+          "pagina",
+          "tamanho",
+          "total",
+          "itens"
+        ],
+        "title": "Municipios",
+        "type": "object"
+      },
+      "PontoSerie": {
+        "properties": {
+          "a_aprovar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Aprovar"
+          },
+          "a_comprovar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Comprovar"
+          },
+          "a_pagar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Pagar"
+          },
+          "ano": {
+            "title": "Ano",
+            "type": "integer"
+          },
+          "aprovados": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aprovados"
+          },
+          "mes": {
+            "title": "Mes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "a_pagar",
+          "a_comprovar",
+          "a_aprovar",
+          "aprovados",
+          "ano",
+          "mes"
+        ],
+        "title": "PontoSerie",
+        "type": "object"
+      },
+      "Referencia": {
+        "properties": {
+          "ano": {
+            "title": "Ano",
+            "type": "integer"
+          },
+          "arquivo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Arquivo"
+          },
+          "mes": {
+            "title": "Mes",
+            "type": "integer"
+          },
+          "planilha_importada_em": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planilha Importada Em"
+          },
+          "posicao_siafe_em": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Posicao Siafe Em"
+          },
+          "ultimo_mes_disponivel": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Mes"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "ano",
+          "mes",
+          "posicao_siafe_em",
+          "planilha_importada_em",
+          "arquivo",
+          "ultimo_mes_disponivel"
+        ],
+        "title": "Referencia",
+        "type": "object"
+      },
+      "Resumo": {
+        "properties": {
+          "contratual": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Contratual"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "convenios": {
+            "title": "Convenios",
+            "type": "integer"
+          },
+          "municipios": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Municipios",
+            "type": "array"
+          },
+          "recorte": {
+            "enum": [
+              "31",
+              "89",
+              "342"
+            ],
+            "title": "Recorte",
+            "type": "string"
+          },
+          "referencia": {
+            "$ref": "#/components/schemas/Referencia"
+          },
+          "siafe": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SiafeResumo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "situacao": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Situacao"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "recorte",
+          "municipios",
+          "convenios",
+          "referencia",
+          "siafe",
+          "contratual",
+          "situacao"
+        ],
+        "title": "Resumo",
+        "type": "object"
+      },
+      "Saldos": {
+        "properties": {
+          "a_aprovar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Aprovar"
+          },
+          "a_comprovar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Comprovar"
+          },
+          "a_pagar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Pagar"
+          },
+          "aprovados": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aprovados"
+          }
+        },
+        "required": [
+          "a_pagar",
+          "a_comprovar",
+          "a_aprovar",
+          "aprovados"
+        ],
+        "title": "Saldos",
+        "type": "object"
+      },
+      "Serie": {
+        "properties": {
+          "municipios": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Municipios",
+            "type": "array"
+          },
+          "pontos": {
+            "items": {
+              "$ref": "#/components/schemas/PontoSerie"
+            },
+            "title": "Pontos",
+            "type": "array"
+          },
+          "recorte": {
+            "enum": [
+              "31",
+              "89",
+              "342"
+            ],
+            "title": "Recorte",
+            "type": "string"
+          }
+        },
+        "required": [
+          "recorte",
+          "municipios",
+          "pontos"
+        ],
+        "title": "Serie",
+        "type": "object"
+      },
+      "SiafeResumo": {
+        "properties": {
+          "a_aprovar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Aprovar"
+          },
+          "a_comprovar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Comprovar"
+          },
+          "a_pagar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Pagar"
+          },
+          "aprovados": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aprovados"
+          },
+          "cobertura": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Cobertura"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mes_anterior": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Saldos"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "a_pagar",
+          "a_comprovar",
+          "a_aprovar",
+          "aprovados",
+          "mes_anterior",
+          "cobertura"
+        ],
+        "title": "SiafeResumo",
+        "type": "object"
+      },
+      "Situacao": {
+        "properties": {
+          "situacao_vigencia": {
+            "items": {
+              "$ref": "#/components/schemas/Contagem"
+            },
+            "title": "Situacao Vigencia",
+            "type": "array"
+          },
+          "status": {
+            "items": {
+              "$ref": "#/components/schemas/Contagem"
+            },
+            "title": "Status",
+            "type": "array"
+          }
+        },
+        "required": [
+          "status",
+          "situacao_vigencia"
+        ],
+        "title": "Situacao",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Dashboard Convênios API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/etl/siafe": {
+      "post": {
+        "operationId": "disparar_carga_siafe_etl_siafe_post",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecucaoIniciada"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "description": "Já existe uma carga em andamento"
+          }
+        },
+        "summary": "Disparar Carga Siafe",
+        "tags": [
+          "etl"
+        ]
+      }
+    },
+    "/etl/siafe/execucoes": {
+      "get": {
+        "description": "Execuções de carga SIAFE, da mais recente para a mais antiga.",
+        "operationId": "historico_cargas_siafe_etl_siafe_execucoes_get",
+        "parameters": [
+          {
+            "description": "A partir de 1",
+            "in": "query",
+            "name": "pagina",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "description": "A partir de 1",
+              "minimum": 1,
+              "title": "Pagina",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Itens por página",
+            "in": "query",
+            "name": "tamanho",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "description": "Itens por página",
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Tamanho",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Execucoes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Historico Cargas Siafe",
+        "tags": [
+          "etl"
+        ]
+      }
+    },
+    "/etl/siafe/status": {
+      "get": {
+        "operationId": "status_carga_siafe_etl_siafe_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecucaoStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Status Carga Siafe",
+        "tags": [
+          "etl"
+        ]
+      }
+    },
+    "/painel/convenio": {
+      "get": {
+        "description": "Detalhe de um convênio, identificado por número e município.",
+        "operationId": "convenio_painel_convenio_get",
+        "parameters": [
+          {
+            "description": "Número do convênio, nas grafias aceitas pela carga (ex.: 143/14)",
+            "in": "query",
+            "name": "numero",
+            "required": true,
+            "schema": {
+              "description": "Número do convênio, nas grafias aceitas pela carga (ex.: 143/14)",
+              "title": "Numero",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Município do convênio (sem acento e caixa também valem)",
+            "in": "query",
+            "name": "municipio",
+            "required": true,
+            "schema": {
+              "description": "Município do convênio (sem acento e caixa também valem)",
+              "title": "Municipio",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ano",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 2100,
+                  "minimum": 2000,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ano"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mes",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 12,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Mes"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetalheConvenio"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Nenhum convênio com essa chave"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Convenio",
+        "tags": [
+          "painel"
+        ]
+      }
+    },
+    "/painel/convenios": {
+      "get": {
+        "operationId": "convenios_painel_convenios_get",
+        "parameters": [
+          {
+            "description": "31 vigentes, 89 primeiro repasse, 342 histórico",
+            "in": "query",
+            "name": "recorte",
+            "required": false,
+            "schema": {
+              "default": "31",
+              "description": "31 vigentes, 89 primeiro repasse, 342 histórico",
+              "enum": [
+                "31",
+                "89",
+                "342"
+              ],
+              "title": "Recorte",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Repetível; sem ele, todos",
+            "in": "query",
+            "name": "municipio",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Repetível; sem ele, todos",
+              "title": "Municipio"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ano",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 2100,
+                  "minimum": 2000,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ano"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mes",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 12,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Mes"
+            }
+          },
+          {
+            "description": "A partir de 1",
+            "in": "query",
+            "name": "pagina",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "description": "A partir de 1",
+              "minimum": 1,
+              "title": "Pagina",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Itens por página",
+            "in": "query",
+            "name": "tamanho",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "description": "Itens por página",
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Tamanho",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Campo, com `-` para decrescente. Aceitos: numero_convenio, municipio, status, fase, a_pagar, a_comprovar, a_aprovar, aprovados, valor_total, repasse_estado, contrapartida, investido_estado, a_repassar, execucao_pct",
+            "in": "query",
+            "name": "ordem",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Campo, com `-` para decrescente. Aceitos: numero_convenio, municipio, status, fase, a_pagar, a_comprovar, a_aprovar, aprovados, valor_total, repasse_estado, contrapartida, investido_estado, a_repassar, execucao_pct",
+              "title": "Ordem"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Convenios"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Convenios",
+        "tags": [
+          "painel"
+        ]
+      }
+    },
+    "/painel/municipios": {
+      "get": {
+        "operationId": "municipios_painel_municipios_get",
+        "parameters": [
+          {
+            "description": "31 vigentes, 89 primeiro repasse, 342 histórico",
+            "in": "query",
+            "name": "recorte",
+            "required": false,
+            "schema": {
+              "default": "31",
+              "description": "31 vigentes, 89 primeiro repasse, 342 histórico",
+              "enum": [
+                "31",
+                "89",
+                "342"
+              ],
+              "title": "Recorte",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Repetível; sem ele, todos",
+            "in": "query",
+            "name": "municipio",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Repetível; sem ele, todos",
+              "title": "Municipio"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ano",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 2100,
+                  "minimum": 2000,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ano"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mes",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 12,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Mes"
+            }
+          },
+          {
+            "description": "A partir de 1",
+            "in": "query",
+            "name": "pagina",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "description": "A partir de 1",
+              "minimum": 1,
+              "title": "Pagina",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Itens por página",
+            "in": "query",
+            "name": "tamanho",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "description": "Itens por página",
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Tamanho",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Campo, com `-` para decrescente. Aceitos: municipio, convenios, a_pagar, a_comprovar, a_aprovar, aprovados, valor_total, repasse_estado, contrapartida, investido_estado, a_repassar, execucao_pct",
+            "in": "query",
+            "name": "ordem",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Campo, com `-` para decrescente. Aceitos: municipio, convenios, a_pagar, a_comprovar, a_aprovar, aprovados, valor_total, repasse_estado, contrapartida, investido_estado, a_repassar, execucao_pct",
+              "title": "Ordem"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Municipios"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Municipios",
+        "tags": [
+          "painel"
+        ]
+      }
+    },
+    "/painel/resumo": {
+      "get": {
+        "operationId": "resumo_painel_resumo_get",
+        "parameters": [
+          {
+            "description": "31 vigentes, 89 primeiro repasse, 342 histórico",
+            "in": "query",
+            "name": "recorte",
+            "required": false,
+            "schema": {
+              "default": "31",
+              "description": "31 vigentes, 89 primeiro repasse, 342 histórico",
+              "enum": [
+                "31",
+                "89",
+                "342"
+              ],
+              "title": "Recorte",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Repetível; sem ele, todos",
+            "in": "query",
+            "name": "municipio",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Repetível; sem ele, todos",
+              "title": "Municipio"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ano",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 2100,
+                  "minimum": 2000,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ano"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mes",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 12,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Mes"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resumo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Resumo",
+        "tags": [
+          "painel"
+        ]
+      }
+    },
+    "/painel/serie": {
+      "get": {
+        "operationId": "serie_painel_serie_get",
+        "parameters": [
+          {
+            "description": "31 vigentes, 89 primeiro repasse, 342 histórico",
+            "in": "query",
+            "name": "recorte",
+            "required": false,
+            "schema": {
+              "default": "31",
+              "description": "31 vigentes, 89 primeiro repasse, 342 histórico",
+              "enum": [
+                "31",
+                "89",
+                "342"
+              ],
+              "title": "Recorte",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Repetível; sem ele, todos",
+            "in": "query",
+            "name": "municipio",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Repetível; sem ele, todos",
+              "title": "Municipio"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Serie"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Serie",
+        "tags": [
+          "painel"
+        ]
+      }
+    }
+  }
+}
