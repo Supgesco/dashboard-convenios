@@ -80,6 +80,14 @@ Endpoints de leitura (`GET`) da tela inicial, em `app/routers/painel.py`, com as
 
 Parâmetros comuns: `recorte` (`31`, `89` ou `342`; padrão `31`) e `municipio` (repetível, casado sem acento/caixa contra os 92 municípios; inválido → 422). `resumo`, `municipios` e `convenios` aceitam `ano` e `mes` juntos; sem eles, o mês corrente (America/Sao_Paulo). Se o SIAFE não tem o mês, `siafe` vem `null` e `referencia.ultimo_mes_disponivel` indica o último carregado.
 
+`municipios` e `convenios` são paginados e ordenados no servidor:
+
+- `pagina` (a partir de 1, padrão 1) e `tamanho` (1 a 100, padrão 20); fora disso → 422. Página além do fim traz `itens` vazio com o `total` certo.
+- `ordem`: um campo, com `-` na frente para decrescente (`ordem=-a_pagar`). Nulos ficam por último, e o desempate é por município e número do convênio. Sem `ordem`, município e depois número. Campo fora da lista → 422.
+  - ranking: `municipio`, `convenios`, `a_pagar`, `a_comprovar`, `a_aprovar`, `aprovados`, `valor_total`, `repasse_estado`, `contrapartida`, `investido_estado`, `a_repassar`, `execucao_pct`;
+  - lista: `numero_convenio`, `municipio`, `status`, `fase` e os mesmos saldos e valores contratuais.
+- Envelope: `{recorte, ano, mes, municipios, pagina, tamanho, total, itens}`, com `total` contando os itens do recorte e do filtro (não reais). A série não é paginada.
+
 Os saldos somam o conjunto distinto de códigos dos convênios selecionados (um código de dois convênios conta uma vez no total, mas entra em cada linha do ranking ou da lista). O percentual de execução é investido ÷ repasse do Estado sobre as somas. Valores ausentes vêm `null`, nunca zero.
 
 ## Testes
