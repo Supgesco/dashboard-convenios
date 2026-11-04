@@ -318,6 +318,48 @@ WHERE r.recorte = :recorte
     return _paginar(conn, sql, params, pagina, ORDEM_LISTA, ("municipio", "numero_convenio"))
 
 
+# --- detalhe de um convênio (chave já normalizada) ---
+
+
+def convenio(conn: Connection, numero: str, municipio: str) -> dict | None:
+    """Identificação do convênio, com a linha da 342 e os recortes; None se a chave não existe."""
+    sql = """
+SELECT
+    c.numero_convenio,
+    c.municipio,
+    c.fase,
+    c.status,
+    g.situacao_vigencia,
+    g.vigencia_final,
+    g.objeto,
+    c.codigo_seobras,
+    c.codigo_seiop,
+    ARRAY(
+        SELECT r.recorte FROM v_recorte_convenio r
+        WHERE r.numero_convenio = c.numero_convenio AND r.municipio = c.municipio
+        ORDER BY r.recorte::int
+    ) AS recortes
+FROM v_convenio c
+JOIN planilha_convenios_geral g ON g.linha = c.linha
+WHERE c.numero_convenio = :numero AND c.municipio = :municipio
+"""
+    linha = conn.execute(text(sql), {"numero": numero, "municipio": municipio}).mappings().first()
+    return dict(linha) if linha else None
+
+
+def compartilhamentos(conn: Connection, numero: str, municipio: str) -> list[dict]:
+    """Os outros convênios que têm algum código em comum com este, com o código."""
+    sql = """
+SELECT o.numero_convenio, o.municipio, o.codigo
+FROM v_convenio_codigo m
+JOIN v_convenio_codigo o
+    ON o.codigo = m.codigo AND (o.numero_convenio, o.municipio) <> (m.numero_convenio, m.municipio)
+WHERE m.numero_convenio = :numero AND m.municipio = :municipio
+ORDER BY o.municipio, o.numero_convenio, o.codigo
+"""
+    return _todas(conn, sql, {"numero": numero, "municipio": municipio})
+
+
 @dataclass(frozen=True)
 class DatasCargas:
     posicao_siafe_em: datetime | None

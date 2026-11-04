@@ -4,7 +4,7 @@ As consultas rodam no Postgres de TEST_DATABASE_URL (ver conftest). A normaliza�
 banco. Todos os números, códigos e valores são fictícios.
 """
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 import pytest
@@ -317,3 +317,79 @@ def test_ordem_fora_da_whitelist():
 def test_ordem_invalida_nunca_chega_ao_sql(carga):
     with pytest.raises(ValueError):
         _lista(carga, ordem="senha")
+
+
+# --- detalhe de um convênio ---
+
+
+def _carteira_detalhe(carga: Carga) -> None:
+    """Um vigente (31, 89, 342), um histórico e o mesmo número em dois municípios.
+
+    `001/2020`–Paraty e `002/2021`–Resende compartilham o SEOBRAS 900001.
+    """
+    carga.planilha(
+        A342, "001/2020", "Paraty", "900001", "900002",
+        status_convenio="Em execução", situacao_vigencia="Vigente",
+        vigencia_final=date(2026, 12, 31), objeto="Obra sintética",
+    )
+    carga.planilha(A89, "001/2020", "Paraty")
+    carga.planilha(A31, "001/2020", "Paraty")
+    carga.planilha(A342, "002/2021", "Resende", "900001")
+    carga.planilha(A342, "010/2020", "Paraty", "900010")
+    carga.planilha(A342, "010/2020", "Resende", "900011")
+
+
+def test_detalhe_identifica_convenio_vigente(carga):
+    _carteira_detalhe(carga)
+
+    c = _rodar(carga, Q.convenio, "001/2020", "Paraty")
+    assert c == {
+        "numero_convenio": "001/2020",
+        "municipio": "Paraty",
+        "fase": "vigente",
+        "status": "Em execução",
+        "situacao_vigencia": "Vigente",
+        "vigencia_final": date(2026, 12, 31),
+        "objeto": "Obra sintética",
+        "codigo_seobras": "900001",
+        "codigo_seiop": "900002",
+        "recortes": ["31", "89", "342"],
+    }
+
+
+def test_detalhe_de_convenio_historico(carga):
+    _carteira_detalhe(carga)
+
+    c = _rodar(carga, Q.convenio, "002/2021", "Resende")
+    assert (c["fase"], c["recortes"], c["objeto"]) == ("historico", ["342"], None)
+
+
+def test_detalhe_distingue_municipio_do_mesmo_numero(carga):
+    _carteira_detalhe(carga)
+
+    assert _rodar(carga, Q.convenio, "010/2020", "Resende")["codigo_seobras"] == "900011"
+    assert _rodar(carga, Q.convenio, "010/2020", "Paraty")["codigo_seobras"] == "900010"
+
+
+def test_detalhe_de_chave_inexistente(carga):
+    _carteira_detalhe(carga)
+
+    assert _rodar(carga, Q.convenio, "001/2020", "Resende") is None
+
+
+def test_compartilhamentos_citam_o_outro_convenio(carga):
+    _carteira_detalhe(carga)
+
+    assert _rodar(carga, Q.compartilhamentos, "001/2020", "Paraty") == [
+        {"numero_convenio": "002/2021", "municipio": "Resende", "codigo": "900001"}
+    ]
+    assert _rodar(carga, Q.compartilhamentos, "002/2021", "Resende") == [
+        {"numero_convenio": "001/2020", "municipio": "Paraty", "codigo": "900001"}
+    ]
+
+
+def test_sem_compartilhamento(carga):
+    _carteira_detalhe(carga)
+
+    assert _rodar(carga, Q.compartilhamentos, "010/2020", "Paraty") == []
+
