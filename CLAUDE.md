@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-Dashboard of "convênios" built from SIAFE (Fazenda RJ) data and spreadsheets. The back-end has two on-demand ETLs into Postgres: the SIAFE FlexVision query and the convênios spreadsheet ("Planilha Geral Somando Forças"). No front-end code exists yet.
+Dashboard of "convênios" built from SIAFE (Fazenda RJ) data and spreadsheets. The back-end has two on-demand ETLs into Postgres: the SIAFE FlexVision query and the convênios spreadsheet ("Planilha Geral Somando Forças"). The front-end (`web/`) is a read-only React app over that API, plus the SIAFE load trigger.
 
 ## Layout
 
@@ -27,7 +27,11 @@ Dashboard of "convênios" built from SIAFE (Fazenda RJ) data and spreadsheets. T
     - `0003` creates the SIAFE × planilha cross-reference as plain Postgres views (`v_convenio`, `v_convenio_codigo`, `v_convenio_registro`, `v_convenio_saldo_codigo`, `v_convenio_saldo`, `v_cruzamento_falha`, plus the intermediate `v_cruzamento_linha` and `v_cruzamento_codigo_origem`), computed on read, so neither load knows about them. The SQL is literal (doesn't import the layout). The views are outside `Base.metadata`, so `alembic check` ignores them. A future migration that alters a `planilha_*` table or `siafe_flexvision` must drop and recreate the dependent views (Postgres refuses the `ALTER`/`DROP` otherwise). Tests: `tests/test_cruzamento.py`.
     - `0004` adds the dashboard views on top of `0003`: `v_recorte_convenio` (convênios per recorte, with status and situação da vigência) and `v_valor_contratual` (contract values per convênio for recortes 31 and 89, each from its own sheet, summing continuation rows; realinhado vs. inicial chosen once per convênio). Same rules as `0003`: literal SQL, outside `Base.metadata`, and they also must be dropped/recreated when a `planilha_*` table they read changes. Tests: `tests/test_painel_views.py`, `test_painel_consultas.py`, `test_routers_painel.py`.
 - `data/` — local database and spreadsheet files. Everything in it except `.gitkeep` is git-ignored, as are `*.db`, `*.sqlite*`, `*.xlsx`, `*.xls`, `*.csv` anywhere. This data is real convênio data: never commit it or add it as fixtures — tests use synthetic fixtures shaped like the real response.
-- `web/` — planned React front-end (referenced in `.gitignore`, not created yet).
+- `web/` — React 19 + TypeScript + Tailwind CSS v4 front-end (Vite, npm; see `web/README.md`). React Router, TanStack Query, Recharts; tests with Vitest + Testing Library.
+  - Screens: `/` (visão geral), `/municipios`, `/convenios`, `/convenio?numero=&municipio=` (detail), `/cargas` (last load, history, trigger with confirmation). Filters (`recorte`, repeated `municipio`, `ano`/`mes`, `pagina`, `ordem`) live only in the URL (`src/filtros.ts`); without `ano`/`mes` the screens use `ultimo_mes_disponivel` from `/painel/resumo`.
+  - `src/api/cliente.ts` (fetch + `ApiErro`), `src/api/hooks.ts` (one query hook per endpoint; nothing persisted in the browser), `src/formato.ts` (all pt-BR formatting; only `null` becomes "—").
+  - `src/api/openapi.json` and `schema.d.ts` are generated from the API's OpenAPI by `npm run api:tipos` (no DB needed) and committed: regenerate them whenever an API response model changes.
+  - Dev server proxies `/api` → `API_URL` (default `http://localhost:8010`; the dev server is pinned to 5180 with `strictPort`, since 8000/5173 are often taken by other projects on this machine), so the API has no CORS. Tests stub `fetch` per route with synthetic fixtures (`src/teste/`); they never call the real API.
 - `openspec/` — OpenSpec planning (schema `spec-driven`). Changes go in `openspec/changes/`, accepted specs in `openspec/specs/`. Use the `/opsx:*` commands (propose → apply → archive) for new features.
 
 ## Commands
@@ -38,7 +42,7 @@ Run from `api/`:
 uv sync                              # install dependencies into api/.venv
 uv add <pkg>                         # add a dependency
 uv run alembic upgrade head          # apply migrations
-uv run fastapi dev app/main.py       # dev server (docs at /docs)
+uv run fastapi dev app/main.py --port 8010  # dev server (docs at /docs); 8010 is what web/ proxies to
 uv run python -m app.etl.siafe       # run the SIAFE load (exit 0 = success)
 uv run python -m app.etl.planilha ../data/<planilha>.xlsx  # run the spreadsheet ETL (0 ok, 1 failure, 2 already running)
 uv run pytest                        # tests; integration tests need TEST_DATABASE_URL
@@ -46,6 +50,16 @@ uv run pytest tests/test_siafe_transform.py::test_lista_vazia_e_mes_sem_registro
 ```
 
 `TEST_DATABASE_URL` points the integration tests at a Postgres; they truncate the tables. The suite aborts if `siafe_flexvision`, `planilha_importacao` or any `planilha_*` table already has data, so it cannot wipe a loaded database. Spreadsheet tests build synthetic workbooks with `tests/planilha_sintetica.py`.
+
+Run from `web/`:
+
+```bash
+npm install
+npm run dev                          # http://localhost:5180 (API at localhost:8010, or API_URL=...)
+npm test                             # Vitest
+npx tsc -b && npm run build          # typecheck + production build
+npm run api:tipos                    # regenerate API types after changing a response model
+```
 
 ## SIAFE API notes
 

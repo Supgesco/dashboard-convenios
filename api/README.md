@@ -23,7 +23,7 @@ uv sync
 uv run alembic upgrade head          # cria as tabelas e as views do cruzamento
 uv run python -m app.etl.siafe       # carga completa (2023-01 até o mês atual), sobrescreve a anterior
 uv run python -m app.etl.planilha ../data/<planilha>.xlsx  # ETL da planilha, sobrescreve a anterior
-uv run fastapi dev app/main.py       # servidor de desenvolvimento
+uv run fastapi dev app/main.py --port 8010  # servidor de desenvolvimento (o front em web/ usa a 8010)
 ```
 
 Endpoints:
