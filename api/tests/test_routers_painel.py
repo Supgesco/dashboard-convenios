@@ -429,6 +429,169 @@ def test_campo_de_ordem_invalido(api):
     assert api.get("/painel/convenios", params={"ordem": "-numero_convenio"}).status_code == 200
 
 
+# --- detalhe do convênio ---
+
+
+def _detalhe(carga: Carga) -> None:
+    """`143/2014`–Paraty realinhado (89 e 342) com SEOBRAS 900001, compartilhado com `002/2021`–Resende.
+
+    `010/2020` existe em Paraty e em Resende. `005/2019`–Niterói está na 31, na 89 e na 342.
+    """
+    carga.planilha(
+        A342, "143/2014", "Paraty", "900001", "900001",
+        status_convenio="Em execução", situacao_vigencia="Vigente",
+        vigencia_final=date(2026, 12, 31), objeto="Obra sintética",
+    )
+    carga.planilha(A89, "143/2014", "Paraty", valor_total_inicial=Decimal("120"),
+                   repasse_inicial=Decimal("100"), total_investido_estado=Decimal("50"))
+    carga.planilha(A342, "002/2021", "Resende", "900001")
+    carga.planilha(A342, "010/2020", "Paraty", "900010")
+    carga.planilha(A342, "010/2020", "Resende", "900011")
+    carga.planilha(A342, "005/2019", "Niterói")
+    carga.planilha(A89, "005/2019", "Niterói", valor_total_inicial=Decimal("120"))
+    carga.planilha(A31, "005/2019", "Niterói", valor_total_inicial=Decimal("100"))
+    carga.siafe(2026, 9, "900010", a_pagar="1")
+    carga.siafe(2026, 10, "900001", a_pagar="70")
+    carga.siafe(2026, 11, "900001", a_pagar="80", aprovados="5")
+
+
+def _get_detalhe(api, numero="143/2014", municipio="Paraty", **params):
+    return api.get("/painel/convenio", params={"numero": numero, "municipio": municipio, **params})
+
+
+def test_detalhe_convenio_encontrado(api, carga):
+    _detalhe(carga)
+
+    r = _get_detalhe(api)
+    assert r.status_code == 200
+    corpo = r.json()
+    assert {k: corpo[k] for k in (
+        "numero_convenio", "municipio", "fase", "status", "situacao_vigencia",
+        "vigencia_final", "objeto", "recortes", "codigo_seobras", "codigo_seiop",
+    )} == {
+        "numero_convenio": "143/2014",
+        "municipio": "Paraty",
+        "fase": "realinhado",
+        "status": "Em execução",
+        "situacao_vigencia": "Vigente",
+        "vigencia_final": "2026-12-31",
+        "objeto": "Obra sintética",
+        "recortes": ["89", "342"],
+        "codigo_seobras": "900001",
+        "codigo_seiop": "900001",
+    }
+    assert corpo["referencia"] == {"ano": 2026, "mes": 11}
+
+
+def test_detalhe_grafias_aceitas(api, carga):
+    _detalhe(carga)
+
+    corpo = _get_detalhe(api, numero="143/14", municipio="paraty").json()
+    assert (corpo["numero_convenio"], corpo["municipio"]) == ("143/2014", "Paraty")
+
+
+def test_detalhe_mesmo_numero_em_outro_municipio(api, carga):
+    _detalhe(carga)
+
+    corpo = _get_detalhe(api, numero="010/2020", municipio="Resende").json()
+    assert (corpo["municipio"], corpo["codigo_seobras"]) == ("Resende", "900011")
+
+
+def test_detalhe_convenio_inexistente(api, carga):
+    _detalhe(carga)
+
+    assert _get_detalhe(api, numero="143/2014", municipio="Resende").status_code == 404
+
+
+def test_detalhe_entrada_invalida(api):
+    r = _get_detalhe(api, numero="abc")
+    assert r.status_code == 422
+    assert r.json()["detail"]["numero"] == "abc"
+    r = _get_detalhe(api, municipio="Atlantida")
+    assert r.status_code == 422
+    assert r.json()["detail"]["municipios_invalidos"] == ["Atlantida"]
+    assert api.get("/painel/convenio", params={"numero": "143/2014"}).status_code == 422
+    assert api.get("/painel/convenio", params={"municipio": "Paraty"}).status_code == 422
+    assert _get_detalhe(api, numero="").status_code == 422
+    assert _get_detalhe(api, municipio="").status_code == 422
+
+
+def test_detalhe_codigo_compartilhado(api, carga):
+    _detalhe(carga)
+
+    corpo = _get_detalhe(api).json()
+    assert corpo["codigo_compartilhado"] is True
+    assert corpo["compartilhado_com"] == [
+        {"numero_convenio": "002/2021", "municipio": "Resende", "codigo": "900001"}
+    ]
+    sem = _get_detalhe(api, numero="010/2020", municipio="Paraty").json()
+    assert (sem["codigo_compartilhado"], sem["compartilhado_com"]) == (False, [])
+
+
+def test_detalhe_saldos_do_mes_e_do_anterior(api, carga):
+    _detalhe(carga)
+
+    corpo = _get_detalhe(api).json()
+    # o mesmo código como SEOBRAS e SEIOP conta uma vez
+    assert corpo["saldos"] == {"a_pagar": 80.0, "a_comprovar": 0.0, "a_aprovar": 0.0, "aprovados": 5.0}
+    assert corpo["mes_anterior"]["a_pagar"] == 70.0
+
+
+def test_detalhe_mes_sem_dados(api, carga):
+    _detalhe(carga)
+
+    corpo = _get_detalhe(api, ano=2026, mes=12).json()
+    assert corpo["saldos"] is None
+    assert corpo["mes_anterior"]["a_pagar"] == 80.0
+    assert _get_detalhe(api, ano=2026).status_code == 422
+
+
+def test_detalhe_contratual_nas_duas_abas(api, carga):
+    _detalhe(carga)
+
+    corpo = _get_detalhe(api, numero="005/2019", municipio="Niterói").json()
+    assert [(b["recorte"], b["valor_total"]) for b in corpo["contratual"]] == [("31", 100.0), ("89", 120.0)]
+    assert corpo["recortes"] == ["31", "89", "342"]
+    realinhado = _get_detalhe(api).json()["contratual"]
+    assert realinhado == [{
+        "recorte": "89", "valor_total": 120.0, "repasse_estado": 100.0, "contrapartida": None,
+        "investido_estado": 50.0, "a_repassar": None, "execucao_pct": 50.0,
+    }]
+
+
+def test_detalhe_convenio_so_na_342(api, carga):
+    _detalhe(carga)
+
+    corpo = _get_detalhe(api, numero="002/2021", municipio="Resende").json()
+    assert (corpo["fase"], corpo["contratual"]) == ("historico", [])
+
+
+def test_detalhe_serie(api, carga):
+    _detalhe(carga)
+
+    serie = _get_detalhe(api).json()["serie"]
+    assert [(p["ano"], p["mes"], p["a_pagar"]) for p in serie] == [
+        (2026, 9, None), (2026, 10, 70.0), (2026, 11, 80.0),
+    ]
+    sem_codigo = _get_detalhe(api, numero="005/2019", municipio="Niterói").json()
+    assert len(sem_codigo["serie"]) == 3
+    assert {p["a_pagar"] for p in sem_codigo["serie"]} == {None}
+    assert set(sem_codigo["saldos"].values()) == {None}
+
+
+def test_detalhe_ignora_recorte_e_filtro(api, carga):
+    _detalhe(carga)
+
+    base = _get_detalhe(api).json()
+    assert _get_detalhe(api, recorte="31").json() == base
+    r = api.get("/painel/convenio", params=[
+        ("numero", "143/2014"), ("municipio", "Resende"), ("municipio", "Paraty"),
+    ])
+    # `municipio` não é filtro repetível aqui: vale um valor só (o último), sem somar convênios
+    assert r.status_code == 200
+    assert r.json() == base
+
+
 # --- só leitura ---
 
 

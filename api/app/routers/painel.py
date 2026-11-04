@@ -13,6 +13,7 @@ from sqlalchemy import Connection, Engine
 from app.etl.siafe import hoje_sp
 from app.painel import consultas as Q
 from app.painel.municipios import normalizar_municipios
+from app.planilha.transformacao import numero_convenio as normalizar_numero
 from app.routers.etl import get_engine
 
 router = APIRouter(prefix="/painel", tags=["painel"])
@@ -136,6 +137,36 @@ class Convenios(BaseModel):
     itens: list[LinhaConvenio]
 
 
+class ConvenioCompartilhado(BaseModel):
+    numero_convenio: str
+    municipio: str
+    codigo: str
+
+
+class ContratualRecorte(Contratual):
+    recorte: Literal["31", "89"]
+
+
+class DetalheConvenio(BaseModel):
+    numero_convenio: str
+    municipio: str
+    fase: str
+    status: str | None
+    situacao_vigencia: str | None
+    vigencia_final: date | None
+    objeto: str | None
+    recortes: list[Recorte]
+    codigo_seobras: str | None
+    codigo_seiop: str | None
+    codigo_compartilhado: bool
+    compartilhado_com: list[ConvenioCompartilhado]
+    referencia: Mes
+    saldos: Saldos | None
+    mes_anterior: Saldos | None
+    contratual: list[ContratualRecorte]
+    serie: list[PontoSerie]
+
+
 # --- parâmetros ---
 
 
@@ -185,9 +216,30 @@ def _get_pagina(permitidos: tuple[str, ...]):
     return dependencia
 
 
+def get_chave(
+    numero: Annotated[str, Query(description="Número do convênio, nas grafias aceitas pela carga (ex.: 143/14)")],
+    municipio: Annotated[str, Query(description="Município do convênio (sem acento e caixa também valem)")],
+) -> tuple[str, str]:
+    """Chave do convênio (número, município) normalizada como na carga da planilha."""
+    numero_normalizado, motivo = normalizar_numero(numero)
+    if numero_normalizado is None:
+        raise HTTPException(
+            status_code=422,
+            detail={"msg": "Número de convênio inválido", "numero": numero, "motivo": motivo or "numero_ausente"},
+        )
+    municipios, invalidos = normalizar_municipios([municipio])
+    if invalidos or not municipios:
+        raise HTTPException(
+            status_code=422,
+            detail={"msg": "Município não reconhecido", "municipios_invalidos": invalidos or [municipio]},
+        )
+    return numero_normalizado, municipios[0]
+
+
 FiltroDep = Annotated[Q.Filtro, Depends(get_filtro)]
 MesDep = Annotated[tuple[int, int], Depends(get_mes)]
 EngineDep = Annotated[Engine, Depends(get_engine)]
+ChaveDep = Annotated[tuple[str, str], Depends(get_chave)]
 PaginaRankingDep = Annotated[Q.Pagina, Depends(_get_pagina(Q.ORDEM_RANKING))]
 PaginaListaDep = Annotated[Q.Pagina, Depends(_get_pagina(Q.ORDEM_LISTA))]
 
@@ -283,4 +335,41 @@ def convenios(filtro: FiltroDep, referencia: MesDep, pagina: PaginaListaDep, eng
         tamanho=pagina.tamanho,
         total=resultado.total,
         itens=resultado.itens,
+    )
+
+
+@router.get(
+    "/convenio",
+    response_model=DetalheConvenio,
+    responses={404: {"description": "Nenhum convênio com essa chave"}},
+)
+def convenio(chave: ChaveDep, referencia: MesDep, engine: EngineDep):
+    """Detalhe de um convênio, identificado por número e município."""
+    numero, municipio = chave
+    ano, mes = referencia
+    with engine.connect() as conn:
+        dados = Q.convenio(conn, numero, municipio)
+        if dados is None:
+            raise HTTPException(status_code=404, detail="Nenhum convênio com essa chave")
+        compartilhado_com = Q.compartilhamentos(conn, numero, municipio)
+
+        def saldos_do_mes(a: int, m: int) -> Saldos | None:
+            if not Q.mes_tem_dados(conn, a, m):
+                return None
+            return Saldos(**Q.saldos_convenio(conn, numero, municipio, a, m))
+
+        saldos = saldos_do_mes(ano, mes)
+        anterior = saldos_do_mes(*Q.mes_anterior(ano, mes))
+        contratual = Q.contratual_convenio(conn, numero, municipio)
+        serie = Q.serie_convenio(conn, numero, municipio)
+
+    return DetalheConvenio(
+        **dados,
+        codigo_compartilhado=bool(compartilhado_com),
+        compartilhado_com=compartilhado_com,
+        referencia=Mes(ano=ano, mes=mes),
+        saldos=saldos,
+        mes_anterior=anterior,
+        contratual=contratual,
+        serie=serie,
     )
