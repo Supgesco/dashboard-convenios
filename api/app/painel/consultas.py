@@ -17,6 +17,68 @@ from sqlalchemy import Connection, text
 SALDOS = ("a_pagar", "a_comprovar", "a_aprovar", "aprovados")
 CONTRATUAIS = ("valor_total", "repasse_estado", "contrapartida", "investido_estado", "a_repassar")
 
+# Campos aceitos em `ordem` (com `-` na frente para decrescente). O ORDER BY é montado só a
+# partir destes nomes, que são colunas da consulta externa; o texto recebido nunca entra no SQL.
+ORDEM_RANKING = ("municipio", "convenios", *SALDOS, *CONTRATUAIS, "execucao_pct")
+ORDEM_LISTA = ("numero_convenio", "municipio", "status", "fase", *SALDOS, *CONTRATUAIS, "execucao_pct")
+
+
+@dataclass(frozen=True)
+class Pagina:
+    pagina: int = 1
+    tamanho: int = 20
+    ordem: str | None = None  # "campo" ou "-campo"; None: ordem padrão
+
+
+@dataclass(frozen=True)
+class Paginado:
+    itens: list[dict]
+    total: int
+
+
+def campo_de_ordem(ordem: str | None, permitidos: tuple[str, ...]) -> tuple[str, bool] | None:
+    """(campo, decrescente) se `ordem` é válida; None se é inválida. `ordem` vazia vira o padrão."""
+    if not ordem:
+        return ("", False)
+    decrescente = ordem.startswith("-")
+    campo = ordem[1:] if decrescente else ordem
+    return (campo, decrescente) if campo in permitidos else None
+
+
+def _paginar(
+    conn: Connection,
+    base: str,
+    params: dict,
+    pagina: Pagina,
+    permitidos: tuple[str, ...],
+    desempate: tuple[str, ...],
+) -> Paginado:
+    """Ordena o conjunto inteiro, corta a página e conta o total na mesma consulta."""
+    escolha = campo_de_ordem(pagina.ordem, permitidos)
+    if escolha is None:
+        raise ValueError(f"ordem inválida: {pagina.ordem!r}")
+    campo, decrescente = escolha
+    ordem = [f"b.{campo} {'DESC' if decrescente else 'ASC'} NULLS LAST"] if campo else []
+    ordem += [f"b.{c}" for c in desempate]
+    sql = f"""
+SELECT b.*, count(*) OVER () AS _total
+FROM ({base}) b
+ORDER BY {", ".join(ordem)}
+LIMIT :_tamanho OFFSET :_offset
+"""
+    linhas = _todas(
+        conn,
+        sql,
+        {**params, "_tamanho": pagina.tamanho, "_offset": (pagina.pagina - 1) * pagina.tamanho},
+    )
+    if linhas:
+        total = linhas[0]["_total"]
+    else:  # página além do fim: a janela não tem linha para trazer o total
+        total = conn.scalar(text(f"SELECT count(*) FROM ({base}) b"), params)
+    for linha in linhas:
+        del linha["_total"]
+    return Paginado(itens=linhas, total=total)
+
 
 @dataclass(frozen=True)
 class Filtro:
@@ -153,8 +215,12 @@ ORDER BY m.ano, m.mes
     return _todas(conn, sql, filtro.params())
 
 
-def ranking_municipios(conn: Connection, filtro: Filtro, ano: int, mes: int) -> list[dict]:
+def ranking_municipios(
+    conn: Connection, filtro: Filtro, ano: int, mes: int, pagina: Pagina = Pagina()
+) -> Paginado:
     """Uma linha por município: convênios, saldos (códigos distintos no município) e contratuais.
+
+    Paginado e ordenado por `pagina` (campos em ORDEM_RANKING), com desempate por município.
 
     `codigo_compartilhado` indica que algum código do município também é de convênio de outro
     município do conjunto, e por isso a soma das linhas pode passar do total do resumo.
@@ -193,13 +259,17 @@ SELECT
 FROM (SELECT municipio, count(*) AS convenios FROM conv GROUP BY municipio) m
 LEFT JOIN saldo sa USING (municipio)
 LEFT JOIN contr ct USING (municipio)
-ORDER BY m.municipio
 """
-    return _todas(conn, sql, {**filtro.params(), "ano": ano, "mes": mes})
+    params = {**filtro.params(), "ano": ano, "mes": mes}
+    return _paginar(conn, sql, params, pagina, ORDEM_RANKING, ("municipio",))
 
 
-def lista_convenios(conn: Connection, filtro: Filtro, ano: int, mes: int) -> list[dict]:
+def lista_convenios(
+    conn: Connection, filtro: Filtro, ano: int, mes: int, pagina: Pagina = Pagina()
+) -> Paginado:
     """Uma linha por convênio, com códigos, saldos do mês e valores contratuais.
+
+    Paginada e ordenada por `pagina` (campos em ORDEM_LISTA), com desempate por município e número.
 
     `codigo_compartilhado` indica que algum código do convênio também é de outro convênio
     do conjunto.
@@ -243,9 +313,9 @@ LEFT JOIN v_convenio_saldo s
 LEFT JOIN v_valor_contratual v
     ON v.recorte = r.recorte AND v.numero_convenio = r.numero_convenio AND v.municipio = r.municipio
 WHERE r.recorte = :recorte
-ORDER BY r.municipio, r.numero_convenio
 """
-    return _todas(conn, sql, {**filtro.params(), "ano": ano, "mes": mes})
+    params = {**filtro.params(), "ano": ano, "mes": mes}
+    return _paginar(conn, sql, params, pagina, ORDEM_LISTA, ("municipio", "numero_convenio"))
 
 
 @dataclass(frozen=True)

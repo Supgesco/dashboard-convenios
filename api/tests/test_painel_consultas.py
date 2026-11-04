@@ -71,7 +71,7 @@ def test_codigo_compartilhado_conta_uma_vez_no_total(carga):
 def test_codigo_compartilhado_conta_nas_duas_linhas_do_ranking(carga):
     _codigo_compartilhado(carga)
 
-    linhas = _rodar(carga, Q.ranking_municipios, Q.Filtro("31"), 2026, 10)
+    linhas = _rodar(carga, Q.ranking_municipios, Q.Filtro("31"), 2026, 10).itens
     assert [(l["municipio"], l["a_pagar"], l["codigo_compartilhado"]) for l in linhas] == [
         ("Paraty", Decimal("100.00"), True),
         ("Resende", Decimal("110.00"), True),
@@ -81,9 +81,9 @@ def test_codigo_compartilhado_conta_nas_duas_linhas_do_ranking(carga):
 def test_compartilhamento_e_avaliado_dentro_do_filtro(carga):
     _codigo_compartilhado(carga)
 
-    [linha] = _rodar(carga, Q.ranking_municipios, Q.Filtro("31", ["Paraty"]), 2026, 10)
+    [linha] = _rodar(carga, Q.ranking_municipios, Q.Filtro("31", ["Paraty"]), 2026, 10).itens
     assert linha["codigo_compartilhado"] is False
-    convenios = _rodar(carga, Q.lista_convenios, Q.Filtro("31"), 2026, 10)
+    convenios = _rodar(carga, Q.lista_convenios, Q.Filtro("31"), 2026, 10).itens
     assert [c["codigo_compartilhado"] for c in convenios] == [True, True]
 
 
@@ -153,7 +153,7 @@ def test_percentual_nulo_com_repasse_zero(carga):
     carga.planilha(A89, "A", "Paraty", total_investido_estado=Decimal("10"), repasse_inicial=Decimal("0"))
 
     assert _rodar(carga, Q.contratual, Q.Filtro("89"))["execucao_pct"] is None
-    [linha] = _rodar(carga, Q.lista_convenios, Q.Filtro("89"), 2026, 10)
+    [linha] = _rodar(carga, Q.lista_convenios, Q.Filtro("89"), 2026, 10).itens
     assert linha["execucao_pct"] is None
 
 
@@ -191,7 +191,7 @@ def test_lista_com_convenio_sem_codigo(carga):
     carga.planilha(A342, "2/2020", "Paraty", "900001")
     carga.siafe(2026, 10, "900001", a_pagar="4")
 
-    linhas = _rodar(carga, Q.lista_convenios, Q.Filtro("342"), 2026, 10)
+    linhas = _rodar(carga, Q.lista_convenios, Q.Filtro("342"), 2026, 10).itens
     assert [(l["numero_convenio"], l["a_pagar"], l["valor_total"]) for l in linhas] == [
         ("1/2020", None, None),
         ("2/2020", Decimal("4.00"), None),
@@ -215,3 +215,105 @@ def test_datas_nulas_sem_cargas_com_sucesso(db):
         datas = Q.datas_cargas(conn)
     assert datas == Q.DatasCargas(None, None, None)
 
+
+# --- paginação e ordenação ---
+
+
+def _carteira_paginavel(carga: Carga) -> None:
+    """5 convênios no 342: a_pagar 30, 10, 10, nulo (sem código) e 20.
+
+    Os dois de a_pagar 10 empatam, em municípios diferentes, para testar o desempate.
+    """
+    for numero, municipio, codigo, valor in (
+        ("1/2020", "Resende", "900001", "30"),
+        ("2/2020", "Paraty", "900002", "10"),
+        ("3/2020", "Niterói", "900003", "10"),
+        ("4/2020", "Paraty", None, None),
+        ("5/2020", "Angra dos Reis", "900005", "20"),
+    ):
+        carga.planilha(A342, numero, municipio, *([codigo] if codigo else []))
+        if codigo:
+            carga.siafe(2026, 10, codigo, a_pagar=valor)
+
+
+def _lista(carga: Carga, **pagina) -> Q.Paginado:
+    return _rodar(carga, Q.lista_convenios, Q.Filtro("342"), 2026, 10, Q.Pagina(**pagina))
+
+
+def test_ordem_padrao_por_municipio_e_numero(carga):
+    _carteira_paginavel(carga)
+
+    pagina = _lista(carga)
+    assert [(l["municipio"], l["numero_convenio"]) for l in pagina.itens] == [
+        ("Angra dos Reis", "5/2020"),
+        ("Niterói", "3/2020"),
+        ("Paraty", "2/2020"),
+        ("Paraty", "4/2020"),
+        ("Resende", "1/2020"),
+    ]
+    assert pagina.total == 5
+
+
+def test_ordem_decrescente_com_nulos_por_ultimo_e_desempate(carga):
+    _carteira_paginavel(carga)
+
+    pagina = _lista(carga, ordem="-a_pagar")
+    assert [(l["numero_convenio"], l["a_pagar"]) for l in pagina.itens] == [
+        ("1/2020", Decimal("30.00")),
+        ("5/2020", Decimal("20.00")),
+        ("3/2020", Decimal("10.00")),  # Niterói antes de Paraty no empate
+        ("2/2020", Decimal("10.00")),
+        ("4/2020", None),
+    ]
+
+
+def test_ordem_crescente_com_nulos_por_ultimo(carga):
+    _carteira_paginavel(carga)
+
+    pagina = _lista(carga, ordem="a_pagar")
+    assert [l["numero_convenio"] for l in pagina.itens] == ["3/2020", "2/2020", "5/2020", "1/2020", "4/2020"]
+
+
+def test_ultima_pagina_parcial(carga):
+    _carteira_paginavel(carga)
+
+    paginas = [_lista(carga, pagina=n, tamanho=2, ordem="-a_pagar") for n in (1, 2, 3)]
+    assert [len(p.itens) for p in paginas] == [2, 2, 1]
+    assert {p.total for p in paginas} == {5}
+    assert [l["numero_convenio"] for p in paginas for l in p.itens] == [
+        l["numero_convenio"] for l in _lista(carga, ordem="-a_pagar").itens
+    ]
+
+
+def test_pagina_alem_do_fim_mantem_total(carga):
+    _carteira_paginavel(carga)
+
+    pagina = _lista(carga, pagina=4, tamanho=2)
+    assert (pagina.itens, pagina.total) == ([], 5)
+
+
+def test_pagina_de_conjunto_vazio(carga):
+    assert _lista(carga) == Q.Paginado(itens=[], total=0)
+
+
+def test_ranking_paginado_e_ordenado(carga):
+    _carteira_paginavel(carga)
+
+    filtro = Q.Filtro("342")
+    pagina = _rodar(carga, Q.ranking_municipios, filtro, 2026, 10, Q.Pagina(tamanho=2, ordem="-convenios"))
+    assert [(l["municipio"], l["convenios"]) for l in pagina.itens] == [("Paraty", 2), ("Angra dos Reis", 1)]
+    assert pagina.total == 4
+    assert "_total" not in pagina.itens[0]
+
+
+def test_ordem_fora_da_whitelist():
+    assert Q.campo_de_ordem("-a_pagar", Q.ORDEM_LISTA) == ("a_pagar", True)
+    assert Q.campo_de_ordem(None, Q.ORDEM_LISTA) == ("", False)
+    assert Q.campo_de_ordem("numero_convenio", Q.ORDEM_RANKING) is None
+    assert Q.campo_de_ordem("senha", Q.ORDEM_LISTA) is None
+    assert Q.campo_de_ordem("a_pagar; DROP TABLE x", Q.ORDEM_LISTA) is None
+
+
+def test_ordem_invalida_nunca_chega_ao_sql(carga):
+    with pytest.raises(ValueError):
+        _lista(carga, ordem="senha")
