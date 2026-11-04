@@ -30,6 +30,9 @@ Endpoints:
 
 - `POST /etl/siafe`: inicia a carga em segundo plano. Responde `202 {"execucao_id", "status"}`, ou `409` se já houver carga em andamento.
 - `GET /etl/siafe/status`: retorna a execução mais recente (`status`: `em_andamento` | `sucesso` | `falha`), ou `404` se nenhuma carga foi feita.
+- `GET /etl/siafe/execucoes`: histórico das cargas, da mais recente para a mais antiga, com os mesmos campos do status. Paginado com `pagina` (a partir de 1, padrão 1) e `tamanho` (1 a 100, padrão 20); fora disso → 422. Envelope `{pagina, tamanho, total, itens}`; sem cargas, `itens` vazio e `total` 0.
+
+> **A API não tem autenticação.** Qualquer cliente que alcance a porta consegue disparar `POST /etl/siafe`, e cada carga faz login no SIAFE. Logins repetidos já bloquearam temporariamente o IP desta máquina. A trava de uma carga por vez (409) impede cargas simultâneas, mas não cargas seguidas. Rode a API só em rede interna, sem exposição pública, até que haja autenticação.
 
 Cada carga substitui todos os registros de `siafe_flexvision` numa única transação. Se a carga falhar, os dados anteriores continuam intactos e a falha fica registrada em `etl_execucao`.
 
