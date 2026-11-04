@@ -3,10 +3,10 @@ from collections.abc import Callable
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from sqlalchemy import Engine, select
+from sqlalchemy import Engine, func, select
 
 from app.etl import siafe as etl
 from app.models import EtlExecucao
@@ -39,6 +39,13 @@ class ExecucaoStatus(BaseModel):
     fim: datetime | None
     registros: int | None
     erro: str | None
+
+
+class Execucoes(BaseModel):
+    pagina: int
+    tamanho: int
+    total: int
+    itens: list[ExecucaoStatus]
 
 
 def _rodar(executor: Callable[[Engine, etl.Reserva], int], engine: Engine, reserva: etl.Reserva) -> None:
@@ -78,3 +85,23 @@ def status_carga_siafe(engine: Annotated[Engine, Depends(get_engine)]):
     if ultima is None:
         raise HTTPException(status_code=404, detail="Nenhuma carga SIAFE executada ainda")
     return ExecucaoStatus.model_validate(ultima, from_attributes=True)
+
+
+@router.get("/siafe/execucoes", response_model=Execucoes)
+def historico_cargas_siafe(
+    engine: Annotated[Engine, Depends(get_engine)],
+    pagina: Annotated[int, Query(ge=1, description="A partir de 1")] = 1,
+    tamanho: Annotated[int, Query(ge=1, le=100, description="Itens por página")] = 20,
+):
+    """Execuções de carga SIAFE, da mais recente para a mais antiga."""
+    with engine.connect() as conn:
+        total = conn.scalar(select(func.count()).select_from(EtlExecucao))
+        linhas = conn.execute(
+            select(EtlExecucao).order_by(EtlExecucao.id.desc()).limit(tamanho).offset((pagina - 1) * tamanho)
+        ).all()
+    return Execucoes(
+        pagina=pagina,
+        tamanho=tamanho,
+        total=total,
+        itens=[ExecucaoStatus.model_validate(l, from_attributes=True) for l in linhas],
+    )
