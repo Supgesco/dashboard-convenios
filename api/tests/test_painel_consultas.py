@@ -12,6 +12,7 @@ from sqlalchemy import Engine, insert
 
 from app.models import EtlExecucao, PlanilhaImportacao
 from app.painel import consultas as Q
+from app.painel.municipios import normalizar_municipios
 from tests.test_cruzamento import A31, A89, A342, Carga
 
 
@@ -23,6 +24,25 @@ def carga(db: Engine) -> Carga:
 def _rodar(carga: Carga, funcao, *args):
     with carga.engine.connect() as conn:
         return funcao(conn, *args)
+
+
+# --- normalização do filtro (sem banco) ---
+
+
+def test_municipio_sem_acento_e_caixa():
+    assert normalizar_municipios(["niteroi", "PARATY"]) == (["Niterói", "Paraty"], [])
+
+
+def test_municipio_por_alias():
+    assert normalizar_municipios(["COMENDADOR L. GASPARIAN"]) == (["Comendador Levy Gasparian"], [])
+
+
+def test_municipio_inexistente():
+    assert normalizar_municipios(["Paraty", "Atlantida", "Atlantida"]) == (["Paraty"], ["Atlantida"])
+
+
+def test_municipio_repetido():
+    assert normalizar_municipios(["Resende", "resende", "Resende "]) == (["Resende"], [])
 
 
 # --- saldos ---
