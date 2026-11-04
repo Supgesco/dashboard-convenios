@@ -62,6 +62,26 @@ A migration `0003` cria views (calculadas na leitura, sem etapa de carga) que li
 
 `v_cruzamento_linha` e `v_cruzamento_codigo_origem` são camadas intermediárias. Para totais gerais, some a partir das contas distintas do SIAFE: um código em mais de um convênio (`codigo_em_mais_de_um_convenio`) aparece em cada um deles.
 
+## Painel gerencial
+
+Endpoints de leitura (`GET`) da tela inicial, em `app/routers/painel.py`, com as somas em `app/painel/consultas.py`. A migration `0004` cria duas views sobre as da `0003`:
+
+| View | Conteúdo |
+|---|---|
+| `v_recorte_convenio` | convênios de cada recorte: `31` (vigentes) ⊂ `89` (primeiro repasse) ⊂ `342` (todos), com status e situação da vigência da linha da 342 |
+| `v_valor_contratual` | valores contratuais por convênio nos recortes `31` e `89`, cada um da sua aba, somando as linhas de continuação; `base` diz se vieram do grupo realinhado ou do inicial |
+
+| Endpoint | Conteúdo |
+|---|---|
+| `/painel/resumo` | convênios do recorte; 4 saldos SIAFE do mês, mês anterior e cobertura (sem filtro de município); valores contratuais (31/89) ou contagem por status e situação (342); datas das últimas cargas com sucesso |
+| `/painel/serie` | os 4 saldos de cada mês carregado |
+| `/painel/municipios` | ranking por município, com `codigo_compartilhado` |
+| `/painel/convenios` | lista de convênios com códigos, saldos do mês e valores contratuais |
+
+Parâmetros comuns: `recorte` (`31`, `89` ou `342`; padrão `31`) e `municipio` (repetível, casado sem acento/caixa contra os 92 municípios; inválido → 422). `resumo`, `municipios` e `convenios` aceitam `ano` e `mes` juntos; sem eles, o mês corrente (America/Sao_Paulo). Se o SIAFE não tem o mês, `siafe` vem `null` e `referencia.ultimo_mes_disponivel` indica o último carregado.
+
+Os saldos somam o conjunto distinto de códigos dos convênios selecionados (um código de dois convênios conta uma vez no total, mas entra em cada linha do ranking ou da lista). O percentual de execução é investido ÷ repasse do Estado sobre as somas. Valores ausentes vêm `null`, nunca zero.
+
 ## Testes
 
 ```bash
