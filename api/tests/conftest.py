@@ -14,8 +14,23 @@ from sqlalchemy import Engine, text
 
 from app.config import API_DIR
 from app.db import make_engine
+from app.planilha.layout import ABAS
 
 TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL")
+
+# Tabelas que os testes apagam. Se alguma já tiver dados, o banco não é de teste.
+TABELAS_COM_DADOS = ["siafe_flexvision", "planilha_importacao", *(aba.tabela for aba in ABAS)]
+TRUNCATE = (
+    f"TRUNCATE siafe_flexvision, etl_execucao, {', '.join(TABELAS_COM_DADOS[1:])} RESTART IDENTITY CASCADE"
+)
+
+
+def _tabela_com_dados(conn) -> str | None:
+    for tabela in TABELAS_COM_DADOS:
+        existe = conn.scalar(text("SELECT to_regclass(:t) IS NOT NULL"), {"t": tabela})
+        if existe and conn.scalar(text(f"SELECT EXISTS (SELECT 1 FROM {tabela})")):
+            return tabela
+    return None
 
 
 def _alembic_config() -> Config:
@@ -30,13 +45,11 @@ def db_engine() -> Engine:
     engine = make_engine(TEST_DATABASE_URL)
     with engine.connect() as conn:
         ja_migrado = conn.scalar(text("SELECT to_regclass('alembic_version') IS NOT NULL"))
-        tem_dados = ja_migrado and conn.scalar(
-            text("SELECT to_regclass('siafe_flexvision') IS NOT NULL AND EXISTS (SELECT 1 FROM siafe_flexvision)")
-        )
-    if tem_dados:
+        com_dados = _tabela_com_dados(conn) if ja_migrado else None
+    if com_dados:
         engine.dispose()
         pytest.exit(
-            "TEST_DATABASE_URL aponta para um banco com dados em siafe_flexvision; "
+            f"TEST_DATABASE_URL aponta para um banco com dados em {com_dados}; "
             "os testes apagam as tabelas. Use um banco vazio.",
             returncode=1,
         )
@@ -49,7 +62,7 @@ def db_engine() -> Engine:
     yield engine
 
     with engine.begin() as conn:
-        conn.execute(text("TRUNCATE siafe_flexvision, etl_execucao RESTART IDENTITY CASCADE"))
+        conn.execute(text(TRUNCATE))
     engine.dispose()
     # Só desfaz as tabelas se foram os testes que as criaram.
     if not ja_migrado:
@@ -64,5 +77,5 @@ def db_engine() -> Engine:
 def db(db_engine: Engine) -> Engine:
     """Engine de teste com as tabelas limpas antes de cada teste."""
     with db_engine.begin() as conn:
-        conn.execute(text("TRUNCATE siafe_flexvision, etl_execucao RESTART IDENTITY CASCADE"))
+        conn.execute(text(TRUNCATE))
     return db_engine

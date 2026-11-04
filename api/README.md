@@ -1,6 +1,6 @@
 # API — Dashboard Convênios
 
-Back-end em FastAPI. A primeira funcionalidade é a carga sob demanda da consulta FlexVision do SIAFE para o Postgres.
+Back-end em FastAPI, com duas cargas sob demanda para o Postgres: a consulta FlexVision do SIAFE e a planilha geral de convênios (Somando Forças).
 
 ## Configuração
 
@@ -22,6 +22,7 @@ Crie `api/.env` (já ignorado pelo git) com:
 uv sync
 uv run alembic upgrade head          # cria as tabelas
 uv run python -m app.etl.siafe       # carga completa (2023-01 até o mês atual), sobrescreve a anterior
+uv run python -m app.etl.planilha ../data/<planilha>.xlsx  # ETL da planilha, sobrescreve a anterior
 uv run fastapi dev app/main.py       # servidor de desenvolvimento
 ```
 
@@ -32,10 +33,24 @@ Endpoints:
 
 Cada carga substitui todos os registros de `siafe_flexvision` numa única transação. Se a carga falhar, os dados anteriores continuam intactos e a falha fica registrada em `etl_execucao`.
 
+## ETL da planilha
+
+Coloque o `.xlsx` em `data/` (a pasta é ignorada pelo git, e a planilha tem dados reais, que nunca devem ser versionados) e rode, a partir de `api/`:
+
+```bash
+uv run python -m app.etl.planilha "../data/<planilha>.xlsx"
+```
+
+O comando valida o layout (abas, cabeçalhos, fim dos dados), normaliza os dados (textos, categorias, municípios, nº do convênio `NNN/AAAA`, códigos SEOBRAS/SEIOP com 6 dígitos) e substitui o conteúdo das 8 tabelas `planilha_*` numa única transação. A aba `Planilha2` é ignorada.
+
+- Código de saída: `0` sucesso, `1` falha (arquivo inválido ou layout diferente do esperado: nada é alterado) e `2` outra importação em andamento.
+- Valores que não puderam ser aproveitados viram nulo e geram **avisos** (aba, célula, motivo, valor original). A CLI mostra o resumo por motivo e os primeiros 20. Todos ficam em `planilha_importacao.avisos`, junto com o nome e o SHA-256 do arquivo.
+- Nas abas em que um convênio ocupa várias linhas, use `linha_principal = true` para contar ou somar uma vez por convênio.
+
 ## Testes
 
 ```bash
 uv run pytest                        # sem TEST_DATABASE_URL, os testes de integração são pulados
 ```
 
-Os testes de integração truncam `siafe_flexvision` e `etl_execucao`. A suíte aborta se `siafe_flexvision` já tiver dados.
+Os testes de integração truncam `siafe_flexvision`, `etl_execucao`, `planilha_importacao` e as tabelas `planilha_*`. A suíte aborta se alguma delas (exceto `etl_execucao`) já tiver dados.
