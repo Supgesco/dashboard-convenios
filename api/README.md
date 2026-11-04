@@ -77,8 +77,9 @@ Endpoints de leitura (`GET`) da tela inicial, em `app/routers/painel.py`, com as
 | `/painel/serie` | os 4 saldos de cada mês carregado |
 | `/painel/municipios` | ranking por município, com `codigo_compartilhado` |
 | `/painel/convenios` | lista de convênios com códigos, saldos do mês e valores contratuais |
+| `/painel/convenio` | detalhe de um convênio: identificação, saldos do mês e do anterior, valores contratuais por aba e série mensal |
 
-Parâmetros comuns: `recorte` (`31`, `89` ou `342`; padrão `31`) e `municipio` (repetível, casado sem acento/caixa contra os 92 municípios; inválido → 422). `resumo`, `municipios` e `convenios` aceitam `ano` e `mes` juntos; sem eles, o mês corrente (America/Sao_Paulo). Se o SIAFE não tem o mês, `siafe` vem `null` e `referencia.ultimo_mes_disponivel` indica o último carregado.
+Parâmetros comuns (exceto no detalhe): `recorte` (`31`, `89` ou `342`; padrão `31`) e `municipio` (repetível, casado sem acento/caixa contra os 92 municípios; inválido → 422). `resumo`, `municipios`, `convenios` e `convenio` aceitam `ano` e `mes` juntos; sem eles, o mês corrente (America/Sao_Paulo). Se o SIAFE não tem o mês, `siafe` vem `null` e `referencia.ultimo_mes_disponivel` indica o último carregado.
 
 `municipios` e `convenios` são paginados e ordenados no servidor:
 
@@ -87,6 +88,14 @@ Parâmetros comuns: `recorte` (`31`, `89` ou `342`; padrão `31`) e `municipio` 
   - ranking: `municipio`, `convenios`, `a_pagar`, `a_comprovar`, `a_aprovar`, `aprovados`, `valor_total`, `repasse_estado`, `contrapartida`, `investido_estado`, `a_repassar`, `execucao_pct`;
   - lista: `numero_convenio`, `municipio`, `status`, `fase` e os mesmos saldos e valores contratuais.
 - Envelope: `{recorte, ano, mes, municipios, pagina, tamanho, total, itens}`, com `total` contando os itens do recorte e do filtro (não reais). A série não é paginada.
+
+`convenio` identifica o convênio por `numero` e `municipio` (ambos obrigatórios), normalizados como na carga da planilha: `numero=143/14&municipio=paraty` é o convênio `143/2014`–Paraty. Número em formato inválido, município não reconhecido ou parâmetro ausente → 422; chave sem convênio → 404. Não aceita `recorte` nem filtro de municípios. A resposta traz:
+
+- `numero_convenio`, `municipio`, `fase`, `status`, `situacao_vigencia`, `vigencia_final`, `objeto`, `codigo_seobras`, `codigo_seiop` e `recortes` (ex.: `["89", "342"]`);
+- `codigo_compartilhado` e `compartilhado_com` (`[{numero_convenio, municipio, codigo}]`, os outros convênios com código em comum);
+- `referencia` (`{ano, mes}`), `saldos` e `mes_anterior` (os 4 saldos, `null` quando o SIAFE não tem o mês);
+- `contratual`: um bloco por aba em que o convênio está (`[{recorte: "31" | "89", valor_total, ..., execucao_pct}]`), vazio para convênios só da 342;
+- `serie`: os 4 saldos do convênio em cada mês carregado, `null` nos meses sem linha das suas contas.
 
 Os saldos somam o conjunto distinto de códigos dos convênios selecionados (um código de dois convênios conta uma vez no total, mas entra em cada linha do ranking ou da lista). O percentual de execução é investido ÷ repasse do Estado sobre as somas. Valores ausentes vêm `null`, nunca zero.
 
