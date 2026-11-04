@@ -1,0 +1,120 @@
+import { screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+
+import App from './App'
+import { erro, rotasPadrao, stubApi } from './teste/api'
+import { renderizar, urlAtual } from './teste/render'
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
+
+describe('navegação', () => {
+  it('abre a tela pelo endereço e marca o item do menu', async () => {
+    stubApi(await rotasPadrao())
+    renderizar(<App />, '/municipios')
+    expect(await screen.findByRole('heading', { name: /Municípios/ })).toBeInTheDocument()
+    const menu = screen.getByRole('navigation', { name: 'Telas' })
+    expect(within(menu).getByRole('link', { name: 'Municípios' })).toHaveAttribute('aria-current', 'page')
+  })
+
+  it('endereço desconhecido mostra "não encontrado" com link para a Visão geral', async () => {
+    stubApi(await rotasPadrao())
+    renderizar(<App />, '/nao-existe')
+    expect(screen.getByRole('heading', { name: 'Página não encontrada' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ir para a Visão geral' })).toHaveAttribute('href', '/')
+  })
+
+  it('trocar de tela pelo menu mantém os filtros', async () => {
+    const api = stubApi(await rotasPadrao())
+    renderizar(<App />, '/?recorte=342&municipio=Paraty')
+    await screen.findByText(/convênios · recorte/)
+    await userEvent.click(within(screen.getByRole('navigation', { name: 'Telas' })).getByRole('link', { name: 'Convênios' }))
+    await waitFor(() => expect(api.para('/painel/convenios')).toHaveLength(1))
+    const pedido = api.para('/painel/convenios')[0]
+    expect(pedido.params.get('recorte')).toBe('342')
+    expect(pedido.params.getAll('municipio')).toEqual(['Paraty'])
+    expect(urlAtual().pathname).toBe('/convenios')
+  })
+
+  it('no detalhe, o menu não leva o município da chave como filtro', async () => {
+    stubApi(await rotasPadrao())
+    renderizar(<App />, '/convenio?numero=901%2F2020&municipio=Paraty')
+    await screen.findByRole('heading', { name: /Convênio 901\/2020/ })
+    const link = within(screen.getByRole('navigation', { name: 'Telas' })).getByRole('link', { name: 'Convênios' })
+    expect(link).toHaveAttribute('href', '/convenios')
+  })
+})
+
+describe('barra de filtros', () => {
+  it('recarregar mantém os filtros: os pedidos usam os da URL', async () => {
+    const api = stubApi(await rotasPadrao())
+    renderizar(<App />, '/?recorte=89&municipio=Paraty')
+    await screen.findByText(/convênios · recorte/)
+    const pedidos = api.para('/painel/resumo').filter((p) => p.params.get('recorte') === '89')
+    expect(pedidos[0].params.getAll('municipio')).toEqual(['Paraty'])
+    expect(screen.getByRole('button', { name: /89 · primeiro repasse/ })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByText('Paraty', { selector: 'span' })).toBeInTheDocument()
+  })
+
+  it('as opções de municípios seguem o recorte', async () => {
+    const api = stubApi(await rotasPadrao())
+    renderizar(<App />, '/?recorte=342')
+    await userEvent.click(screen.getByText(/Municípios: todos/))
+    const lista = await screen.findByRole('list', { name: 'Municípios do recorte' })
+    expect(within(lista).getByRole('checkbox', { name: 'Angra dos Reis' })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: /31 · vigentes/ }))
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole('list', { name: 'Municípios do recorte' })).getByRole('checkbox', { name: 'Niterói' }),
+      ).toBeInTheDocument(),
+    )
+    expect(screen.queryByRole('checkbox', { name: 'Angra dos Reis' })).not.toBeInTheDocument()
+    const opcoes = api.para('/painel/municipios').filter((p) => p.params.get('tamanho') === '100')
+    expect(opcoes.map((p) => p.params.get('recorte'))).toEqual(['342', '31'])
+    expect(opcoes.every((p) => !p.params.has('municipio'))).toBe(true)
+  })
+
+  it('escolher município põe o filtro na URL', async () => {
+    stubApi(await rotasPadrao())
+    renderizar(<App />, '/')
+    await userEvent.click(screen.getByText(/Municípios: todos/))
+    await userEvent.click(await screen.findByLabelText('Paraty'))
+    expect(urlAtual().searchParams.getAll('municipio')).toEqual(['Paraty'])
+    await userEvent.click(screen.getByRole('button', { name: 'Remover Paraty' }))
+    expect(urlAtual().searchParams.has('municipio')).toBe(false)
+  })
+
+  it('recorte inválido na URL mostra a mensagem e "limpar filtros", sem consultar a API', async () => {
+    const api = stubApi(await rotasPadrao())
+    renderizar(<App />, '/convenios?recorte=50')
+    expect(screen.getByText(/recorte "50" não existe/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Limpar filtros' }))
+    expect(urlAtual().search).toBe('')
+    await waitFor(() => expect(api.para('/painel/convenios')).toHaveLength(1))
+  })
+
+  it('município recusado pela API (422) mostra o motivo e "limpar filtros"', async () => {
+    const rotas = await rotasPadrao()
+    stubApi({
+      ...rotas,
+      'GET /painel/convenios': () => erro(422, { msg: 'Município não reconhecido', municipios_invalidos: ['Atlantida'] }),
+    })
+    renderizar(<App />, '/convenios?municipio=Atlantida')
+    expect(await screen.findByText('Município não reconhecido: Atlantida')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Limpar filtros' }))
+    expect(urlAtual().searchParams.has('municipio')).toBe(false)
+  })
+
+  it('mostra o mês em uso e permite voltar ao último disponível', async () => {
+    stubApi(await rotasPadrao())
+    renderizar(<App />, '/?ano=2025&mes=3')
+    expect(await screen.findByLabelText('Mês de referência')).toHaveValue('2025-03')
+    await userEvent.click(screen.getByRole('button', { name: 'usar o último disponível' }))
+    expect(urlAtual().searchParams.has('ano')).toBe(false)
+    await waitFor(() => expect(screen.getByLabelText('Mês de referência')).toHaveValue('2026-10'))
+    expect(screen.getByText('(último disponível)')).toBeInTheDocument()
+  })
+})
