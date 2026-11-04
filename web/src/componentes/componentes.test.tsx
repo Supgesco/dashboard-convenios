@@ -7,6 +7,7 @@ import { ApiErro } from '../api/cliente'
 import { serie } from '../teste/fixtures'
 import { CaixaErro } from './Estados'
 import { GraficoSerie } from './GraficoSerie'
+import { Variacao } from '../telas/comum'
 import { TabelaPaginada, proximaOrdem, type Coluna } from './TabelaPaginada'
 
 interface Item {
@@ -122,5 +123,21 @@ describe('GraficoSerie', () => {
   it('sem pontos', () => {
     render(<GraficoSerie titulo="Série" pontos={[]} />)
     expect(screen.getByText('Nenhum mês carregado.')).toBeInTheDocument()
+  })
+})
+
+describe('Variacao', () => {
+  it('sinal e seta para cima e para baixo; zero e ausente sem seta', () => {
+    const { rerender } = render(<Variacao valor={12.5} campo="a_pagar" />)
+    expect(screen.getByTestId('variacao-a_pagar')).toHaveTextContent('+12,5%')
+    expect(screen.getByTestId('seta-a_pagar')).toHaveTextContent('▲')
+    rerender(<Variacao valor={-12.5} campo="a_pagar" />)
+    expect(screen.getByTestId('variacao-a_pagar')).toHaveTextContent('−12,5%')
+    expect(screen.getByTestId('seta-a_pagar')).toHaveTextContent('▼')
+    rerender(<Variacao valor={0} campo="a_pagar" />)
+    expect(screen.queryByTestId('seta-a_pagar')).not.toBeInTheDocument()
+    rerender(<Variacao valor={null} campo="a_pagar" />)
+    expect(screen.getByTestId('variacao-a_pagar')).toHaveTextContent('—')
+    expect(screen.queryByTestId('seta-a_pagar')).not.toBeInTheDocument()
   })
 })

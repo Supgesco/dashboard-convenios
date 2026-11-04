@@ -19,7 +19,7 @@ function Status({ status }: { status: string }) {
       ? 'bg-emerald-100 text-emerald-900'
       : status === 'falha'
         ? 'bg-red-100 text-red-900'
-        : 'bg-sky-100 text-sky-900'
+        : 'bg-marca-100 text-marca-900'
   const icone = status === 'sucesso' ? '✓' : status === 'falha' ? '✕' : '⟳'
   return (
     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${estilo}`}>
@@ -105,7 +105,7 @@ function Disparo() {
         Iniciar carga SIAFE
       </button>
       {disparo.data?.tipo === 'ja_em_andamento' && (
-        <p role="status" className="mt-2 text-sm text-sky-900">
+        <p role="status" className="mt-2 text-sm text-marca-900">
           Já existe uma carga SIAFE em andamento. A tela está acompanhando essa carga.
         </p>
       )}
@@ -117,7 +117,7 @@ function Disparo() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="confirmar-titulo"
-            className="w-full max-w-md rounded-lg bg-white p-5 shadow-xl"
+            className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl"
           >
             <h2 id="confirmar-titulo" className="text-base font-semibold">
               Iniciar a carga SIAFE?
@@ -189,7 +189,7 @@ function Planilha() {
 export function TelaCargas() {
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-semibold">Cargas</h1>
+      <h1 className="titulo-tela">Cargas</h1>
       <section className="cartao space-y-4" aria-label="Carga SIAFE">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <h2 className="titulo-secao">Última carga SIAFE</h2>

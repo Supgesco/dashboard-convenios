@@ -143,7 +143,7 @@ describe('disparo', () => {
     sessionStorage.clear()
     const a = await api()
     renderizar(<App />, '/')
-    await screen.findByText(/convênios · recorte/)
+    await screen.findByLabelText('Convênios', { selector: 'div' })
     const menu = screen.getByRole('navigation', { name: 'Telas' })
     for (const tela of ['Municípios', 'Convênios', 'Cargas', 'Visão geral']) {
       await userEvent.click(within(menu).getByRole('link', { name: tela }))

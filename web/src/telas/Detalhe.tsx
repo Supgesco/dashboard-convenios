@@ -6,6 +6,7 @@ import { CaixaErro, Carregando } from '../componentes/Estados'
 import { GraficoSerie } from '../componentes/GraficoSerie'
 import { lerFiltros, useMesReferencia } from '../filtros'
 import { AUSENTE, data, mesAno, moeda } from '../formato'
+import { NOME_RECORTE, nomesRecortes } from '../recortes'
 import { BlocoContratual, CAMPOS_SALDO, CartoesSaldo, linkDetalhe } from './comum'
 
 function Campo({ rotulo, children }: { rotulo: string; children: React.ReactNode }) {
@@ -30,9 +31,9 @@ export function TelaDetalhe() {
     if (erro instanceof ApiErro && erro.status === 404) {
       return (
         <section className="cartao">
-          <h1 className="text-lg font-semibold">Convênio não encontrado</h1>
+          <h1 className="titulo-tela">Convênio não encontrado</h1>
           <p className="mt-2 text-sm text-slate-600">
-            Não há convênio {numero} em {municipio} na planilha carregada.
+            Não há convênio {numero} em {municipio}.
           </p>
           <Link to="/convenios" className="botao-link mt-3 inline-block">
             Ir para a lista de convênios
@@ -59,7 +60,7 @@ export function TelaDetalhe() {
         <Link to="/convenios" className="botao-link">
           ← Convênios
         </Link>
-        <h1 className="mt-1 text-lg font-semibold">
+        <h1 className="titulo-tela mt-1">
           Convênio {d.numero_convenio} · {d.municipio}
         </h1>
       </div>
@@ -72,14 +73,14 @@ export function TelaDetalhe() {
           <Campo rotulo="Fim da vigência">{data(d.vigencia_final)}</Campo>
           <Campo rotulo="Código SEOBRAS">{d.codigo_seobras ?? AUSENTE}</Campo>
           <Campo rotulo="Código SEIOP">{d.codigo_seiop ?? AUSENTE}</Campo>
-          <Campo rotulo="Recortes">{d.recortes.join(', ')}</Campo>
+          <Campo rotulo="Recortes">{nomesRecortes(d.recortes)}</Campo>
         </dl>
         <div className="mt-3 text-sm">
           <p className="text-xs text-slate-500">Objeto</p>
           <p>{d.objeto ?? AUSENTE}</p>
         </div>
         {d.codigo_compartilhado && (
-          <div className="mt-3 rounded-md bg-amber-50 p-3 text-sm text-amber-900">
+          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
             <p className="font-medium">Código compartilhado com outros convênios</p>
             <ul className="mt-1 list-inside list-disc">
               {d.compartilhado_com.map((c) => (
@@ -98,10 +99,10 @@ export function TelaDetalhe() {
       <section aria-label="Saldos do mês" className="space-y-2">
         <h2 className="titulo-secao">Saldos SIAFE · {mesAno(d.referencia.ano, d.referencia.mes)}</h2>
         {!d.saldos && (
-          <p className="text-sm text-slate-500">O SIAFE não tem dados de {mesAno(d.referencia.ano, d.referencia.mes)}.</p>
+          <p className="text-sm text-slate-600">O SIAFE não tem dados de {mesAno(d.referencia.ano, d.referencia.mes)}.</p>
         )}
         <CartoesSaldo saldos={d.saldos} anterior={d.mes_anterior} />
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-600">
           Mês anterior ({mesAno(anterior.ano, anterior.mes)}):{' '}
           {d.mes_anterior
             ? CAMPOS_SALDO.map(({ campo, rotulo }) => `${rotulo} ${moeda(d.mes_anterior?.[campo])}`).join(' · ')
@@ -111,12 +112,12 @@ export function TelaDetalhe() {
 
       {d.contratual.length === 0 ? (
         <p className="cartao text-sm text-slate-600">
-          Não há valores contratuais para este convênio (ele não está nas abas 31 nem 89 da planilha).
+          Não há valores contratuais para este convênio: ele não está nos recortes Vigentes nem Primeiro realinhamento.
         </p>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {d.contratual.map((c) => (
-            <BlocoContratual key={c.recorte} titulo={`Valores contratuais · aba ${c.recorte}`} valores={c} />
+            <BlocoContratual key={c.recorte} titulo={`Valores contratuais · ${NOME_RECORTE[c.recorte]}`} valores={c} />
           ))}
         </div>
       )}

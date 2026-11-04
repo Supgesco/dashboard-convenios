@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import App from '../App'
-import { erro, ok, rotasPadrao, stubApi, type Rotas } from '../teste/api'
+import { ehContagem, erro, ok, rotasPadrao, stubApi, type Rotas } from '../teste/api'
 import * as f from '../teste/fixtures'
 import { renderizar, urlAtual } from '../teste/render'
 
@@ -21,13 +21,16 @@ describe('Visão geral', () => {
   it('recorte 31 sem filtro: saldos com variação, contratual, cobertura, série e datas', async () => {
     await api()
     renderizar(<App />, '/')
-    await screen.findByText(/convênios · recorte/)
-    expect(screen.getByText('12')).toBeInTheDocument()
+    expect(await screen.findByLabelText('Convênios', { selector: 'div' })).toHaveTextContent('12')
+    expect(screen.getByLabelText('Convênios', { selector: 'div' })).toHaveTextContent('Vigentes')
     expect(cartao('A pagar')).toHaveTextContent('R$ 1.000,00')
     expect(within(cartao('A pagar')).getByTestId('variacao-a_pagar')).toHaveTextContent('+25,0%')
     // anterior nulo e anterior zero → "—"
     expect(within(cartao('A aprovar')).getByTestId('variacao-a_aprovar')).toHaveTextContent('—')
     expect(within(cartao('Aprovados')).getByTestId('variacao-aprovados')).toHaveTextContent('—')
+    // direção por sinal e seta, não só por cor; sem variação, sem seta
+    expect(within(cartao('A pagar')).getByTestId('seta-a_pagar')).toHaveTextContent('▲')
+    expect(within(cartao('Aprovados')).queryByTestId('seta-aprovados')).not.toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'Valores contratuais' })).toHaveTextContent('45,5%')
     expect(screen.getByRole('region', { name: 'Cobertura do SIAFE' })).toHaveTextContent('50,0%')
     expect(screen.queryByRole('region', { name: 'Situação dos convênios' })).not.toBeInTheDocument()
@@ -40,8 +43,8 @@ describe('Visão geral', () => {
     corpo.referencia.ultimo_mes_disponivel = { ano: 2026, mes: 10 }
     const a = await api({ 'GET /painel/resumo': () => ok(corpo) })
     renderizar(<App />, '/')
-    await screen.findByText(/convênios · recorte/)
-    const filtrados = a.para('/painel/resumo').filter((p) => p.params.get('recorte') === '31')
+    await screen.findByLabelText('Convênios', { selector: 'div' })
+    const filtrados = a.para('/painel/resumo').filter((p) => p.params.get('recorte') === '31' && !ehContagem(p))
     expect(filtrados).toHaveLength(1)
     expect(filtrados[0].params.get('ano')).toBe('2026')
     expect(filtrados[0].params.get('mes')).toBe('10')
@@ -94,7 +97,7 @@ describe('Visão geral', () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
     renderizar(<App />, '/')
     expect((await screen.findAllByRole('alert'))[0]).toHaveTextContent('Não foi possível falar com a API')
-    await userEvent.click(screen.getByRole('button', { name: /342 · todos/ }))
+    await userEvent.click(screen.getByRole('button', { name: /^Histórico inicial/ }))
     expect(urlAtual().searchParams.get('recorte')).toBe('342')
     await userEvent.click(within(screen.getByRole('navigation', { name: 'Telas' })).getByRole('link', { name: 'Cargas' }))
     expect(screen.getByRole('heading', { name: 'Cargas' })).toBeInTheDocument()
@@ -213,9 +216,9 @@ describe('Detalhe do convênio', () => {
     const id = screen.getByRole('region', { name: 'Identificação' })
     expect(id).toHaveTextContent('Obra sintética de teste')
     expect(id).toHaveTextContent('30/06/2027')
-    expect(id).toHaveTextContent('31, 89, 342')
-    expect(screen.getByRole('region', { name: 'Valores contratuais · aba 31' })).toHaveTextContent('R$ 5.000,00')
-    expect(screen.getByRole('region', { name: 'Valores contratuais · aba 89' })).toHaveTextContent('R$ 6.000,00')
+    expect(id).toHaveTextContent('Histórico inicial, Primeiro realinhamento, Vigentes')
+    expect(screen.getByRole('region', { name: 'Valores contratuais · Vigentes' })).toHaveTextContent('R$ 5.000,00')
+    expect(screen.getByRole('region', { name: 'Valores contratuais · Primeiro realinhamento' })).toHaveTextContent('R$ 6.000,00')
     expect(screen.getByRole('region', { name: 'Saldos do mês' })).toHaveTextContent('A comprovar —')
     expect(screen.getByRole('region', { name: 'Saldos SIAFE do convênio por mês' })).toBeInTheDocument()
   })
@@ -223,7 +226,7 @@ describe('Detalhe do convênio', () => {
   it('convênio só da 342: aviso de que não há valores contratuais', async () => {
     await api({ 'GET /painel/convenio': () => ok(f.detalhe({ recortes: ['342'], fase: 'historico', contratual: [] })) })
     renderizar(<App />, URL_DETALHE)
-    expect(await screen.findByText(/Não há valores contratuais para este convênio/)).toBeInTheDocument()
+    expect(await screen.findByText(/Não há valores contratuais para este convênio/)).not.toHaveTextContent(/aba/)
     expect(screen.queryByRole('region', { name: /Valores contratuais/ })).not.toBeInTheDocument()
   })
 
@@ -232,6 +235,7 @@ describe('Detalhe do convênio', () => {
     renderizar(<App />, '/convenio?numero=999%2F1999&municipio=Paraty')
     expect(await screen.findByRole('heading', { name: 'Convênio não encontrado' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Ir para a lista de convênios' })).toHaveAttribute('href', '/convenios')
+    expect(screen.getByText(/Não há convênio 999\/1999 em Paraty\./)).not.toHaveTextContent(/planilha/i)
   })
 
   it('422: mostra o motivo da API', async () => {

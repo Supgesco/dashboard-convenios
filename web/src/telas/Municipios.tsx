@@ -50,8 +50,8 @@ export function TelaMunicipios() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-semibold">
-        Municípios {d && <span className="text-sm font-normal text-slate-500">· {mesAno(d.ano, d.mes)}</span>}
+      <h1 className="titulo-tela">
+        Municípios {d && <span className="text-sm font-normal text-slate-600">· {mesAno(d.ano, d.mes)}</span>}
       </h1>
       {consulta.isError ? (
         <CaixaErro erro={consulta.error} onTentar={() => void consulta.refetch()} onLimpar={limpar} />

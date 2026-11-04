@@ -54,8 +54,8 @@ export function TelaConvenios() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-semibold">
-        Convênios {d && <span className="text-sm font-normal text-slate-500">· {mesAno(d.ano, d.mes)}</span>}
+      <h1 className="titulo-tela">
+        Convênios {d && <span className="text-sm font-normal text-slate-600">· {mesAno(d.ano, d.mes)}</span>}
       </h1>
       {consulta.isError ? (
         <CaixaErro erro={consulta.error} onTentar={() => void consulta.refetch()} onLimpar={limpar} />

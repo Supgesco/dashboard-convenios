@@ -1,28 +1,56 @@
 @import "tailwindcss";
 
+/*
+ * Paleta "branco gelo e azul". O azul (marca) é a cor da interface: ativo, links, foco e botão primário.
+ * Contraste de texto (contrast() do validador da skill de dataviz):
+ *   marca-600 #1d5fc4: 6,02 no branco · 5,61 no gelo · 5,44 no marca-50
+ *   marca-700 #184ea3: 7,90 no branco · 7,35 no gelo · 7,14 no marca-50
+ *   slate-500 #64748b: 4,76 no branco, mas 4,43 no gelo → texto pequeno direto sobre o gelo usa slate-600.
+ * Âmbar fica reservado à marca de código compartilhado e vermelho aos erros.
+ */
+@theme {
+  --color-gelo: #f4f7fb;
+  --color-marca-50: #eef4fc;
+  --color-marca-100: #d9e6f8;
+  --color-marca-200: #b5cdf1;
+  --color-marca-300: #86ace6;
+  --color-marca-400: #5389d8;
+  --color-marca-500: #2f6fcf;
+  --color-marca-600: #1d5fc4;
+  --color-marca-700: #184ea3;
+  --color-marca-800: #163f82;
+  --color-marca-900: #142f5e;
+}
+
 @layer base {
   body {
-    @apply bg-slate-100 text-slate-900 antialiased;
+    @apply bg-gelo text-slate-900 antialiased;
   }
 }
 
 @layer components {
   .cartao {
-    @apply rounded-lg border border-slate-200 bg-white p-4 shadow-sm;
+    @apply rounded-xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_2px_rgb(15_23_42/0.04)];
   }
   .titulo-secao {
-    @apply text-sm font-semibold text-slate-700;
+    @apply text-sm font-semibold text-slate-800;
+  }
+  .titulo-tela {
+    @apply text-xl font-semibold tracking-tight text-slate-900;
   }
   .botao-primario {
-    @apply rounded-md bg-sky-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply rounded-lg bg-marca-600 px-3.5 py-2 text-sm font-medium text-white shadow-sm hover:bg-marca-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-600 disabled:cursor-not-allowed disabled:opacity-50;
   }
   .botao-secundario {
-    @apply rounded-md border border-slate-300 bg-white px-3 py-1 text-sm text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 hover:border-marca-200 hover:bg-marca-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-200 disabled:hover:bg-white;
   }
   .botao-link {
-    @apply text-sm text-sky-700 underline-offset-2 hover:underline;
+    @apply text-sm font-medium text-marca-700 underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-marca-600;
   }
   .campo {
-    @apply rounded-md border border-slate-300 bg-white px-2 py-1 text-sm;
+    @apply rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm hover:border-marca-200 focus:border-marca-500 focus:outline-none focus:ring-2 focus:ring-marca-100;
+  }
+  .rotulo-campo {
+    @apply text-xs font-medium text-slate-500;
   }
 }

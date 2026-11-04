@@ -10,7 +10,7 @@ import { TelaVisaoGeral } from './telas/VisaoGeral'
 function NaoEncontrado() {
   return (
     <section className="cartao">
-      <h1 className="text-lg font-semibold">Página não encontrada</h1>
+      <h1 className="titulo-tela">Página não encontrada</h1>
       <p className="mt-2 text-sm text-slate-600">Este endereço não corresponde a nenhuma tela do painel.</p>
       <Link to="/" className="botao-link mt-3 inline-block">
         Ir para a Visão geral

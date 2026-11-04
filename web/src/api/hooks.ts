@@ -3,12 +3,14 @@ import {
   QueryClient,
   keepPreviousData,
   useMutation,
+  useQueries,
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
 import { useEffect, useRef } from 'react'
 
 import { ApiErro, apiGet, apiPost } from './cliente'
+import { RECORTES } from './tipos'
 import type {
   Convenios,
   DetalheConvenio,
@@ -75,12 +77,35 @@ export function useResumo(filtro: FiltroApi, mes: MesConsulta, { enabled = true 
   })
 }
 
+/** Resumo de um recorte inteiro, sem município e sem mês. A contagem de convênios não depende do mês. */
+function consultaResumoSemFiltro(recorte: Recorte) {
+  return {
+    queryKey: ['resumo-geral', recorte],
+    queryFn: () => apiGet<Resumo>('/painel/resumo', { recorte }),
+    staleTime: 5 * 60_000,
+  }
+}
+
 /** Resumo sem filtro, usado para o último mês disponível e a última importação da planilha. */
 export function useResumoGeral() {
-  return useQuery({
-    queryKey: ['resumo-geral'],
-    queryFn: () => apiGet<Resumo>('/painel/resumo', { recorte: '342' }),
-    staleTime: 5 * 60_000,
+  return useQuery(consultaResumoSemFiltro('342'))
+}
+
+/**
+ * Quantidade de convênios de cada recorte inteiro (sem município), vinda da API.
+ * O 342 compartilha o cache com `useResumoGeral`; só 31 e 89 geram pedidos novos.
+ * Enquanto carrega, ou se falhar, o recorte fica sem número (`undefined`).
+ */
+export function useContagemRecortes(): Partial<Record<Recorte, number>> {
+  return useQueries({
+    queries: RECORTES.map((r) => consultaResumoSemFiltro(r)),
+    combine: (resultados) =>
+      Object.fromEntries(
+        RECORTES.flatMap((r, i) => {
+          const n = resultados[i].data?.convenios
+          return typeof n === 'number' ? [[r, n]] : []
+        }),
+      ) as Partial<Record<Recorte, number>>,
   })
 }
 

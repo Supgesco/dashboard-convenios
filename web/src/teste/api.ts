@@ -36,6 +36,10 @@ export function stubApi(rotas: Rotas) {
   }
 }
 
+/** Pedido de contagem de convênios por recorte (barra de filtros): resumo sem município e sem mês. */
+export const ehContagem = (p: Pedido) =>
+  p.caminho === '/painel/resumo' && !p.params.has('municipio') && !p.params.has('ano') && !p.params.has('mes')
+
 export const ok = (corpo: unknown) => ({ status: 200, corpo })
 export const erro = (status: number, detail: unknown) => ({ status, corpo: { detail } })
 
