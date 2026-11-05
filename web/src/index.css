@@ -1,0 +1,196 @@
+@import "tailwindcss";
+
+/*
+ * Paleta "branco gelo e azul". O azul (marca) é a cor da interface: ativo, links, foco e botão primário.
+ * Contraste de texto (contrast() do validador da skill de dataviz):
+ *   marca-600 #1d5fc4: 6,02 no branco · 5,61 no gelo · 5,44 no marca-50
+ *   marca-700 #184ea3: 7,90 no branco · 7,35 no gelo · 7,14 no marca-50
+ *   slate-500 #64748b: 4,76 no branco, mas 4,43 no gelo → texto pequeno direto sobre o gelo usa slate-600.
+ * Barra lateral em marca-900/950: texto branco (13,9:1 no 900) e marca-200 (≈ 9:1) nos itens inativos.
+ * Âmbar fica reservado à marca de código compartilhado e à faixa "em desenvolvimento" do topo; vermelho, aos erros.
+ */
+@theme {
+  --color-gelo: #f4f7fb;
+  --color-marca-50: #eef4fc;
+  --color-marca-100: #d9e6f8;
+  --color-marca-200: #b5cdf1;
+  --color-marca-300: #86ace6;
+  --color-marca-400: #5389d8;
+  --color-marca-500: #2f6fcf;
+  --color-marca-600: #1d5fc4;
+  --color-marca-700: #184ea3;
+  --color-marca-800: #163f82;
+  --color-marca-900: #142f5e;
+  --color-marca-950: #0d1f40;
+
+  --shadow-cartao: 0 1px 2px rgb(15 23 42 / 0.04), 0 4px 16px -4px rgb(15 23 42 / 0.06);
+  --shadow-cartao-alto: 0 2px 4px rgb(15 23 42 / 0.05), 0 12px 28px -8px rgb(15 23 42 / 0.12);
+
+  /* Movimento: o painel anima sempre, inclusive com "reduzir movimento" no sistema (ver src/movimento.ts). */
+  --animate-surgir: surgir 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-crescer: crescer 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-brilho: brilho 1.4s ease-in-out infinite;
+  --animate-indeterminado: indeterminado 1.1s ease-in-out infinite;
+  --animate-gaveta: gaveta 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-descer: descer 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  @keyframes surgir {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+  @keyframes crescer {
+    from {
+      transform: scaleX(0);
+    }
+  }
+  @keyframes brilho {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+  @keyframes descer {
+    from {
+      transform: translateY(-100%);
+    }
+  }
+  @keyframes gaveta {
+    from {
+      transform: translateX(-100%);
+    }
+  }
+  @keyframes indeterminado {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(250%);
+    }
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-gelo text-slate-900 antialiased;
+  }
+}
+
+@layer components {
+  .cartao {
+    @apply rounded-2xl border border-slate-200/60 bg-white p-6 shadow-cartao;
+  }
+  /* Card de indicador: faixa de cor no topo, vinda de --cor (definida em linha). */
+  .cartao-kpi {
+    @apply relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white p-5 pt-6 shadow-cartao transition-[box-shadow,translate] duration-200 hover:-translate-y-0.5 hover:shadow-cartao-alto;
+  }
+  .cartao-kpi::before {
+    content: '';
+    @apply absolute inset-x-0 top-0 h-1;
+    background-color: var(--cor, var(--color-marca-600));
+  }
+  .kpi-rotulo {
+    @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
+  }
+  .kpi-valor {
+    @apply text-2xl font-semibold tracking-tight break-words tabular-nums text-slate-900 xl:text-[1.65rem];
+  }
+  .kpi-valor-grande {
+    @apply text-3xl xl:text-4xl;
+  }
+  .titulo-secao {
+    @apply text-base font-semibold tracking-tight text-slate-800;
+  }
+  .subtitulo-secao {
+    @apply mt-0.5 text-sm text-slate-500;
+  }
+  .titulo-tela {
+    @apply text-2xl font-semibold tracking-tight text-slate-900;
+  }
+  .subtitulo-tela {
+    @apply mt-1 text-sm text-slate-600;
+  }
+  .selo {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+  .botao-primario {
+    @apply rounded-lg bg-marca-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-[background-color,scale] hover:bg-marca-700 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-600 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .botao-secundario {
+    @apply rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 transition-[background-color,border-color,scale] hover:border-marca-200 active:scale-[0.98] disabled:active:scale-100 hover:bg-marca-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-200 disabled:hover:bg-white;
+  }
+  .botao-link {
+    @apply text-sm font-medium text-marca-700 underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-marca-600;
+  }
+  .campo {
+    @apply rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition-colors hover:border-marca-200 focus:border-marca-500 focus:outline-none focus:ring-2 focus:ring-marca-100;
+  }
+  .rotulo-campo {
+    @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
+  }
+
+  /* Tabelas: sem zebra, separador fino entre linhas, cabeçalho em caixa-alta pequena. */
+  .tabela {
+    @apply min-w-full border-separate border-spacing-0 text-sm;
+  }
+  .tabela-th {
+    @apply border-b border-slate-200 bg-slate-50/95 px-4 py-3 text-left text-[0.7rem] font-semibold uppercase tracking-wider whitespace-nowrap text-slate-500;
+  }
+  .tabela-td {
+    @apply border-b border-slate-100 px-4 py-3 text-slate-700;
+  }
+  /* Grade cujos filhos entram em sequência (cards). */
+  .grade-surgir > * {
+    @apply animate-surgir;
+  }
+  .grade-surgir > :nth-child(2) {
+    animation-delay: 60ms;
+  }
+  .grade-surgir > :nth-child(3) {
+    animation-delay: 120ms;
+  }
+  .grade-surgir > :nth-child(4) {
+    animation-delay: 180ms;
+  }
+  .grade-surgir > :nth-child(5) {
+    animation-delay: 240ms;
+  }
+  .grade-surgir > :nth-child(n + 6) {
+    animation-delay: 300ms;
+  }
+  /* Bloco de espera com brilho passando (skeleton). */
+  .esqueleto {
+    @apply animate-brilho rounded-2xl bg-slate-200/60;
+    background-image: linear-gradient(90deg, transparent 0%, rgb(255 255 255 / 0.65) 50%, transparent 100%);
+    background-size: 200% 100%;
+  }
+}
+
+@layer components {
+  .tabela tbody tr:last-child > td {
+    @apply border-b-0;
+  }
+}
+
+/* Mapa de municípios (Leaflet): fundo do OSM atenuado para não competir com as cores; dica em tinta slate. */
+@layer components {
+  .mapa-municipios {
+    @apply bg-slate-100 font-sans;
+    z-index: 0;
+  }
+  .mapa-municipios .mapa-fundo {
+    filter: grayscale(1) contrast(0.9) brightness(1.05);
+    opacity: 0.6;
+  }
+  .mapa-municipios path.leaflet-interactive {
+    transition:
+      fill 0.4s ease,
+      fill-opacity 0.4s ease;
+  }
+  .mapa-municipios .dica-mapa {
+    @apply rounded-lg border-0 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-800 shadow-cartao-alto;
+  }
+}
