@@ -16,13 +16,13 @@ const ROTULO_STATUS: Record<string, string> = {
 function Status({ status }: { status: string }) {
   const estilo =
     status === 'sucesso'
-      ? 'bg-emerald-100 text-emerald-900'
+      ? 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200'
       : status === 'falha'
-        ? 'bg-red-100 text-red-900'
-        : 'bg-marca-100 text-marca-900'
+        ? 'bg-red-50 text-red-800 ring-1 ring-red-200'
+        : 'bg-marca-50 text-marca-800 ring-1 ring-marca-200'
   const icone = status === 'sucesso' ? '✓' : status === 'falha' ? '✕' : '⟳'
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${estilo}`}>
+    <span className={`selo ${estilo}`}>
       <span aria-hidden="true">{icone}</span>
       {ROTULO_STATUS[status] ?? status}
     </span>
@@ -55,26 +55,26 @@ function UltimaCarga() {
         <Status status={e.status} />
         {e.status === 'em_andamento' && <span className="text-slate-500">atualizando a cada 5 segundos…</span>}
       </p>
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-2 md:grid-cols-4">
-        <div>
-          <dt className="text-xs text-slate-500">Origem</dt>
+      <dl className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="rounded-xl bg-gelo px-4 py-3">
+          <dt className="text-xs font-medium text-slate-600">Origem</dt>
           <dd>{e.origem}</dd>
         </div>
-        <div>
-          <dt className="text-xs text-slate-500">Início</dt>
+        <div className="rounded-xl bg-gelo px-4 py-3">
+          <dt className="text-xs font-medium text-slate-600">Início</dt>
           <dd>{dataHora(e.inicio)}</dd>
         </div>
-        <div>
-          <dt className="text-xs text-slate-500">Fim</dt>
+        <div className="rounded-xl bg-gelo px-4 py-3">
+          <dt className="text-xs font-medium text-slate-600">Fim</dt>
           <dd>{dataHora(e.fim)}</dd>
         </div>
-        <div>
-          <dt className="text-xs text-slate-500">Registros</dt>
-          <dd>{inteiro(e.registros)}</dd>
+        <div className="rounded-xl bg-gelo px-4 py-3">
+          <dt className="text-xs font-medium text-slate-600">Registros</dt>
+          <dd className="mt-0.5 font-medium tabular-nums">{inteiro(e.registros)}</dd>
         </div>
       </dl>
       {e.erro && (
-        <p className="rounded-md bg-red-50 p-2 text-red-900">
+        <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-900">
           <span className="font-medium">Erro: </span>
           {e.erro}
         </p>
@@ -112,12 +112,12 @@ function Disparo() {
       {disparo.isError && <CaixaErro erro={disparo.error} titulo="Não foi possível iniciar a carga" />}
 
       {confirmando && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-900/40 p-4">
+        <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="confirmar-titulo"
-            className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl"
+            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
           >
             <h2 id="confirmar-titulo" className="text-base font-semibold">
               Iniciar a carga SIAFE?
@@ -171,13 +171,13 @@ function Planilha() {
   if (!resumo.data) return <Carregando />
   const { arquivo, planilha_importada_em } = resumo.data.referencia
   return planilha_importada_em ? (
-    <dl className="grid grid-cols-2 gap-x-6 text-sm">
-      <div>
-        <dt className="text-xs text-slate-500">Arquivo</dt>
+    <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+      <div className="rounded-xl bg-gelo px-4 py-3">
+        <dt className="text-xs font-medium text-slate-600">Arquivo</dt>
         <dd>{arquivo ?? AUSENTE}</dd>
       </div>
-      <div>
-        <dt className="text-xs text-slate-500">Importada em</dt>
+      <div className="rounded-xl bg-gelo px-4 py-3">
+        <dt className="text-xs font-medium text-slate-600">Importada em</dt>
         <dd>{dataHora(planilha_importada_em)}</dd>
       </div>
     </dl>
@@ -188,8 +188,11 @@ function Planilha() {
 
 export function TelaCargas() {
   return (
-    <div className="space-y-4">
-      <h1 className="titulo-tela">Cargas</h1>
+    <div className="space-y-6">
+      <header>
+        <h1 className="titulo-tela">Cargas</h1>
+        <p className="subtitulo-tela">Última carga do SIAFE, histórico e importação da planilha.</p>
+      </header>
       <section className="cartao space-y-4" aria-label="Carga SIAFE">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <h2 className="titulo-secao">Última carga SIAFE</h2>
@@ -197,11 +200,11 @@ export function TelaCargas() {
         </div>
         <UltimaCarga />
       </section>
-      <section className="space-y-2" aria-label="Histórico de cargas">
+      <section className="space-y-3" aria-label="Histórico de cargas">
         <h2 className="titulo-secao">Histórico de cargas SIAFE</h2>
         <Historico />
       </section>
-      <section className="cartao space-y-2" aria-label="Planilha">
+      <section className="cartao space-y-4" aria-label="Planilha">
         <h2 className="titulo-secao">Planilha de convênios</h2>
         <Planilha />
         <p className="text-xs text-slate-500">A importação da planilha é feita pela linha de comando da API.</p>

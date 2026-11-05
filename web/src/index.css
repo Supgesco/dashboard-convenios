@@ -6,6 +6,7 @@
  *   marca-600 #1d5fc4: 6,02 no branco · 5,61 no gelo · 5,44 no marca-50
  *   marca-700 #184ea3: 7,90 no branco · 7,35 no gelo · 7,14 no marca-50
  *   slate-500 #64748b: 4,76 no branco, mas 4,43 no gelo → texto pequeno direto sobre o gelo usa slate-600.
+ * Barra lateral em marca-900/950: texto branco (13,9:1 no 900) e marca-200 (≈ 9:1) nos itens inativos.
  * Âmbar fica reservado à marca de código compartilhado e vermelho aos erros.
  */
 @theme {
@@ -20,6 +21,10 @@
   --color-marca-700: #184ea3;
   --color-marca-800: #163f82;
   --color-marca-900: #142f5e;
+  --color-marca-950: #0d1f40;
+
+  --shadow-cartao: 0 1px 2px rgb(15 23 42 / 0.04), 0 4px 16px -4px rgb(15 23 42 / 0.06);
+  --shadow-cartao-alto: 0 2px 4px rgb(15 23 42 / 0.05), 0 12px 28px -8px rgb(15 23 42 / 0.12);
 }
 
 @layer base {
@@ -30,27 +35,68 @@
 
 @layer components {
   .cartao {
-    @apply rounded-xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_2px_rgb(15_23_42/0.04)];
+    @apply rounded-2xl border border-slate-200/60 bg-white p-6 shadow-cartao;
+  }
+  /* Card de indicador: faixa de cor no topo, vinda de --cor (definida em linha). */
+  .cartao-kpi {
+    @apply relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white p-5 pt-6 shadow-cartao transition-shadow hover:shadow-cartao-alto;
+  }
+  .cartao-kpi::before {
+    content: '';
+    @apply absolute inset-x-0 top-0 h-1;
+    background-color: var(--cor, var(--color-marca-600));
+  }
+  .kpi-rotulo {
+    @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
+  }
+  .kpi-valor {
+    @apply text-2xl font-semibold tracking-tight break-words tabular-nums text-slate-900 xl:text-[1.65rem];
   }
   .titulo-secao {
-    @apply text-sm font-semibold text-slate-800;
+    @apply text-base font-semibold tracking-tight text-slate-800;
+  }
+  .subtitulo-secao {
+    @apply mt-0.5 text-sm text-slate-500;
   }
   .titulo-tela {
-    @apply text-xl font-semibold tracking-tight text-slate-900;
+    @apply text-2xl font-semibold tracking-tight text-slate-900;
+  }
+  .subtitulo-tela {
+    @apply mt-1 text-sm text-slate-600;
+  }
+  .selo {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
   }
   .botao-primario {
-    @apply rounded-lg bg-marca-600 px-3.5 py-2 text-sm font-medium text-white shadow-sm hover:bg-marca-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-600 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply rounded-lg bg-marca-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-marca-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-600 disabled:cursor-not-allowed disabled:opacity-50;
   }
   .botao-secundario {
-    @apply rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 hover:border-marca-200 hover:bg-marca-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-200 disabled:hover:bg-white;
+    @apply rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 transition-colors hover:border-marca-200 hover:bg-marca-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-200 disabled:hover:bg-white;
   }
   .botao-link {
     @apply text-sm font-medium text-marca-700 underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-marca-600;
   }
   .campo {
-    @apply rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm hover:border-marca-200 focus:border-marca-500 focus:outline-none focus:ring-2 focus:ring-marca-100;
+    @apply rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition-colors hover:border-marca-200 focus:border-marca-500 focus:outline-none focus:ring-2 focus:ring-marca-100;
   }
   .rotulo-campo {
-    @apply text-xs font-medium text-slate-500;
+    @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
+  }
+
+  /* Tabelas: sem zebra, separador fino entre linhas, cabeçalho em caixa-alta pequena. */
+  .tabela {
+    @apply min-w-full border-separate border-spacing-0 text-sm;
+  }
+  .tabela-th {
+    @apply border-b border-slate-200 bg-slate-50/95 px-4 py-3 text-left text-[0.7rem] font-semibold uppercase tracking-wider whitespace-nowrap text-slate-500;
+  }
+  .tabela-td {
+    @apply border-b border-slate-100 px-4 py-3 text-slate-700;
+  }
+}
+
+@layer components {
+  .tabela tbody tr:last-child > td {
+    @apply border-b-0;
   }
 }

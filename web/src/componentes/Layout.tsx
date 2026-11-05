@@ -96,10 +96,10 @@ export function Layout() {
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[15rem_1fr]">
       {/* Barra superior só em tela estreita */}
-      <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-slate-200 bg-white/95 px-4 py-2.5 backdrop-blur lg:hidden">
+      <header className="sticky top-0 z-30 flex items-center gap-3 bg-marca-900 px-4 py-2.5 text-white shadow-md lg:hidden">
         <button
           type="button"
-          className="botao-secundario inline-flex items-center gap-2"
+          className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-3 py-1.5 text-sm text-white hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           aria-expanded={aberto}
           aria-controls={ID_MENU}
           onClick={() => setAberto((a) => !a)}
@@ -109,7 +109,7 @@ export function Layout() {
           </Icone>
           Menu
         </button>
-        <span className="font-semibold text-marca-800">Painel de convênios</span>
+        <span className="font-semibold">Painel de convênios</span>
       </header>
 
       {aberto && (
@@ -118,13 +118,27 @@ export function Layout() {
 
       <aside
         id={ID_MENU}
-        className={`fixed inset-y-0 left-0 z-50 w-60 flex-col border-r border-slate-200 bg-white lg:sticky lg:top-0 lg:z-auto lg:flex lg:h-screen ${
-          aberto ? 'flex shadow-xl' : 'hidden'
+        className={`fixed inset-y-0 left-0 z-50 w-60 flex-col bg-gradient-to-b from-marca-900 to-marca-950 text-marca-100 lg:sticky lg:top-0 lg:z-auto lg:flex lg:h-screen ${
+          aberto ? 'flex shadow-2xl' : 'hidden'
         }`}
       >
-        <div className="px-5 pb-4 pt-5">
-          <p className="text-base font-semibold tracking-tight text-marca-800">Painel de convênios</p>
+        <div className="flex items-center gap-3 px-5 pb-6 pt-6">
+          <span
+            aria-hidden="true"
+            className="grid size-9 place-items-center rounded-xl bg-white/10 text-white ring-1 ring-white/15"
+          >
+            <Icone>
+              <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
+            </Icone>
+          </span>
+          <div>
+            <p className="text-sm font-semibold leading-tight tracking-tight text-white">Painel de convênios</p>
+            <p className="text-xs text-marca-200">SIAFE · Planilha geral</p>
+          </div>
         </div>
+        <p className="px-6 pb-2 text-[0.7rem] font-semibold uppercase tracking-wider text-marca-300" aria-hidden="true">
+          Navegação
+        </p>
         <nav aria-label="Telas" className="flex-1 px-3">
           <ul className="space-y-1">
             {MENU.map((item) => (
@@ -134,10 +148,10 @@ export function Layout() {
                   end={item.para === '/'}
                   onClick={() => setAberto(false)}
                   className={({ isActive }) =>
-                    `relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-marca-600 ${
+                    `relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-white ${
                       isActive
-                        ? 'bg-marca-50 font-medium text-marca-800 before:absolute before:inset-y-1.5 before:left-0 before:w-1 before:rounded-full before:bg-marca-600'
-                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                        ? 'bg-white/15 font-medium text-white before:absolute before:inset-y-2 before:left-0 before:w-1 before:rounded-full before:bg-marca-300'
+                        : 'text-marca-200 hover:bg-white/10 hover:text-white'
                     }`
                   }
                 >
@@ -150,11 +164,11 @@ export function Layout() {
         </nav>
       </aside>
 
-      <main className="min-w-0 px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl space-y-5">
+      <main className="min-w-0 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+        <div className="mx-auto max-w-7xl space-y-6">
           {comFiltros && <BarraFiltros />}
           {comFiltros && filtros.erro ? (
-            <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+            <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-900">
               <p className="font-medium">Filtro inválido na URL</p>
               <p className="mt-1">{filtros.erro}</p>
               <button type="button" className="botao-secundario mt-3" onClick={limpar}>

@@ -7,7 +7,7 @@ import { ApiErro } from '../api/cliente'
 import { serie } from '../teste/fixtures'
 import { CaixaErro } from './Estados'
 import { GraficoSerie } from './GraficoSerie'
-import { Variacao } from '../telas/comum'
+import { BarraProgresso, Variacao } from '../telas/comum'
 import { TabelaPaginada, proximaOrdem, type Coluna } from './TabelaPaginada'
 
 interface Item {
@@ -139,5 +139,25 @@ describe('Variacao', () => {
     rerender(<Variacao valor={null} campo="a_pagar" />)
     expect(screen.getByTestId('variacao-a_pagar')).toHaveTextContent('—')
     expect(screen.queryByTestId('seta-a_pagar')).not.toBeInTheDocument()
+  })
+})
+
+describe('BarraProgresso', () => {
+  it('nulo não desenha barra', () => {
+    const { container } = render(<BarraProgresso pct={null} rotulo="Execução" />)
+    expect(container).toBeEmptyDOMElement()
+  })
+
+  it('limita o valor ao intervalo 0–100', () => {
+    render(
+      <>
+        <BarraProgresso pct={120} rotulo="Acima" />
+        <BarraProgresso pct={-5} rotulo="Abaixo" />
+        <BarraProgresso pct={45.5} rotulo="Meio" />
+      </>,
+    )
+    expect(screen.getByRole('progressbar', { name: 'Acima' })).toHaveAttribute('aria-valuenow', '100')
+    expect(screen.getByRole('progressbar', { name: 'Abaixo' })).toHaveAttribute('aria-valuenow', '0')
+    expect(screen.getByRole('progressbar', { name: 'Meio' })).toHaveAttribute('aria-valuenow', '46')
   })
 })

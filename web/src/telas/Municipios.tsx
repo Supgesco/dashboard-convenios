@@ -49,10 +49,14 @@ export function TelaMunicipios() {
   const d = consulta.data
 
   return (
-    <div className="space-y-4">
-      <h1 className="titulo-tela">
-        Municípios {d && <span className="text-sm font-normal text-slate-600">· {mesAno(d.ano, d.mes)}</span>}
-      </h1>
+    <div className="space-y-6">
+      <header>
+        <h1 className="titulo-tela">Municípios</h1>
+        <p className="subtitulo-tela">
+          {d && <span className="font-medium text-slate-700">{mesAno(d.ano, d.mes)} · </span>}
+          Saldos SIAFE e valores contratuais por município. Clique em um município para ver seus convênios.
+        </p>
+      </header>
       {consulta.isError ? (
         <CaixaErro erro={consulta.error} onTentar={() => void consulta.refetch()} onLimpar={limpar} />
       ) : !d ? (

@@ -12,8 +12,8 @@ import { BlocoContratual, CAMPOS_SALDO, CartoesSaldo, linkDetalhe } from './comu
 function Campo({ rotulo, children }: { rotulo: string; children: React.ReactNode }) {
   return (
     <div>
-      <dt className="text-xs text-slate-500">{rotulo}</dt>
-      <dd className="font-medium">{children}</dd>
+      <dt className="text-xs font-medium text-slate-500">{rotulo}</dt>
+      <dd className="mt-0.5 font-medium text-slate-900">{children}</dd>
     </div>
   )
 }
@@ -55,18 +55,25 @@ export function TelaDetalhe() {
   const anterior = d.referencia.mes === 1 ? { ano: d.referencia.ano - 1, mes: 12 } : { ano: d.referencia.ano, mes: d.referencia.mes - 1 }
 
   return (
-    <div className="space-y-4">
-      <div>
+    <div className="space-y-6">
+      <header>
         <Link to="/convenios" className="botao-link">
           ← Convênios
         </Link>
-        <h1 className="titulo-tela mt-1">
+        <h1 className="titulo-tela mt-2">
           Convênio {d.numero_convenio} · {d.municipio}
         </h1>
-      </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {d.status && <span className="selo bg-marca-100 text-marca-800">{d.status}</span>}
+          {d.situacao_vigencia && (
+            <span className="selo border border-slate-200 bg-white text-slate-700">{d.situacao_vigencia}</span>
+          )}
+        </div>
+      </header>
 
       <section className="cartao" aria-label="Identificação">
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm md:grid-cols-4">
+        <h2 className="titulo-secao">Identificação</h2>
+        <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 text-sm md:grid-cols-4">
           <Campo rotulo="Fase">{d.fase}</Campo>
           <Campo rotulo="Status">{d.status ?? AUSENTE}</Campo>
           <Campo rotulo="Situação da vigência">{d.situacao_vigencia ?? AUSENTE}</Campo>
@@ -75,12 +82,12 @@ export function TelaDetalhe() {
           <Campo rotulo="Código SEIOP">{d.codigo_seiop ?? AUSENTE}</Campo>
           <Campo rotulo="Recortes">{nomesRecortes(d.recortes)}</Campo>
         </dl>
-        <div className="mt-3 text-sm">
-          <p className="text-xs text-slate-500">Objeto</p>
-          <p>{d.objeto ?? AUSENTE}</p>
+        <div className="mt-5 rounded-xl bg-gelo px-4 py-3.5 text-sm">
+          <p className="text-xs font-medium text-slate-600">Objeto</p>
+          <p className="mt-1 leading-relaxed text-slate-800">{d.objeto ?? AUSENTE}</p>
         </div>
         {d.codigo_compartilhado && (
-          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
             <p className="font-medium">Código compartilhado com outros convênios</p>
             <ul className="mt-1 list-inside list-disc">
               {d.compartilhado_com.map((c) => (
@@ -96,7 +103,7 @@ export function TelaDetalhe() {
         )}
       </section>
 
-      <section aria-label="Saldos do mês" className="space-y-2">
+      <section aria-label="Saldos do mês" className="space-y-3">
         <h2 className="titulo-secao">Saldos SIAFE · {mesAno(d.referencia.ano, d.referencia.mes)}</h2>
         {!d.saldos && (
           <p className="text-sm text-slate-600">O SIAFE não tem dados de {mesAno(d.referencia.ano, d.referencia.mes)}.</p>

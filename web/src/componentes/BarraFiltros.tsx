@@ -27,7 +27,7 @@ function SeletorMunicipios({ recorte, selecionados, onMudar }: {
           Municípios: {selecionados.length ? selecionados.length : 'todos'}
           <span aria-hidden="true" className="text-slate-400">▾</span>
         </summary>
-        <div className="absolute z-20 mt-1 w-72 rounded-xl border border-slate-200 bg-white p-2 shadow-lg">
+        <div className="absolute z-20 mt-2 w-72 rounded-xl border border-slate-200/80 bg-white p-2 shadow-cartao-alto">
           <label htmlFor={idBusca} className="sr-only">
             Buscar município
           </label>
@@ -79,7 +79,7 @@ export function BarraFiltros() {
   const valorMes = ref.mes ? `${ref.mes.ano}-${String(ref.mes.mes).padStart(2, '0')}` : ''
 
   return (
-    <section aria-label="Filtros" className="cartao flex flex-col gap-4 xl:flex-row xl:items-end xl:gap-6">
+    <section aria-label="Filtros" className="cartao flex flex-col gap-5 p-5 xl:flex-row xl:items-end xl:gap-8">
       <div className="min-w-0">
         <p className="rotulo-campo mb-1.5" aria-hidden="true">
           Recorte
@@ -87,7 +87,7 @@ export function BarraFiltros() {
         <div
           role="group"
           aria-label="Recorte"
-          className="grid grid-cols-1 gap-1 rounded-xl bg-slate-100 p-1 sm:grid-cols-3"
+          className="grid grid-cols-1 gap-1 rounded-xl border border-slate-200/70 bg-gelo p-1 sm:grid-cols-3"
         >
           {ORDEM_EXIBICAO.map((r) => {
             const ativo = filtros.recorte === r
@@ -100,7 +100,7 @@ export function BarraFiltros() {
                 aria-label={rotuloRecorte(r, contagem[r])}
                 onClick={() => mudar({ recorte: r })}
                 className={`rounded-lg px-4 py-2 text-left transition-colors focus-visible:outline-2 focus-visible:outline-marca-600 sm:min-w-44 ${
-                  ativo ? 'bg-white text-marca-800 shadow-sm ring-1 ring-marca-200' : 'text-slate-600 hover:bg-white/60'
+                  ativo ? 'bg-white text-marca-800 shadow-cartao ring-1 ring-marca-200' : 'text-slate-600 hover:bg-white/70 hover:text-slate-900'
                 }`}
               >
                 <span className="block whitespace-nowrap text-sm font-semibold">{NOME_RECORTE[r]}</span>

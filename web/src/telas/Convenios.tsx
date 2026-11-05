@@ -53,10 +53,14 @@ export function TelaConvenios() {
   const d = consulta.data
 
   return (
-    <div className="space-y-4">
-      <h1 className="titulo-tela">
-        Convênios {d && <span className="text-sm font-normal text-slate-600">· {mesAno(d.ano, d.mes)}</span>}
-      </h1>
+    <div className="space-y-6">
+      <header>
+        <h1 className="titulo-tela">Convênios</h1>
+        <p className="subtitulo-tela">
+          {d && <span className="font-medium text-slate-700">{mesAno(d.ano, d.mes)} · </span>}
+          Lista de convênios do recorte. Clique em uma linha para abrir o detalhe.
+        </p>
+      </header>
       {consulta.isError ? (
         <CaixaErro erro={consulta.error} onTentar={() => void consulta.refetch()} onLimpar={limpar} />
       ) : !d ? (

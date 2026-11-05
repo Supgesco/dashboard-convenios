@@ -4,9 +4,14 @@ import { ApiErro } from '../api/cliente'
 
 export function Carregando({ texto = 'Carregando…' }: { texto?: string }) {
   return (
-    <p role="status" className="animate-pulse py-6 text-sm text-slate-500">
-      {texto}
-    </p>
+    <div role="status" className="space-y-3 py-2">
+      <div aria-hidden="true" className="grid animate-pulse gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="h-24 rounded-2xl bg-slate-200/60" />
+        ))}
+      </div>
+      <p className="text-sm text-slate-500">{texto}</p>
+    </div>
   )
 }
 
@@ -22,8 +27,13 @@ export function CaixaErro({ erro, onTentar, onLimpar, titulo = 'Não foi possív
   const mensagem = erro instanceof Error ? erro.message : 'Erro inesperado.'
   const de422 = erro instanceof ApiErro && erro.status === 422
   return (
-    <div role="alert" className="my-3 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-900">
-      <p className="font-medium">{titulo}</p>
+    <div role="alert" className="my-3 rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-900">
+      <p className="flex items-center gap-2 font-semibold">
+        <span aria-hidden="true" className="grid size-5 place-items-center rounded-full bg-red-600 text-xs text-white">
+          !
+        </span>
+        {titulo}
+      </p>
       <p className="mt-1">{mensagem}</p>
       <div className="mt-3 flex gap-2">
         {onTentar && !de422 && (
@@ -43,8 +53,11 @@ export function CaixaErro({ erro, onTentar, onLimpar, titulo = 'Não foi possív
 
 export function Aviso({ children }: { children: ReactNode }) {
   return (
-    <p role="note" className="my-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-      {children}
+    <p role="note" className="flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+      <span aria-hidden="true" className="mt-px font-semibold text-amber-700">
+        ⚠
+      </span>
+      <span>{children}</span>
     </p>
   )
 }

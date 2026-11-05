@@ -38,11 +38,15 @@ export function TabelaPaginada<T>(p: Props<T>) {
   const paginas = Math.max(1, Math.ceil(p.total / p.tamanho))
   const [um, varios] = p.unidade
   return (
-    <div className={p.atualizando ? 'opacity-60 transition-opacity' : undefined}>
+    <div
+      className={`overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-cartao ${
+        p.atualizando ? 'opacity-60 transition-opacity' : ''
+      }`}
+    >
       {/* Rolagem própria nos dois eixos: é o que permite o cabeçalho fixo (sticky top-0) e a coluna fixa. */}
-      <div className="max-h-[70vh] overflow-auto rounded-xl border border-slate-200/80 bg-white">
-        <table className="min-w-full border-separate border-spacing-0 text-sm">
-          <thead className="text-left text-xs text-slate-600">
+      <div className="max-h-[70vh] overflow-auto">
+        <table className="tabela">
+          <thead>
             <tr>
               {p.colunas.map((c) => {
                 const direcao =
@@ -52,14 +56,12 @@ export function TabelaPaginada<T>(p: Props<T>) {
                     key={c.campo}
                     scope="col"
                     aria-sort={direcao}
-                    className={`sticky top-0 whitespace-nowrap border-b border-slate-200 bg-slate-50 px-3 py-2.5 font-medium ${
-                      c.numerica ? 'text-right' : ''
-                    } ${c.fixa ? 'left-0 z-20' : 'z-10'}`}
+                    className={`tabela-th sticky top-0 ${c.numerica ? 'text-right' : ''} ${c.fixa ? 'left-0 z-20' : 'z-10'}`}
                   >
                     {c.ordenavel ? (
                       <button
                         type="button"
-                        className={`inline-flex items-center gap-1 rounded hover:text-marca-800 focus-visible:outline-2 focus-visible:outline-marca-600 ${
+                        className={`inline-flex items-center gap-1 rounded uppercase tracking-wider hover:text-marca-800 focus-visible:outline-2 focus-visible:outline-marca-600 ${
                           c.numerica ? 'flex-row-reverse' : ''
                         } ${direcao ? 'text-marca-800' : ''}`}
                         onClick={() => p.onOrdem(proximaOrdem(p.ordem, c.campo))}
@@ -80,7 +82,7 @@ export function TabelaPaginada<T>(p: Props<T>) {
           <tbody>
             {p.itens.length === 0 ? (
               <tr>
-                <td colSpan={p.colunas.length} className="px-3 py-6 text-center text-slate-500">
+                <td colSpan={p.colunas.length} className="px-4 py-10 text-center text-slate-500">
                   {p.vazio ?? 'Nenhum item encontrado.'}
                 </td>
               </tr>
@@ -88,7 +90,7 @@ export function TabelaPaginada<T>(p: Props<T>) {
               p.itens.map((item) => (
                 <tr
                   key={p.chave(item)}
-                  className={`group even:bg-slate-50/60 ${
+                  className={`group transition-colors ${
                     p.onLinha
                       ? 'cursor-pointer hover:bg-marca-50 focus-visible:bg-marca-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-marca-600'
                       : ''
@@ -107,11 +109,11 @@ export function TabelaPaginada<T>(p: Props<T>) {
                   {p.colunas.map((c) => (
                     <td
                       key={c.campo}
-                      className={`whitespace-nowrap border-b border-slate-100 px-3 py-2.5 ${
+                      className={`tabela-td whitespace-nowrap ${
                         c.numerica ? 'text-right tabular-nums' : ''
                       } ${
                         c.fixa
-                          ? `sticky left-0 z-[1] bg-white group-even:bg-slate-50 font-medium text-slate-900 ${
+                          ? `sticky left-0 z-[1] bg-white font-medium text-slate-900 ${
                               p.onLinha ? 'group-hover:bg-marca-50 group-focus-visible:bg-marca-50' : ''
                             }`
                           : ''
@@ -126,8 +128,11 @@ export function TabelaPaginada<T>(p: Props<T>) {
           </tbody>
         </table>
       </div>
-      <nav aria-label="Paginação" className="mt-3 flex items-center justify-between text-sm text-slate-600">
-        <span className="tabular-nums">
+      <nav
+        aria-label="Paginação"
+        className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/70 bg-slate-50/60 px-4 py-3 text-sm text-slate-600"
+      >
+        <span className="font-medium tabular-nums text-slate-700">
           {p.total} {p.total === 1 ? um : varios}
         </span>
         <span className="flex items-center gap-2">
