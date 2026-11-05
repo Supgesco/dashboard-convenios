@@ -20,6 +20,7 @@ export const contratual = {
   investido_estado: 1820,
   a_repassar: 2180,
   execucao_pct: 45.5,
+  investido_sobre_total_pct: 36.4,
 }
 
 export function resumo(parcial: Partial<Resumo> = {}): Resumo {

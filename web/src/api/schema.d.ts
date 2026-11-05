@@ -169,6 +169,8 @@ export interface components {
             execucao_pct: number | null;
             /** Investido Estado */
             investido_estado: number | null;
+            /** Investido Sobre Total Pct */
+            investido_sobre_total_pct: number | null;
             /** Repasse Estado */
             repasse_estado: number | null;
             /** Valor Total */
@@ -184,6 +186,8 @@ export interface components {
             execucao_pct: number | null;
             /** Investido Estado */
             investido_estado: number | null;
+            /** Investido Sobre Total Pct */
+            investido_sobre_total_pct: number | null;
             /**
              * Recorte
              * @enum {string}
@@ -328,6 +332,8 @@ export interface components {
             fase: string;
             /** Investido Estado */
             investido_estado: number | null;
+            /** Investido Sobre Total Pct */
+            investido_sobre_total_pct: number | null;
             /** Municipio */
             municipio: string;
             /** Numero Convenio */
@@ -361,6 +367,8 @@ export interface components {
             execucao_pct: number | null;
             /** Investido Estado */
             investido_estado: number | null;
+            /** Investido Sobre Total Pct */
+            investido_sobre_total_pct: number | null;
             /** Municipio */
             municipio: string;
             /** Repasse Estado */
@@ -644,7 +652,7 @@ export interface operations {
                 pagina?: number;
                 /** @description Itens por página */
                 tamanho?: number;
-                /** @description Campo, com `-` para decrescente. Aceitos: numero_convenio, municipio, status, fase, a_pagar, a_comprovar, a_aprovar, aprovados, valor_total, repasse_estado, contrapartida, investido_estado, a_repassar, execucao_pct */
+                /** @description Campo, com `-` para decrescente. Aceitos: numero_convenio, municipio, status, fase, a_pagar, a_comprovar, a_aprovar, aprovados, valor_total, repasse_estado, contrapartida, investido_estado, a_repassar, execucao_pct, investido_sobre_total_pct */
                 ordem?: string | null;
             };
             header?: never;
@@ -686,7 +694,7 @@ export interface operations {
                 pagina?: number;
                 /** @description Itens por página */
                 tamanho?: number;
-                /** @description Campo, com `-` para decrescente. Aceitos: municipio, convenios, a_pagar, a_comprovar, a_aprovar, aprovados, valor_total, repasse_estado, contrapartida, investido_estado, a_repassar, execucao_pct */
+                /** @description Campo, com `-` para decrescente. Aceitos: municipio, convenios, a_pagar, a_comprovar, a_aprovar, aprovados, valor_total, repasse_estado, contrapartida, investido_estado, a_repassar, execucao_pct, investido_sobre_total_pct */
                 ordem?: string | null;
             };
             header?: never;

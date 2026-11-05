@@ -88,6 +88,17 @@
             ],
             "title": "Investido Estado"
           },
+          "investido_sobre_total_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Investido Sobre Total Pct"
+          },
           "repasse_estado": {
             "anyOf": [
               {
@@ -117,7 +128,8 @@
           "contrapartida",
           "investido_estado",
           "a_repassar",
-          "execucao_pct"
+          "execucao_pct",
+          "investido_sobre_total_pct"
         ],
         "title": "Contratual",
         "type": "object"
@@ -168,6 +180,17 @@
             ],
             "title": "Investido Estado"
           },
+          "investido_sobre_total_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Investido Sobre Total Pct"
+          },
           "recorte": {
             "enum": [
               "31",
@@ -206,6 +229,7 @@
           "investido_estado",
           "a_repassar",
           "execucao_pct",
+          "investido_sobre_total_pct",
           "recorte"
         ],
         "title": "ContratualRecorte",
@@ -705,6 +729,17 @@
             ],
             "title": "Investido Estado"
           },
+          "investido_sobre_total_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Investido Sobre Total Pct"
+          },
           "municipio": {
             "title": "Municipio",
             "type": "string"
@@ -754,6 +789,7 @@
           "investido_estado",
           "a_repassar",
           "execucao_pct",
+          "investido_sobre_total_pct",
           "a_pagar",
           "a_comprovar",
           "a_aprovar",
@@ -867,6 +903,17 @@
             ],
             "title": "Investido Estado"
           },
+          "investido_sobre_total_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Investido Sobre Total Pct"
+          },
           "municipio": {
             "title": "Municipio",
             "type": "string"
@@ -901,6 +948,7 @@
           "investido_estado",
           "a_repassar",
           "execucao_pct",
+          "investido_sobre_total_pct",
           "a_pagar",
           "a_comprovar",
           "a_aprovar",
@@ -1737,7 +1785,7 @@
             }
           },
           {
-            "description": "Campo, com `-` para decrescente. Aceitos: numero_convenio, municipio, status, fase, a_pagar, a_comprovar, a_aprovar, aprovados, valor_total, repasse_estado, contrapartida, investido_estado, a_repassar, execucao_pct",
+            "description": "Campo, com `-` para decrescente. Aceitos: numero_convenio, municipio, status, fase, a_pagar, a_comprovar, a_aprovar, aprovados, valor_total, repasse_estado, contrapartida, investido_estado, a_repassar, execucao_pct, investido_sobre_total_pct",
             "in": "query",
             "name": "ordem",
             "required": false,
@@ -1750,7 +1798,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Campo, com `-` para decrescente. Aceitos: numero_convenio, municipio, status, fase, a_pagar, a_comprovar, a_aprovar, aprovados, valor_total, repasse_estado, contrapartida, investido_estado, a_repassar, execucao_pct",
+              "description": "Campo, com `-` para decrescente. Aceitos: numero_convenio, municipio, status, fase, a_pagar, a_comprovar, a_aprovar, aprovados, valor_total, repasse_estado, contrapartida, investido_estado, a_repassar, execucao_pct, investido_sobre_total_pct",
               "title": "Ordem"
             }
           }
@@ -1889,7 +1937,7 @@
             }
           },
           {
-            "description": "Campo, com `-` para decrescente. Aceitos: municipio, convenios, a_pagar, a_comprovar, a_aprovar, aprovados, valor_total, repasse_estado, contrapartida, investido_estado, a_repassar, execucao_pct",
+            "description": "Campo, com `-` para decrescente. Aceitos: municipio, convenios, a_pagar, a_comprovar, a_aprovar, aprovados, valor_total, repasse_estado, contrapartida, investido_estado, a_repassar, execucao_pct, investido_sobre_total_pct",
             "in": "query",
             "name": "ordem",
             "required": false,
@@ -1902,7 +1950,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Campo, com `-` para decrescente. Aceitos: municipio, convenios, a_pagar, a_comprovar, a_aprovar, aprovados, valor_total, repasse_estado, contrapartida, investido_estado, a_repassar, execucao_pct",
+              "description": "Campo, com `-` para decrescente. Aceitos: municipio, convenios, a_pagar, a_comprovar, a_aprovar, aprovados, valor_total, repasse_estado, contrapartida, investido_estado, a_repassar, execucao_pct, investido_sobre_total_pct",
               "title": "Ordem"
             }
           }
