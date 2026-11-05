@@ -175,3 +175,22 @@
   }
 }
 
+/* Mapa de municípios (Leaflet): fundo do OSM atenuado para não competir com as cores; dica em tinta slate. */
+@layer components {
+  .mapa-municipios {
+    @apply bg-slate-100 font-sans;
+    z-index: 0;
+  }
+  .mapa-municipios .mapa-fundo {
+    filter: grayscale(1) contrast(0.9) brightness(1.05);
+    opacity: 0.6;
+  }
+  .mapa-municipios path.leaflet-interactive {
+    transition:
+      fill 0.4s ease,
+      fill-opacity 0.4s ease;
+  }
+  .mapa-municipios .dica-mapa {
+    @apply rounded-lg border-0 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-800 shadow-cartao-alto;
+  }
+}

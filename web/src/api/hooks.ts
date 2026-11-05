@@ -140,18 +140,31 @@ export function useMunicipios(filtro: FiltroApi, mes: MesConsulta, pagina: Pagin
   })
 }
 
-/** Municípios com convênio no recorte, para o seletor (o RJ tem 92, cabe numa página de 100). */
-export function useOpcoesMunicipios(recorte: Recorte) {
-  return useQuery({
-    queryKey: ['opcoes-municipios', recorte],
+/** Pedido único (o RJ tem 92 municípios, cabe numa página de 100) de todos os municípios do recorte. */
+function consultaMunicipiosRecorte(recorte: Recorte) {
+  return {
+    queryKey: ['municipios-recorte', recorte],
     queryFn: async () => {
       const r = await apiGet<Municipios>('/painel/municipios', { recorte, tamanho: 100, ordem: 'municipio' })
       if (r.total > r.itens.length) {
-        console.warn(`Seletor de municípios: ${r.total} municípios, só ${r.itens.length} carregados`)
+        console.warn(`Municípios do recorte: ${r.total} municípios, só ${r.itens.length} carregados`)
       }
-      return r.itens.map((i) => i.municipio)
+      return r.itens.map((i) => ({ municipio: i.municipio, convenios: i.convenios }))
     },
     staleTime: 5 * 60_000,
+  }
+}
+
+/** Convênios por município no recorte inteiro (sem mês nem filtro de município), para o mapa. */
+export function useMunicipiosRecorte(recorte: Recorte) {
+  return useQuery(consultaMunicipiosRecorte(recorte))
+}
+
+/** Municípios com convênio no recorte, para o seletor; divide o pedido com o mapa. */
+export function useOpcoesMunicipios(recorte: Recorte) {
+  return useQuery({
+    ...consultaMunicipiosRecorte(recorte),
+    select: (linhas: { municipio: string; convenios: number }[]) => linhas.map((l) => l.municipio),
   })
 }
 

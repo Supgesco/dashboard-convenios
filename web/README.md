@@ -7,7 +7,7 @@ Telas:
 | Endereço | Tela | Endpoints |
 |---|---|---|
 | `/` | Visão geral da carteira, sem filtros: totais de cadastrados (342) e vigentes (31), valores contratuais dos vigentes, rosca de status (os 5 mais frequentes + "Outros", `src/rosca.ts`; "Vigente" é estar nos 31, e quem a planilha marca como Vigente fora deles, que a API conta como "Vigência não confirmada", entra sempre em "Outros"), top 10 municípios e lista dos vigentes | `/painel/resumo`, `/painel/municipios`, `/painel/convenios` |
-| `/municipios` | Ranking de municípios | `/painel/municipios` |
+| `/municipios` | Mapa do RJ com a quantidade de convênios do recorte em cada município (clique abre Convênios filtrada) e ranking de municípios | `/painel/municipios` |
 | `/convenios` | Cards dos 4 saldos SIAFE do filtro e lista de convênios | `/painel/resumo`, `/painel/convenios` |
 | `/convenio?numero=&municipio=` | Detalhe de um convênio | `/painel/convenio` |
 | `/cargas` | Última carga, histórico e disparo | `/etl/siafe/status`, `/etl/siafe/execucoes`, `POST /etl/siafe` |
@@ -23,6 +23,8 @@ Os recortes aparecem pelo nome, do maior para o menor (cada um está contido no 
 | `recorte=342` | Histórico inicial |
 | `recorte=89` | Primeiro realinhamento |
 | `recorte=31` | Vigentes (padrão) |
+
+O mapa da tela Municípios (`src/mapa/`) usa Leaflet, carregado sob demanda só nessa tela. O fundo é o OpenStreetMap (`tile.openstreetmap.org`, exige internet no navegador), atenuado em cinza. Os contornos dos 92 municípios ficam em `src/mapa/municipios-rj.json`, gerado da malha pública do IBGE por `npm run mapa:malha` (precisa de internet; só rode para atualizar a malha). As cores vêm de até 5 faixas calculadas das quantidades do recorte, mais o cinza "Sem convênio". A quantidade depende só do recorte, e o mapa divide o pedido `tamanho=100` com o seletor de municípios. Nos testes, o mapa vira um dublê (`src/teste/MapaFalso.tsx`), porque o Leaflet não roda no jsdom.
 
 A quantidade de convênios ao lado de cada nome vem da API, e não fica no código. É o `convenios` de `GET /painel/resumo?recorte=…` sem município nem mês, e não muda com o filtro de município. O 342 reaproveita o pedido que as telas já fazem para o mês padrão. Se a contagem falhar, o seletor mostra só o nome.
 

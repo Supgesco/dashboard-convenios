@@ -6,6 +6,7 @@ import { CaixaErro, Carregando } from '../componentes/Estados'
 import { TabelaPaginada, type Coluna } from '../componentes/TabelaPaginada'
 import { buscaGlobal, useFiltros, useMesReferencia } from '../filtros'
 import { inteiro, mesAno, moeda, percentual } from '../formato'
+import { PainelMapa } from '../mapa/PainelMapa'
 import { CAMPOS_CONTRATUAL, CAMPOS_SALDO, LegendaCompartilhado, MarcaCompartilhado } from './comum'
 
 // Todos os campos ordenáveis estão na whitelist da API (consultas.ORDEM_RANKING).
@@ -57,6 +58,7 @@ export function TelaMunicipios() {
           Saldos SIAFE e valores contratuais por município. Clique em um município para ver seus convênios.
         </p>
       </header>
+      <PainelMapa recorte={filtros.recorte} municipios={filtros.municipios} busca={busca} />
       {consulta.isError ? (
         <CaixaErro erro={consulta.error} onTentar={() => void consulta.refetch()} onLimpar={limpar} />
       ) : !d ? (

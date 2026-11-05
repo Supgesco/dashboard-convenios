@@ -239,6 +239,96 @@ describe('Municípios', () => {
   })
 })
 
+describe('Mapa de municípios', () => {
+  // Recorte 31: Paraty 1, Niterói 2; recorte 342: de 1 a 40 convênios (muitas quantidades).
+  const rotasMapa = (extra: Rotas = {}) =>
+    api({
+      'GET /painel/municipios': (p) =>
+        ok(
+          p.params.get('recorte') === '342'
+            ? f.municipios(
+                ['Angra dos Reis', 'Niterói', 'Paraty', 'Maricá', 'Petrópolis', 'Resende', 'Volta Redonda'].map((m, i) =>
+                  f.linhaMunicipio(m, { convenios: [1, 3, 6, 10, 18, 25, 40][i] }),
+                ),
+              )
+            : f.municipios([f.linhaMunicipio('Paraty', { convenios: 1 }), f.linhaMunicipio('Niterói', { convenios: 2 })]),
+        ),
+      ...extra,
+    })
+  const mapa = () => screen.findByRole('list', { name: 'Mapa (dublê)' })
+  const legenda = () => within(screen.getByRole('list', { name: 'Legenda do mapa' })).getAllByRole('listitem')
+  const pedidosMapa = (a: Awaited<ReturnType<typeof api>>) =>
+    a.para('/painel/municipios').filter((p) => p.params.get('tamanho') === '100')
+
+  it('cores e legenda seguem o recorte; sem convênio fica cinza', async () => {
+    await rotasMapa()
+    renderizar(<App />, '/municipios')
+    expect(await screen.findByRole('heading', { name: 'Convênios por município · Vigentes' })).toBeInTheDocument()
+    await mapa()
+    expect(legenda().map((i) => i.textContent)).toEqual(['Sem convênio', '1', '2'])
+    const paraty = screen.getByRole('button', { name: 'Paraty · 1 convênio' })
+    const niteroi = screen.getByRole('button', { name: 'Niterói · 2 convênios' })
+    const marica = screen.getByRole('button', { name: 'Maricá · 0 convênios' })
+    expect(paraty.dataset.cor).not.toBe(niteroi.dataset.cor)
+    expect(marica.dataset.cor).toBe('#e2e8f0')
+
+    await userEvent.click(screen.getByRole('button', { name: /^Histórico inicial/ }))
+    expect(await screen.findByRole('heading', { name: 'Convênios por município · Histórico inicial' })).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Volta Redonda · 40 convênios' })).toBeInTheDocument())
+    const faixas = legenda().slice(1)
+    expect(faixas.length).toBeLessThanOrEqual(5)
+    expect(faixas[0]).toHaveTextContent(/^1/)
+    expect(faixas.at(-1)).toHaveTextContent(/40$/)
+  })
+
+  it('um único pedido por recorte, dividido com o seletor; trocar o mês não pede de novo', async () => {
+    const a = await rotasMapa()
+    renderizar(<App />, '/municipios?ano=2025&mes=3')
+    await mapa()
+    await userEvent.click(screen.getByRole('button', { name: /^Municípios/ }))
+    await screen.findByRole('list', { name: 'Municípios do recorte' })
+    await userEvent.keyboard('{Escape}')
+    await userEvent.click(screen.getByRole('button', { name: 'Voltar ao último mês' }))
+    await waitFor(() =>
+      expect(a.para('/painel/municipios').some((p) => p.params.get('tamanho') === '20' && p.params.get('ano') === '2026')).toBe(true),
+    )
+    expect(pedidosMapa(a)).toHaveLength(1)
+    expect(pedidosMapa(a)[0].params.has('ano')).toBe(false)
+  })
+
+  it('com filtro de município, os demais ficam apagados', async () => {
+    await rotasMapa()
+    renderizar(<App />, '/municipios?municipio=Paraty')
+    await mapa()
+    expect(screen.getByRole('button', { name: 'Paraty · 1 convênio' }).dataset.apagado).toBe('false')
+    expect(screen.getByRole('button', { name: 'Niterói · 2 convênios' }).dataset.apagado).toBe('true')
+  })
+
+  it('clique abre Convênios com o município, mesmo recorte e mês; sem convênio não navega', async () => {
+    await rotasMapa({
+      'GET /painel/municipios': () => ok(f.municipios([f.linhaMunicipio('Niterói', { convenios: 5 })])),
+    })
+    renderizar(<App />, '/municipios?recorte=89&ano=2026&mes=10')
+    await mapa()
+    await userEvent.click(screen.getByRole('button', { name: 'Maricá · 0 convênios' }))
+    expect(urlAtual().pathname).toBe('/municipios')
+    await userEvent.click(screen.getByRole('button', { name: 'Niterói · 5 convênios' }))
+    expect(urlAtual().pathname).toBe('/convenios')
+    expect(Object.fromEntries(urlAtual().searchParams)).toEqual({ recorte: '89', ano: '2026', mes: '10', municipio: 'Niterói' })
+  })
+
+  it('falha só no mapa: erro com "Tentar de novo", e a tabela continua', async () => {
+    await rotasMapa({
+      'GET /painel/municipios': (p) =>
+        p.params.get('tamanho') === '100' ? erro(500, 'falha') : ok(f.municipios([f.linhaMunicipio('Paraty')])),
+    })
+    renderizar(<App />, '/municipios')
+    expect(await screen.findByText('Não foi possível carregar o mapa')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Tentar de novo' })).toBeInTheDocument()
+    expect(await screen.findByRole('row', { name: 'Ver convênios de Paraty' })).toBeInTheDocument()
+  })
+})
+
 describe('Convênios', () => {
   it('cards dos 4 saldos do filtro com variação por sinal e seta', async () => {
     const a = await api()

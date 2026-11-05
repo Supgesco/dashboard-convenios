@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
-import { afterEach } from 'vitest'
+import { afterEach, vi } from 'vitest'
 
 afterEach(() => {
   cleanup()
@@ -13,3 +13,7 @@ class ResizeObserverFalso {
   disconnect() {}
 }
 globalThis.ResizeObserver ??= ResizeObserverFalso as unknown as typeof ResizeObserver
+
+
+// O Leaflet não roda no jsdom: nas telas, o mapa de municípios vira um dublê com a mesma lógica (src/teste/MapaFalso.tsx).
+vi.mock('../mapa/MapaMunicipios', () => import('./MapaFalso'))
