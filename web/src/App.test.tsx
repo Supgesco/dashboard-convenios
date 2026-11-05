@@ -29,6 +29,15 @@ describe('navegação', () => {
     expect(screen.getByRole('link', { name: 'Ir para a Visão geral' })).toHaveAttribute('href', '/')
   })
 
+  it.each(['/', '/municipios', '/convenios', '/convenio?numero=901%2F2020&municipio=Paraty', '/cargas', '/nao-existe'])(
+    'faixa de sistema em desenvolvimento no topo de %s',
+    async (endereco) => {
+      stubApi(await rotasPadrao())
+      renderizar(<App />, endereco)
+      expect(screen.getByRole('note')).toHaveTextContent('Em desenvolvimento (passível de bugs e/ou erros inesperados)')
+    },
+  )
+
   it('trocar de tela pelo menu mantém os filtros', async () => {
     const api = stubApi(await rotasPadrao())
     renderizar(<App />, '/municipios?recorte=342&municipio=Paraty')

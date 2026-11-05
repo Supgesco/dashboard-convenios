@@ -101,6 +101,39 @@ describe('Visão geral', () => {
     expect(regiao).toHaveTextContent('100convênios')
   })
 
+  it('"Vigência não confirmada" não tem fatia própria: entra em "Outros" e o próximo status sobe para o top 5', async () => {
+    const status = [
+      { valor: 'Concluído', convenios: 50 },
+      { valor: 'Vigência não confirmada', convenios: 20 },
+      { valor: 'Vigente', convenios: 10 },
+      { valor: 'Expirado', convenios: 8 },
+      { valor: 'Em execução', convenios: 6 },
+      { valor: 'Tomada de Contas', convenios: 4 },
+      { valor: 'Rescindido', convenios: 2 },
+    ]
+    await rotasCarteira({
+      'GET /painel/resumo': (p) => {
+        const recorte = (p.params.get('recorte') ?? '31') as '31' | '342'
+        const r = f.resumo({ recorte })
+        if (r.situacao) r.situacao = { ...r.situacao, status }
+        return ok(r)
+      },
+    })
+    renderizar(<App />, '/')
+    const regiao = await screen.findByRole('region', { name: 'Convênios por status' })
+    const itens = within(regiao).getAllByRole('listitem').map((i) => i.textContent)
+    expect(itens).toEqual([
+      'Concluído5050,0%',
+      'Vigente1010,0%',
+      'Expirado88,0%',
+      'Em execução66,0%',
+      'Tomada de Contas44,0%',
+      'Outros2222,0%',
+    ])
+    expect(regiao).not.toHaveTextContent('Vigência não confirmada')
+    expect(regiao).toHaveTextContent('100convênios')
+  })
+
   it('top 10 municípios pedido à API sobre os cadastrados, com a quantidade escrita', async () => {
     const a = await rotasCarteira()
     renderizar(<App />, '/')
