@@ -6,15 +6,15 @@ Telas:
 
 | Endereço | Tela | Endpoints |
 |---|---|---|
-| `/` | Visão geral | `/painel/resumo`, `/painel/serie` |
+| `/` | Visão geral da carteira, sem filtros: totais de cadastrados (342) e vigentes (31), valores contratuais dos vigentes, status, top 10 municípios e lista dos vigentes | `/painel/resumo`, `/painel/municipios`, `/painel/convenios` |
 | `/municipios` | Ranking de municípios | `/painel/municipios` |
-| `/convenios` | Lista de convênios | `/painel/convenios` |
+| `/convenios` | Cards dos 4 saldos SIAFE do filtro e lista de convênios | `/painel/resumo`, `/painel/convenios` |
 | `/convenio?numero=&municipio=` | Detalhe de um convênio | `/painel/convenio` |
 | `/cargas` | Última carga, histórico e disparo | `/etl/siafe/status`, `/etl/siafe/execucoes`, `POST /etl/siafe` |
 
-Os filtros (`recorte`, `municipio` repetível, `ano`/`mes`, `pagina`, `ordem`) ficam na URL. Sem `ano`/`mes`, as telas usam o último mês com dados do SIAFE.
+Os filtros (`recorte`, `municipio` repetível, `ano`/`mes`, `pagina`, `ordem`) ficam na URL. Sem `ano`/`mes`, as telas com filtro usam o último mês com dados do SIAFE. A Visão geral ignora recorte, município e mês (só lê `pagina` e `ordem` da lista dos vigentes), mas os mantém na URL para as outras telas.
 
-As telas ficam à direita de uma barra lateral de navegação. Em telas estreitas, a barra lateral vira uma gaveta aberta pelo botão "Menu". Visão geral, Municípios e Convênios têm o bloco de filtros no topo.
+As telas ficam à direita de uma barra lateral de navegação. Em telas estreitas, a barra lateral vira uma gaveta aberta pelo botão "Menu". Municípios e Convênios têm o bloco de filtros no topo.
 
 Os recortes aparecem pelo nome, do maior para o menor (cada um está contido no anterior), e a URL continua usando o número:
 
