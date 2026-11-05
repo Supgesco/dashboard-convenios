@@ -7,7 +7,7 @@
  *   marca-700 #184ea3: 7,90 no branco · 7,35 no gelo · 7,14 no marca-50
  *   slate-500 #64748b: 4,76 no branco, mas 4,43 no gelo → texto pequeno direto sobre o gelo usa slate-600.
  * Barra lateral em marca-900/950: texto branco (13,9:1 no 900) e marca-200 (≈ 9:1) nos itens inativos.
- * Âmbar fica reservado à marca de código compartilhado e vermelho aos erros.
+ * Âmbar fica reservado à marca de código compartilhado e à faixa "em desenvolvimento" do topo; vermelho, aos erros.
  */
 @theme {
   --color-gelo: #f4f7fb;
