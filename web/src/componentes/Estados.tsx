@@ -5,9 +5,9 @@ import { ApiErro } from '../api/cliente'
 export function Carregando({ texto = 'Carregando…' }: { texto?: string }) {
   return (
     <div role="status" className="space-y-3 py-2">
-      <div aria-hidden="true" className="grid animate-pulse gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div aria-hidden="true" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="h-24 rounded-2xl bg-slate-200/60" />
+          <div key={i} className="esqueleto h-24" style={{ animationDelay: `${i * 120}ms` }} />
         ))}
       </div>
       <p className="text-sm text-slate-500">{texto}</p>
@@ -27,7 +27,7 @@ export function CaixaErro({ erro, onTentar, onLimpar, titulo = 'Não foi possív
   const mensagem = erro instanceof Error ? erro.message : 'Erro inesperado.'
   const de422 = erro instanceof ApiErro && erro.status === 422
   return (
-    <div role="alert" className="my-3 rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-900">
+    <div role="alert" className="my-3 animate-surgir rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-900">
       <p className="flex items-center gap-2 font-semibold">
         <span aria-hidden="true" className="grid size-5 place-items-center rounded-full bg-red-600 text-xs text-white">
           !

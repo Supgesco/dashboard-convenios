@@ -1,6 +1,8 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
+
+import { inteiro, moeda } from '../formato'
 import { describe, expect, it, vi } from 'vitest'
 
 import { ApiErro } from '../api/cliente'
@@ -8,6 +10,7 @@ import { serie } from '../teste/fixtures'
 import { BarrasHorizontais } from './BarrasHorizontais'
 import { CaixaErro } from './Estados'
 import { GraficoSerie } from './GraficoSerie'
+import { NumeroAnimado } from './NumeroAnimado'
 import { BarraProgresso, Variacao } from '../telas/comum'
 import { TabelaPaginada, proximaOrdem, type Coluna } from './TabelaPaginada'
 
@@ -186,5 +189,16 @@ describe('BarrasHorizontais', () => {
     render(<BarrasHorizontais titulo="Top 10" itens={[]} vazio="Nenhum município." />)
     expect(screen.getByRole('region', { name: 'Top 10' })).toHaveTextContent('Nenhum município.')
     expect(screen.queryByRole('listitem')).not.toBeInTheDocument()
+  })
+})
+
+describe('NumeroAnimado', () => {
+  it('nos testes mostra o valor final; nulo é "—"', () => {
+    const { rerender } = render(<NumeroAnimado valor={1234} formatar={inteiro} />)
+    expect(screen.getByText('1.234')).toBeInTheDocument()
+    rerender(<NumeroAnimado valor={1500.5} formatar={moeda} />)
+    expect(screen.getByText('R$ 1.500,50')).toBeInTheDocument()
+    rerender(<NumeroAnimado valor={null} formatar={moeda} />)
+    expect(screen.getByText('—')).toBeInTheDocument()
   })
 })

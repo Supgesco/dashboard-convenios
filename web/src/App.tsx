@@ -1,3 +1,4 @@
+import { MotionConfig } from 'motion/react'
 import { Link, Route, Routes } from 'react-router'
 
 import { Layout } from './componentes/Layout'
@@ -5,6 +6,7 @@ import { TelaCargas } from './telas/Cargas'
 import { TelaConvenios } from './telas/Convenios'
 import { TelaDetalhe } from './telas/Detalhe'
 import { TelaMunicipios } from './telas/Municipios'
+import { ANIMAR } from './movimento'
 import { TelaVisaoGeral } from './telas/VisaoGeral'
 
 function NaoEncontrado() {
@@ -20,16 +22,19 @@ function NaoEncontrado() {
 }
 
 export default function App() {
+  // Anima mesmo com "reduzir movimento" no sistema (ver `movimento.ts`).
   return (
-    <Routes>
-      <Route element={<Layout />}>
-        <Route index element={<TelaVisaoGeral />} />
-        <Route path="municipios" element={<TelaMunicipios />} />
-        <Route path="convenios" element={<TelaConvenios />} />
-        <Route path="convenio" element={<TelaDetalhe />} />
-        <Route path="cargas" element={<TelaCargas />} />
-        <Route path="*" element={<NaoEncontrado />} />
-      </Route>
-    </Routes>
+    <MotionConfig reducedMotion={ANIMAR ? 'never' : 'always'}>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route index element={<TelaVisaoGeral />} />
+          <Route path="municipios" element={<TelaMunicipios />} />
+          <Route path="convenios" element={<TelaConvenios />} />
+          <Route path="convenio" element={<TelaDetalhe />} />
+          <Route path="cargas" element={<TelaCargas />} />
+          <Route path="*" element={<NaoEncontrado />} />
+        </Route>
+      </Routes>
+    </MotionConfig>
   )
 }

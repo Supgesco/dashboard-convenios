@@ -3,6 +3,7 @@ import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, X
 
 import type { PontoSerie } from '../api/tipos'
 import { AUSENTE, mesAno, moeda, moedaCurta } from '../formato'
+import { ANIMAR } from '../movimento'
 import { SERIES } from '../series'
 
 interface Props {
@@ -26,7 +27,7 @@ export function GraficoSerie({ pontos, titulo }: Props) {
       {pontos.length === 0 ? (
         <p className="py-6 text-sm text-slate-500">Nenhum mês carregado.</p>
       ) : tabela ? (
-        <div className="max-h-80 overflow-auto rounded-xl border border-slate-200/70">
+        <div className="max-h-80 animate-surgir overflow-auto rounded-xl border border-slate-200/70">
           <table className="tabela">
             <thead>
               <tr>
@@ -59,7 +60,7 @@ export function GraficoSerie({ pontos, titulo }: Props) {
           </table>
         </div>
       ) : (
-        <div className="h-80">
+        <div className="h-80 animate-surgir">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={dados} margin={{ top: 8, right: 16, bottom: 0, left: 8 }}>
               <CartesianGrid stroke="#eef2f7" vertical={false} />
@@ -111,7 +112,9 @@ export function GraficoSerie({ pontos, titulo }: Props) {
                   dot={false}
                   activeDot={{ r: 4, stroke: '#ffffff', strokeWidth: 2 }}
                   connectNulls={false}
-                  isAnimationActive={false}
+                  isAnimationActive={ANIMAR}
+                  animationDuration={700}
+                  animationEasing="ease-out"
                 />
               ))}
             </LineChart>

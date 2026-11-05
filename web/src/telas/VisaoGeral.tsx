@@ -5,6 +5,7 @@ import { TAMANHO_PAGINA, useConvenios, useRankingRecorte, useResumoRecorte } fro
 import type { LinhaConvenio } from '../api/tipos'
 import { BarrasHorizontais } from '../componentes/BarrasHorizontais'
 import { CaixaErro, Carregando } from '../componentes/Estados'
+import { NumeroAnimado } from '../componentes/NumeroAnimado'
 import { TabelaPaginada, type Coluna } from '../componentes/TabelaPaginada'
 import { useFiltros } from '../filtros'
 import { AUSENTE, dataHora, inteiro, moeda, percentual } from '../formato'
@@ -19,6 +20,39 @@ const SEM_FILTRO = { municipios: [] } as const
 
 function municipios(n: number | undefined): ReactNode {
   return n === undefined ? null : <p>em {inteiro(n)} {n === 1 ? 'município' : 'municípios'}</p>
+}
+
+/** Rodapé de card com uma fração: texto e percentual na mesma linha, barra embaixo (nulo → "—" e sem barra). */
+function Proporcao({
+  pct,
+  texto,
+  rotulo,
+  invertido,
+  children,
+}: {
+  pct: number | null | undefined
+  texto: string
+  rotulo: string
+  /** Sobre card escuro: texto e barra claros. */
+  invertido?: boolean
+  children?: ReactNode
+}) {
+  return (
+    <div className="space-y-1.5">
+      {children && <div className={`text-sm ${invertido ? 'text-white' : 'text-slate-600'}`}>{children}</div>}
+      <p className={`flex items-baseline justify-between gap-2 text-xs ${invertido ? '' : 'text-slate-500'}`}>
+        <span>{texto}</span>
+        <span className={`text-sm font-semibold tabular-nums ${invertido ? 'text-white' : 'text-marca-700'}`}>
+          {percentual(pct)}
+        </span>
+      </p>
+      <BarraProgresso
+        pct={pct}
+        rotulo={rotulo}
+        {...(invertido ? { cor: 'bg-white', trilho: 'bg-white/20' } : {})}
+      />
+    </div>
+  )
 }
 
 function CartoesGerais() {
@@ -37,31 +71,57 @@ function CartoesGerais() {
   const v = vigentes.data
   if (!c || !v) return <Carregando texto="Carregando os totais…" />
   const contratual = v.contratual
+  // Os Vigentes estão contidos nos cadastrados (31 ⊂ 342), então a fração é uma parte do todo.
+  const vigentesPct = c.convenios > 0 ? (v.convenios / c.convenios) * 100 : null
 
+  // Duas linhas proporcionais: as quantidades (meia largura cada) e os três valores em reais (um terço cada).
   return (
-    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
-      <CartaoDestaque rotulo="Cadastrados" valor={inteiro(c.convenios)} escuro>
+    <div className="grade-surgir grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-6">
+      <CartaoDestaque
+        rotulo="Cadastrados"
+        valor={<NumeroAnimado valor={c.convenios} formatar={inteiro} />}
+        escuro
+        grande
+        className="lg:col-span-3"
+      >
         <p className="text-sm text-white">convênios</p>
         {municipios(munCadastrados.data?.total)}
       </CartaoDestaque>
-      <CartaoDestaque rotulo="Vigentes" valor={inteiro(v.convenios)}>
-        <div className="text-sm text-slate-600">{municipios(munVigentes.data?.total)}</div>
+      <CartaoDestaque
+        rotulo="Vigentes"
+        valor={<NumeroAnimado valor={v.convenios} formatar={inteiro} />}
+        escuro
+        tom="verde"
+        grande
+        className="lg:col-span-3"
+      >
+        <Proporcao pct={vigentesPct} texto="dos cadastrados" rotulo="Vigentes sobre os cadastrados" invertido>
+          {municipios(munVigentes.data?.total)}
+        </Proporcao>
       </CartaoDestaque>
-      <CartaoDestaque rotulo="Valor total conveniado" valor={moeda(contratual?.valor_total)}>
+      <CartaoDestaque
+        rotulo="Valor total conveniado"
+        valor={<NumeroAnimado valor={contratual?.valor_total} formatar={moeda} />}
+        className="lg:col-span-2"
+      >
         <p className="text-xs text-slate-500">dos convênios vigentes</p>
       </CartaoDestaque>
-      <CartaoDestaque rotulo="Investido pelo Estado" valor={moeda(contratual?.investido_estado)}>
-        <div className="space-y-1.5">
-          <p className="flex items-baseline justify-between gap-2 text-xs text-slate-500">
-            <span>do valor conveniado</span>
-            <span className="text-sm font-semibold tabular-nums text-marca-700">
-              {percentual(contratual?.investido_sobre_total_pct)}
-            </span>
-          </p>
-          <BarraProgresso pct={contratual?.investido_sobre_total_pct} rotulo="Investido sobre o valor conveniado" />
-        </div>
+      <CartaoDestaque
+        rotulo="Investido pelo Estado"
+        valor={<NumeroAnimado valor={contratual?.investido_estado} formatar={moeda} />}
+        className="lg:col-span-2"
+      >
+        <Proporcao
+          pct={contratual?.investido_sobre_total_pct}
+          texto="do valor conveniado"
+          rotulo="Investido sobre o valor conveniado"
+        />
       </CartaoDestaque>
-      <CartaoDestaque rotulo="A repassar" valor={moeda(contratual?.a_repassar)}>
+      <CartaoDestaque
+        rotulo="A repassar"
+        valor={<NumeroAnimado valor={contratual?.a_repassar} formatar={moeda} />}
+        className="sm:col-span-2 lg:col-span-2"
+      >
         <p className="text-xs text-slate-500">saldo dos convênios vigentes</p>
       </CartaoDestaque>
     </div>

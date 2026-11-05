@@ -2,6 +2,7 @@
 import type { CSSProperties, ReactNode } from 'react'
 
 import type { Contratual, Saldos } from '../api/tipos'
+import { NumeroAnimado } from '../componentes/NumeroAnimado'
 import { COR_SERIE } from '../series'
 import { calcularVariacao, moeda, percentual, variacao } from '../formato'
 
@@ -56,31 +57,71 @@ export function LegendaCompartilhado() {
 
 interface CartaoDestaqueProps {
   rotulo: string
-  valor: string
+  /** Texto pronto ou nó (ex.: `NumeroAnimado`). */
+  valor: ReactNode
   /** Cor de identidade (a da série no gráfico): faixa no topo e marca; o texto não usa a cor. */
   cor?: string
   /** Versão invertida (fundo marca escuro, texto claro): para o número principal da tela. */
   escuro?: boolean
+  /** Tom da versão invertida: azul da marca (padrão) ou verde (destaque dos vigentes). */
+  tom?: 'marca' | 'verde'
+  /** Valor maior (quantidades em destaque, na linha de cima). */
+  grande?: boolean
+  /** Classes extras do card (ex.: quantas colunas ele ocupa na grade). */
+  className?: string
   children?: ReactNode
 }
 
-/** Card de indicador: faixa de cor no topo, rótulo pequeno e valor grande (exato). */
-export function CartaoDestaque({ rotulo, valor, cor, escuro, children }: CartaoDestaqueProps) {
+// Contraste do texto pequeno: marca-100 sobre marca-700 e emerald-100 sobre emerald-700 passam de 4,5:1;
+// o gradiente só escurece a partir daí.
+const TONS_ESCUROS = {
+  marca: {
+    fundo: 'from-marca-700 to-marca-900 hover:shadow-[0_16px_36px_-10px_rgb(20_47_94/0.55)]',
+    brilho: 'bg-marca-400/25',
+    suave: 'text-marca-100',
+  },
+  verde: {
+    fundo: 'from-emerald-700 to-emerald-900 hover:shadow-[0_16px_36px_-10px_rgb(6_78_59/0.55)]',
+    brilho: 'bg-emerald-300/25',
+    suave: 'text-emerald-100',
+  },
+} as const
+
+/**
+ * Card de indicador: rótulo pequeno, valor grande (exato) e rodapé encostado embaixo, para que cards
+ * lado a lado alinhem o rodapé mesmo com conteúdos de alturas diferentes.
+ */
+export function CartaoDestaque({
+  rotulo,
+  valor,
+  cor,
+  escuro,
+  tom = 'marca',
+  grande,
+  className = '',
+  children,
+}: CartaoDestaqueProps) {
   if (escuro) {
+    const t = TONS_ESCUROS[tom]
     return (
       <div
-        className="flex flex-col gap-2 rounded-2xl bg-gradient-to-br from-marca-700 to-marca-900 p-5 pt-6 text-white shadow-cartao-alto lg:row-span-2 lg:justify-center lg:p-7 2xl:row-span-1 2xl:p-5"
+        className={`relative flex flex-col gap-2 overflow-hidden rounded-2xl bg-gradient-to-br ${t.fundo} p-5 pt-6 text-white shadow-cartao-alto transition-[box-shadow,translate] duration-200 hover:-translate-y-0.5 ${className}`}
         aria-label={rotulo}
       >
-        <p className="text-xs font-semibold uppercase tracking-wider text-marca-100">{rotulo}</p>
-        <p className="text-3xl font-semibold tracking-tight tabular-nums lg:text-5xl 2xl:text-3xl">{valor}</p>
-        {children && <div className="mt-auto pt-1 text-xs text-marca-100">{children}</div>}
+        {/* Brilho decorativo no canto */}
+        <span
+          aria-hidden="true"
+          className={`pointer-events-none absolute -top-12 -right-12 size-40 rounded-full ${t.brilho} blur-2xl`}
+        />
+        <p className={`text-xs font-semibold uppercase tracking-wider ${t.suave}`}>{rotulo}</p>
+        <p className={`kpi-valor text-white ${grande ? 'kpi-valor-grande' : ''}`}>{valor}</p>
+        {children && <div className={`mt-auto pt-1 text-xs ${t.suave}`}>{children}</div>}
       </div>
     )
   }
   return (
     <div
-      className="cartao-kpi flex flex-col gap-2"
+      className={`cartao-kpi flex flex-col gap-2 ${className}`}
       aria-label={rotulo}
       style={cor ? ({ '--cor': cor } as CSSProperties) : undefined}
     >
@@ -88,7 +129,7 @@ export function CartaoDestaque({ rotulo, valor, cor, escuro, children }: CartaoD
         {cor && <span aria-hidden="true" className="size-2 rounded-full" style={{ backgroundColor: cor }} />}
         {rotulo}
       </p>
-      <p className="kpi-valor">{valor}</p>
+      <p className={`kpi-valor ${grande ? 'kpi-valor-grande' : ''}`}>{valor}</p>
       {children && <div className="mt-auto pt-1">{children}</div>}
     </div>
   )
@@ -113,7 +154,17 @@ export function Variacao({ valor, campo }: { valor: number | null; campo: string
 }
 
 /** Barra horizontal de 0 a 100% (valor fora do intervalo é limitado; nulo não desenha barra). */
-export function BarraProgresso({ pct, cor = 'bg-marca-600', rotulo }: { pct: number | null | undefined; cor?: string; rotulo: string }) {
+export function BarraProgresso({
+  pct,
+  cor = 'bg-marca-600',
+  trilho = 'bg-slate-100',
+  rotulo,
+}: {
+  pct: number | null | undefined
+  cor?: string
+  trilho?: string
+  rotulo: string
+}) {
   if (pct === null || pct === undefined || !Number.isFinite(pct)) return null
   const largura = Math.min(100, Math.max(0, pct))
   return (
@@ -123,9 +174,12 @@ export function BarraProgresso({ pct, cor = 'bg-marca-600', rotulo }: { pct: num
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={Math.round(largura)}
-      className="h-2 w-full overflow-hidden rounded-full bg-slate-100"
+      className={`h-2 w-full overflow-hidden rounded-full ${trilho}`}
     >
-      <div className={`h-full rounded-full ${cor}`} style={{ width: `${largura}%` }} />
+      <div
+        className={`h-full origin-left animate-crescer rounded-full ${cor}`}
+        style={{ width: `${largura}%` }}
+      />
     </div>
   )
 }
@@ -141,13 +195,18 @@ interface CartoesSaldoProps {
 export function CartoesSaldo({ saldos, anterior, antes }: CartoesSaldoProps) {
   return (
     <div
-      className={`grid grid-cols-1 gap-5 sm:grid-cols-2 ${antes ? 'lg:grid-cols-3 2xl:grid-cols-5' : 'xl:grid-cols-4'}`}
+      className={`grade-surgir grid grid-cols-1 gap-5 sm:grid-cols-2 ${antes ? 'lg:grid-cols-3 2xl:grid-cols-5' : 'xl:grid-cols-4'}`}
     >
       {antes}
       {CAMPOS_SALDO.map(({ campo, rotulo }) => {
         const atual = saldos?.[campo]
         return (
-          <CartaoDestaque key={campo} rotulo={rotulo} valor={moeda(atual)} cor={COR_SERIE[campo]}>
+          <CartaoDestaque
+            key={campo}
+            rotulo={rotulo}
+            valor={<NumeroAnimado valor={atual} formatar={moeda} />}
+            cor={COR_SERIE[campo]}
+          >
             <Variacao valor={calcularVariacao(atual, anterior?.[campo])} campo={campo} />
           </CartaoDestaque>
         )

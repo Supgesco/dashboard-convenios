@@ -39,10 +39,16 @@ export function TabelaPaginada<T>(p: Props<T>) {
   const [um, varios] = p.unidade
   return (
     <div
-      className={`overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-cartao ${
-        p.atualizando ? 'opacity-60 transition-opacity' : ''
+      className={`relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-cartao transition-opacity ${
+        p.atualizando ? 'opacity-60' : ''
       }`}
+      aria-busy={p.atualizando || undefined}
     >
+      {p.atualizando && (
+        <div aria-hidden="true" className="absolute inset-x-0 top-0 z-30 h-0.5 overflow-hidden bg-marca-100">
+          <div className="h-full w-2/5 animate-indeterminado rounded-full bg-marca-500" />
+        </div>
+      )}
       {/* Rolagem própria nos dois eixos: é o que permite o cabeçalho fixo (sticky top-0) e a coluna fixa. */}
       <div className="max-h-[70vh] overflow-auto">
         <table className="tabela">
@@ -87,10 +93,11 @@ export function TabelaPaginada<T>(p: Props<T>) {
                 </td>
               </tr>
             ) : (
-              p.itens.map((item) => (
+              p.itens.map((item, k) => (
                 <tr
                   key={p.chave(item)}
-                  className={`group transition-colors ${
+                  style={{ animationDelay: `${Math.min(k, 10) * 30}ms` }}
+                  className={`group animate-surgir transition-colors ${
                     p.onLinha
                       ? 'cursor-pointer hover:bg-marca-50 focus-visible:bg-marca-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-marca-600'
                       : ''
@@ -106,7 +113,7 @@ export function TabelaPaginada<T>(p: Props<T>) {
                   tabIndex={p.onLinha ? 0 : undefined}
                   aria-label={p.rotuloLinha?.(item)}
                 >
-                  {p.colunas.map((c) => (
+                  {p.colunas.map((c, ic) => (
                     <td
                       key={c.campo}
                       className={`tabela-td whitespace-nowrap ${
@@ -120,6 +127,15 @@ export function TabelaPaginada<T>(p: Props<T>) {
                       }`}
                     >
                       {c.valor(item)}
+                      {/* Linha clicável: seta no fim indica que abre o detalhe. */}
+                      {p.onLinha && ic === p.colunas.length - 1 && (
+                        <span
+                          aria-hidden="true"
+                          className="ml-2 inline-block -translate-x-1 text-marca-600 opacity-0 transition-[opacity,translate] group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100"
+                        >
+                          ›
+                        </span>
+                      )}
                     </td>
                   ))}
                 </tr>
