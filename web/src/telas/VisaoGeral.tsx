@@ -1,174 +1,201 @@
-import { useResumo, useSerie } from '../api/hooks'
-import type { Resumo } from '../api/tipos'
-import { Aviso, CaixaErro, Carregando } from '../componentes/Estados'
-import { GraficoSerie } from '../componentes/GraficoSerie'
-import { useFiltros, useMesReferencia } from '../filtros'
-import { AUSENTE, dataHora, inteiro, mesAno, moeda, percentual } from '../formato'
-import { NOME_RECORTE } from '../recortes'
-import { COR_SERIE } from '../series'
-import { BarraProgresso, BlocoContratual, CAMPOS_SALDO, CartaoDestaque, CartoesSaldo } from './comum'
+import type { ReactNode } from 'react'
+import { useNavigate } from 'react-router'
 
-function Situacao({ situacao }: { situacao: NonNullable<Resumo['situacao']> }) {
-  const lista = (titulo: string, itens: { valor: string | null; convenios: number }[]) => {
-    const maior = Math.max(0, ...itens.map((i) => i.convenios))
+import { TAMANHO_PAGINA, useConvenios, useRankingRecorte, useResumoRecorte } from '../api/hooks'
+import type { LinhaConvenio } from '../api/tipos'
+import { BarrasHorizontais } from '../componentes/BarrasHorizontais'
+import { CaixaErro, Carregando } from '../componentes/Estados'
+import { TabelaPaginada, type Coluna } from '../componentes/TabelaPaginada'
+import { useFiltros } from '../filtros'
+import { AUSENTE, dataHora, inteiro, moeda, percentual } from '../formato'
+import { BarraProgresso, CartaoDestaque, MarcaCompartilhado, linkDetalhe } from './comum'
+
+// Visão geral fixa da carteira: não usa recorte, município nem mês da URL (só `pagina`/`ordem` da lista).
+// "Cadastrados" é o recorte mais amplo (Histórico inicial, 342); os valores contratuais são dos Vigentes (31).
+const CADASTRADOS = '342'
+const VIGENTES = '31'
+const ORDEM_PADRAO_VIGENTES = '-valor_total'
+const SEM_FILTRO = { municipios: [] } as const
+
+function municipios(n: number | undefined): ReactNode {
+  return n === undefined ? null : <p>em {inteiro(n)} {n === 1 ? 'município' : 'municípios'}</p>
+}
+
+function CartoesGerais() {
+  const cadastrados = useResumoRecorte(CADASTRADOS)
+  const vigentes = useResumoRecorte(VIGENTES)
+  const munCadastrados = useRankingRecorte(CADASTRADOS, 10, '-convenios')
+  const munVigentes = useRankingRecorte(VIGENTES, 1)
+
+  const falha = cadastrados.isError ? cadastrados : vigentes.isError ? vigentes : null
+  if (falha) {
     return (
-      <div>
-        <h3 className="rotulo-campo">{titulo}</h3>
-        <ul className="mt-3 space-y-3 text-sm">
-          {itens.map((i) => (
-            <li key={i.valor ?? ''}>
-              <div className="flex justify-between gap-4">
-                <span className="text-slate-700">{i.valor ?? 'Sem informação'}</span>
-                <span className="font-semibold tabular-nums text-slate-900">{inteiro(i.convenios)}</span>
-              </div>
-              <div aria-hidden="true" className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                <div
-                  className="h-full rounded-full bg-marca-500"
-                  style={{ width: `${maior ? (i.convenios / maior) * 100 : 0}%` }}
-                />
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
+      <CaixaErro erro={falha.error} onTentar={() => void falha.refetch()} titulo="Não foi possível carregar os totais" />
     )
   }
+  const c = cadastrados.data
+  const v = vigentes.data
+  if (!c || !v) return <Carregando texto="Carregando os totais…" />
+  const contratual = v.contratual
+
   return (
-    <section className="cartao" aria-label="Situação dos convênios">
-      <h2 className="titulo-secao">Situação dos convênios</h2>
-      <div className="mt-5 grid gap-8 md:grid-cols-2">
-        {lista('Por status', situacao.status)}
-        {lista('Por situação da vigência', situacao.situacao_vigencia)}
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
+      <CartaoDestaque rotulo="Cadastrados" valor={inteiro(c.convenios)} escuro>
+        <p className="text-sm text-white">convênios</p>
+        {municipios(munCadastrados.data?.total)}
+      </CartaoDestaque>
+      <CartaoDestaque rotulo="Vigentes" valor={inteiro(v.convenios)}>
+        <div className="text-sm text-slate-600">{municipios(munVigentes.data?.total)}</div>
+      </CartaoDestaque>
+      <CartaoDestaque rotulo="Valor total conveniado" valor={moeda(contratual?.valor_total)}>
+        <p className="text-xs text-slate-500">dos convênios vigentes</p>
+      </CartaoDestaque>
+      <CartaoDestaque rotulo="Investido pelo Estado" valor={moeda(contratual?.investido_estado)}>
+        <div className="space-y-1.5">
+          <p className="flex items-baseline justify-between gap-2 text-xs text-slate-500">
+            <span>do valor conveniado</span>
+            <span className="text-sm font-semibold tabular-nums text-marca-700">
+              {percentual(contratual?.investido_sobre_total_pct)}
+            </span>
+          </p>
+          <BarraProgresso pct={contratual?.investido_sobre_total_pct} rotulo="Investido sobre o valor conveniado" />
+        </div>
+      </CartaoDestaque>
+      <CartaoDestaque rotulo="A repassar" valor={moeda(contratual?.a_repassar)}>
+        <p className="text-xs text-slate-500">saldo dos convênios vigentes</p>
+      </CartaoDestaque>
+    </div>
+  )
+}
+
+function Status() {
+  const consulta = useResumoRecorte(CADASTRADOS)
+  if (consulta.isError) {
+    return <CaixaErro erro={consulta.error} onTentar={() => void consulta.refetch()} titulo="Não foi possível carregar os status" />
+  }
+  if (!consulta.data) return <Carregando texto="Carregando os status…" />
+  const itens = (consulta.data.situacao?.status ?? []).map((s) => ({ rotulo: s.valor, valor: s.convenios }))
+  return (
+    <BarrasHorizontais
+      titulo="Convênios por status"
+      subtitulo="Todos os convênios cadastrados"
+      itens={itens}
+      vazio="Nenhum convênio cadastrado."
+    />
+  )
+}
+
+function TopMunicipios() {
+  const consulta = useRankingRecorte(CADASTRADOS, 10, '-convenios')
+  if (consulta.isError) {
+    return (
+      <CaixaErro erro={consulta.error} onTentar={() => void consulta.refetch()} titulo="Não foi possível carregar os municípios" />
+    )
+  }
+  if (!consulta.data) return <Carregando texto="Carregando os municípios…" />
+  const itens = consulta.data.itens.map((m) => ({ rotulo: m.municipio, valor: m.convenios }))
+  return (
+    <BarrasHorizontais
+      titulo="Top 10 municípios"
+      subtitulo="Com mais convênios cadastrados"
+      itens={itens}
+      vazio="Nenhum município com convênio."
+    />
+  )
+}
+
+const COLUNAS_VIGENTES: Coluna<LinhaConvenio>[] = [
+  {
+    campo: 'numero_convenio',
+    rotulo: 'Número',
+    ordenavel: true,
+    fixa: true,
+    valor: (i) => (
+      <>
+        {i.numero_convenio}
+        {i.codigo_compartilhado && <MarcaCompartilhado />}
+      </>
+    ),
+  },
+  { campo: 'municipio', rotulo: 'Município', ordenavel: true, valor: (i) => i.municipio },
+  { campo: 'status', rotulo: 'Status', ordenavel: true, valor: (i) => i.status ?? AUSENTE },
+  { campo: 'valor_total', rotulo: 'Valor total', ordenavel: true, numerica: true, valor: (i) => moeda(i.valor_total) },
+  {
+    campo: 'investido_estado',
+    rotulo: 'Investido pelo Estado',
+    ordenavel: true,
+    numerica: true,
+    valor: (i) => moeda(i.investido_estado),
+  },
+  { campo: 'a_repassar', rotulo: 'A repassar', ordenavel: true, numerica: true, valor: (i) => moeda(i.a_repassar) },
+]
+
+function ListaVigentes() {
+  const { filtros, mudar } = useFiltros()
+  const ordem = filtros.ordem ?? ORDEM_PADRAO_VIGENTES
+  const consulta = useConvenios({ recorte: VIGENTES, ...SEM_FILTRO }, null, { pagina: filtros.pagina, ordem })
+  const navegar = useNavigate()
+  const d = consulta.data
+
+  return (
+    <section aria-label="Convênios vigentes" className="space-y-3">
+      <div>
+        <h2 className="titulo-secao">Convênios vigentes</h2>
+        <p className="subtitulo-secao">Do maior para o menor valor total. Clique em uma linha para abrir o detalhe.</p>
       </div>
+      {consulta.isError ? (
+        <CaixaErro erro={consulta.error} onTentar={() => void consulta.refetch()} titulo="Não foi possível carregar os vigentes" />
+      ) : !d ? (
+        <Carregando texto="Carregando os vigentes…" />
+      ) : (
+        <TabelaPaginada
+          colunas={COLUNAS_VIGENTES}
+          itens={d.itens}
+          chave={(i) => `${i.numero_convenio}|${i.municipio}`}
+          total={d.total}
+          pagina={filtros.pagina}
+          tamanho={TAMANHO_PAGINA}
+          ordem={ordem}
+          onOrdem={(o) => mudar({ ordem: o })}
+          onPagina={(pagina) => mudar({ pagina })}
+          onLinha={(i) => navegar(linkDetalhe(i.numero_convenio, i.municipio))}
+          rotuloLinha={(i) => `Ver detalhe do convênio ${i.numero_convenio} de ${i.municipio}`}
+          unidade={['convênio vigente', 'convênios vigentes']}
+          vazio="Nenhum convênio vigente."
+          atualizando={consulta.isPlaceholderData}
+        />
+      )}
     </section>
   )
 }
 
-function Cobertura({ cobertura }: { cobertura: NonNullable<NonNullable<Resumo['siafe']>['cobertura']> }) {
+function DatasCargas() {
+  const r = useResumoRecorte(CADASTRADOS).data
+  if (!r) return null
   return (
-    <section className="cartao" aria-label="Cobertura do SIAFE">
-      <h2 className="titulo-secao">Cobertura do SIAFE</h2>
-      <p className="subtitulo-secao">Saldo vinculado aos convênios × total do SIAFE</p>
-      <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200/70">
-        <table className="tabela">
-          <thead>
-            <tr>
-              <th scope="col" className="tabela-th">
-                Saldo
-              </th>
-              <th scope="col" className="tabela-th text-right">
-                Vinculado
-              </th>
-              <th scope="col" className="tabela-th text-right">
-                Total SIAFE
-              </th>
-              <th scope="col" className="tabela-th text-right">
-                Cobertura
-              </th>
-            </tr>
-          </thead>
-        <tbody>
-          {CAMPOS_SALDO.map(({ campo, rotulo }) => {
-            const v = cobertura.vinculado[campo]
-            const t = cobertura.total_siafe[campo]
-            const pct = v !== null && t ? (v / t) * 100 : null
-            return (
-              <tr key={campo}>
-                <td className="tabela-td">
-                  <span className="flex items-center gap-2">
-                    <span aria-hidden="true" className="size-2 rounded-full" style={{ backgroundColor: COR_SERIE[campo] }} />
-                    {rotulo}
-                  </span>
-                </td>
-                <td className="tabela-td text-right tabular-nums">{moeda(v)}</td>
-                <td className="tabela-td text-right tabular-nums">{moeda(t)}</td>
-                <td className="tabela-td text-right tabular-nums">
-                  <span className="inline-flex items-center justify-end gap-2">
-                    <span className="hidden w-16 sm:block">
-                      <BarraProgresso pct={pct} rotulo={`Cobertura de ${rotulo}`} />
-                    </span>
-                    <span className="min-w-14 font-medium text-slate-900">{percentual(pct)}</span>
-                  </span>
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-      </div>
-    </section>
+    <p className="border-t border-slate-200/70 pt-4 text-xs text-slate-600">
+      Posição do SIAFE em {dataHora(r.referencia.posicao_siafe_em)} · planilha importada em{' '}
+      {dataHora(r.referencia.planilha_importada_em)}
+      {r.referencia.arquivo ? ` (${r.referencia.arquivo})` : ''}
+      {!r.referencia.posicao_siafe_em && !r.referencia.planilha_importada_em ? ` ${AUSENTE}` : ''}
+    </p>
   )
 }
 
 export function TelaVisaoGeral() {
-  const { filtros, limpar } = useFiltros()
-  const ref = useMesReferencia(filtros.mes)
-  const resumo = useResumo(filtros, ref.mes, { enabled: ref.resolvido })
-  const serie = useSerie(filtros)
-  const r = resumo.data
-
   return (
     <div className="space-y-6">
       <header>
         <h1 className="titulo-tela">Visão geral</h1>
-        <p className="subtitulo-tela">
-          {r
-            ? `${NOME_RECORTE[r.recorte]} · referência ${mesAno(r.referencia.ano, r.referencia.mes)}`
-            : 'Saldos SIAFE e valores contratuais dos convênios'}
-        </p>
+        <p className="subtitulo-tela">Resumo de toda a carteira de convênios, sem filtros.</p>
       </header>
-      {resumo.isError ? (
-        <CaixaErro erro={resumo.error} onTentar={() => void resumo.refetch()} onLimpar={limpar} />
-      ) : !r ? (
-        <Carregando />
-      ) : (
-        <>
-          {!r.siafe && (
-            <Aviso>
-              O SIAFE não tem dados de {mesAno(r.referencia.ano, r.referencia.mes)}.{' '}
-              {r.referencia.ultimo_mes_disponivel
-                ? `Último mês disponível: ${mesAno(r.referencia.ultimo_mes_disponivel.ano, r.referencia.ultimo_mes_disponivel.mes)}.`
-                : 'Nenhum mês foi carregado.'}
-            </Aviso>
-          )}
-          <CartoesSaldo
-            saldos={r.siafe}
-            anterior={r.siafe?.mes_anterior}
-            antes={
-              <CartaoDestaque rotulo="Convênios" valor={inteiro(r.convenios)} escuro>
-                <p>
-                  {NOME_RECORTE[r.recorte]}
-                  {r.municipios.length > 0 && ` · ${r.municipios.join(', ')}`} · {mesAno(r.referencia.ano, r.referencia.mes)}
-                </p>
-              </CartaoDestaque>
-            }
-          />
-          {r.contratual && <BlocoContratual titulo="Valores contratuais" valores={r.contratual} />}
-          {(r.situacao || r.siafe?.cobertura) && (
-            <div className={`grid gap-6 ${r.situacao && r.siafe?.cobertura ? 'xl:grid-cols-2' : ''}`}>
-              {r.situacao && <Situacao situacao={r.situacao} />}
-              {r.siafe?.cobertura && <Cobertura cobertura={r.siafe.cobertura} />}
-            </div>
-          )}
-        </>
-      )}
-
-      {serie.isError ? (
-        <CaixaErro erro={serie.error} onTentar={() => void serie.refetch()} onLimpar={limpar} titulo="Não foi possível carregar a série" />
-      ) : serie.data ? (
-        <GraficoSerie titulo="Saldos SIAFE por mês" pontos={serie.data.pontos} />
-      ) : (
-        <Carregando texto="Carregando a série…" />
-      )}
-
-      {r && (
-        <p className="border-t border-slate-200/70 pt-4 text-xs text-slate-600">
-          Posição do SIAFE em {dataHora(r.referencia.posicao_siafe_em)} · planilha importada em{' '}
-          {dataHora(r.referencia.planilha_importada_em)}
-          {r.referencia.arquivo ? ` (${r.referencia.arquivo})` : ''}
-          {!r.referencia.posicao_siafe_em && !r.referencia.planilha_importada_em ? ` ${AUSENTE}` : ''}
-        </p>
-      )}
+      <CartoesGerais />
+      <div className="grid gap-6 xl:grid-cols-2">
+        <Status />
+        <TopMunicipios />
+      </div>
+      <ListaVigentes />
+      <DatasCargas />
     </div>
   )
 }

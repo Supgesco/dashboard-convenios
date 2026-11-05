@@ -1,10 +1,11 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
 import { ApiErro } from '../api/cliente'
 import { serie } from '../teste/fixtures'
+import { BarrasHorizontais } from './BarrasHorizontais'
 import { CaixaErro } from './Estados'
 import { GraficoSerie } from './GraficoSerie'
 import { BarraProgresso, Variacao } from '../telas/comum'
@@ -159,5 +160,31 @@ describe('BarraProgresso', () => {
     expect(screen.getByRole('progressbar', { name: 'Acima' })).toHaveAttribute('aria-valuenow', '100')
     expect(screen.getByRole('progressbar', { name: 'Abaixo' })).toHaveAttribute('aria-valuenow', '0')
     expect(screen.getByRole('progressbar', { name: 'Meio' })).toHaveAttribute('aria-valuenow', '46')
+  })
+})
+
+describe('BarrasHorizontais', () => {
+  it('mantém a ordem dada, escreve a quantidade e mede a barra pelo maior valor', () => {
+    render(
+      <BarrasHorizontais
+        titulo="Por status"
+        itens={[
+          { rotulo: 'Concluído', valor: 200 },
+          { rotulo: 'Em execução', valor: 50 },
+          { rotulo: null, valor: 1200 },
+        ]}
+      />,
+    )
+    const regiao = screen.getByRole('region', { name: 'Por status' })
+    const itens = within(regiao).getAllByRole('listitem')
+    expect(itens.map((i) => i.textContent)).toEqual(['Concluído200', 'Em execução50', 'Sem informação1.200'])
+    const barras = within(regiao).getAllByTestId('barra')
+    expect(barras.map((b) => b.style.width)).toEqual([`${(200 / 1200) * 100}%`, `${(50 / 1200) * 100}%`, '100%'])
+  })
+
+  it('lista vazia mostra a mensagem', () => {
+    render(<BarrasHorizontais titulo="Top 10" itens={[]} vazio="Nenhum município." />)
+    expect(screen.getByRole('region', { name: 'Top 10' })).toHaveTextContent('Nenhum município.')
+    expect(screen.queryByRole('listitem')).not.toBeInTheDocument()
   })
 })

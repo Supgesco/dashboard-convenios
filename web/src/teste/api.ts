@@ -48,7 +48,6 @@ export async function rotasPadrao(): Promise<Rotas> {
   const f = await import('./fixtures')
   return {
     'GET /painel/resumo': (p) => ok(f.resumo({ recorte: (p.params.get('recorte') ?? '31') as '31' | '89' | '342' })),
-    'GET /painel/serie': () => ok(f.serie()),
     'GET /painel/municipios': (p) =>
       ok(
         f.municipios(

@@ -1,12 +1,12 @@
 import { useNavigate } from 'react-router'
 
-import { TAMANHO_PAGINA, useConvenios } from '../api/hooks'
+import { TAMANHO_PAGINA, useConvenios, useResumo } from '../api/hooks'
 import type { LinhaConvenio } from '../api/tipos'
-import { CaixaErro, Carregando } from '../componentes/Estados'
+import { Aviso, CaixaErro, Carregando } from '../componentes/Estados'
 import { TabelaPaginada, type Coluna } from '../componentes/TabelaPaginada'
-import { useFiltros, useMesReferencia } from '../filtros'
+import { useFiltros, useMesReferencia, type Filtros, type MesReferencia } from '../filtros'
 import { AUSENTE, mesAno, moeda, percentual } from '../formato'
-import { CAMPOS_CONTRATUAL, CAMPOS_SALDO, LegendaCompartilhado, MarcaCompartilhado, linkDetalhe } from './comum'
+import { CAMPOS_CONTRATUAL, CAMPOS_SALDO, CartoesSaldo, LegendaCompartilhado, MarcaCompartilhado, linkDetalhe } from './comum'
 
 // Campos ordenáveis = whitelist da API (consultas.ORDEM_LISTA); os códigos não são ordenáveis.
 const BASE: Coluna<LinhaConvenio>[] = [
@@ -44,6 +44,36 @@ const CONTRATUAIS: Coluna<LinhaConvenio>[] = CAMPOS_CONTRATUAL.map(({ campo, rot
   valor: (i: LinhaConvenio) => (pct ? percentual(i[campo]) : moeda(i[campo])),
 }))
 
+/** Os 4 saldos SIAFE do recorte, dos municípios e do mês em uso, com a variação sobre o mês anterior. */
+function SaldosDoFiltro({ filtros, referencia, onLimpar }: { filtros: Filtros; referencia: MesReferencia; onLimpar: () => void }) {
+  const resumo = useResumo(filtros, referencia.mes, { enabled: referencia.resolvido })
+  const r = resumo.data
+  if (resumo.isError) {
+    return (
+      <CaixaErro
+        erro={resumo.error}
+        onTentar={() => void resumo.refetch()}
+        onLimpar={onLimpar}
+        titulo="Não foi possível carregar os saldos"
+      />
+    )
+  }
+  if (!r) return <Carregando texto="Carregando os saldos…" />
+  return (
+    <section aria-label="Saldos SIAFE" className="space-y-4">
+      {!r.siafe && (
+        <Aviso>
+          O SIAFE não tem dados de {mesAno(r.referencia.ano, r.referencia.mes)}.{' '}
+          {r.referencia.ultimo_mes_disponivel
+            ? `Último mês disponível: ${mesAno(r.referencia.ultimo_mes_disponivel.ano, r.referencia.ultimo_mes_disponivel.mes)}.`
+            : 'Nenhum mês foi carregado.'}
+        </Aviso>
+      )}
+      <CartoesSaldo saldos={r.siafe} anterior={r.siafe?.mes_anterior} />
+    </section>
+  )
+}
+
 export function TelaConvenios() {
   const { filtros, busca, mudar, limpar } = useFiltros()
   const ref = useMesReferencia(filtros.mes)
@@ -61,6 +91,7 @@ export function TelaConvenios() {
           Lista de convênios do recorte. Clique em uma linha para abrir o detalhe.
         </p>
       </header>
+      <SaldosDoFiltro filtros={filtros} referencia={ref} onLimpar={limpar} />
       {consulta.isError ? (
         <CaixaErro erro={consulta.error} onTentar={() => void consulta.refetch()} onLimpar={limpar} />
       ) : !d ? (

@@ -20,7 +20,6 @@ import type {
   Municipios,
   Recorte,
   Resumo,
-  Serie,
 } from './tipos'
 
 /** Mês pedido à API; `null` deixa a API escolher (mês corrente). */
@@ -86,6 +85,23 @@ function consultaResumoSemFiltro(recorte: Recorte) {
   }
 }
 
+/** Resumo de um recorte inteiro (sem município e sem mês), com o mesmo cache da contagem dos recortes. */
+export function useResumoRecorte(recorte: Recorte) {
+  return useQuery(consultaResumoSemFiltro(recorte))
+}
+
+/**
+ * Ranking de municípios de um recorte inteiro, sem município e sem mês: para a Visão geral, que só usa
+ * a quantidade de convênios por município e o `total` (quantos municípios têm convênio).
+ */
+export function useRankingRecorte(recorte: Recorte, tamanho: number, ordem: string | null = null) {
+  return useQuery({
+    queryKey: ['ranking-recorte', recorte, tamanho, ordem],
+    queryFn: () => apiGet<Municipios>('/painel/municipios', { recorte, tamanho, ordem }),
+    staleTime: 5 * 60_000,
+  })
+}
+
 /** Resumo sem filtro, usado para o último mês disponível e a última importação da planilha. */
 export function useResumoGeral() {
   return useQuery(consultaResumoSemFiltro('342'))
@@ -106,13 +122,6 @@ export function useContagemRecortes(): Partial<Record<Recorte, number>> {
           return typeof n === 'number' ? [[r, n]] : []
         }),
       ) as Partial<Record<Recorte, number>>,
-  })
-}
-
-export function useSerie(filtro: FiltroApi) {
-  return useQuery({
-    queryKey: ['serie', chaveFiltro(filtro)],
-    queryFn: () => apiGet<Serie>('/painel/serie', paramsFiltro(filtro)),
   })
 }
 

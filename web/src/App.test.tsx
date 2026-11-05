@@ -11,7 +11,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-const cartaoConvenios = () => screen.findByLabelText('Convênios', { selector: 'div' })
+const saldos = () => screen.findByRole('region', { name: 'Saldos SIAFE' })
 
 describe('navegação', () => {
   it('abre a tela pelo endereço e marca o item do menu', async () => {
@@ -31,8 +31,8 @@ describe('navegação', () => {
 
   it('trocar de tela pelo menu mantém os filtros', async () => {
     const api = stubApi(await rotasPadrao())
-    renderizar(<App />, '/?recorte=342&municipio=Paraty')
-    await cartaoConvenios()
+    renderizar(<App />, '/municipios?recorte=342&municipio=Paraty')
+    await screen.findByRole('heading', { name: /Municípios/ })
     await userEvent.click(within(screen.getByRole('navigation', { name: 'Telas' })).getByRole('link', { name: 'Convênios' }))
     await waitFor(() => expect(api.para('/painel/convenios')).toHaveLength(1))
     const pedido = api.para('/painel/convenios')[0]
@@ -53,8 +53,8 @@ describe('navegação', () => {
 describe('barra de filtros', () => {
   it('recarregar mantém os filtros: os pedidos usam os da URL', async () => {
     const api = stubApi(await rotasPadrao())
-    renderizar(<App />, '/?recorte=89&municipio=Paraty')
-    await cartaoConvenios()
+    renderizar(<App />, '/convenios?recorte=89&municipio=Paraty')
+    await saldos()
     const pedidos = api.para('/painel/resumo').filter((p) => p.params.get('recorte') === '89' && !ehContagem(p))
     expect(pedidos[0].params.getAll('municipio')).toEqual(['Paraty'])
     expect(screen.getByRole('button', { name: /^Primeiro realinhamento/ })).toHaveAttribute('aria-pressed', 'true')
@@ -63,7 +63,7 @@ describe('barra de filtros', () => {
 
   it('as opções de municípios seguem o recorte', async () => {
     const api = stubApi(await rotasPadrao())
-    renderizar(<App />, '/?recorte=342')
+    renderizar(<App />, '/convenios?recorte=342')
     await userEvent.click(screen.getByText(/Municípios: todos/))
     const lista = await screen.findByRole('list', { name: 'Municípios do recorte' })
     expect(within(lista).getByRole('checkbox', { name: 'Angra dos Reis' })).toBeInTheDocument()
@@ -82,7 +82,7 @@ describe('barra de filtros', () => {
 
   it('escolher município põe o filtro na URL', async () => {
     stubApi(await rotasPadrao())
-    renderizar(<App />, '/')
+    renderizar(<App />, '/convenios')
     await userEvent.click(screen.getByText(/Municípios: todos/))
     await userEvent.click(await screen.findByLabelText('Paraty'))
     expect(urlAtual().searchParams.getAll('municipio')).toEqual(['Paraty'])
@@ -113,7 +113,7 @@ describe('barra de filtros', () => {
 
   it('mostra o mês em uso e permite voltar ao último disponível', async () => {
     stubApi(await rotasPadrao())
-    renderizar(<App />, '/?ano=2025&mes=3')
+    renderizar(<App />, '/convenios?ano=2025&mes=3')
     expect(await screen.findByLabelText('Mês de referência')).toHaveValue('2025-03')
     await userEvent.click(screen.getByRole('button', { name: 'usar o último disponível' }))
     expect(urlAtual().searchParams.has('ano')).toBe(false)
@@ -125,7 +125,7 @@ describe('barra de filtros', () => {
 describe('menu lateral', () => {
   it('em tela estreita, o botão Menu abre a gaveta, e escolher uma tela a fecha', async () => {
     stubApi(await rotasPadrao())
-    renderizar(<App />, '/')
+    renderizar(<App />, '/convenios')
     const botao = screen.getByRole('button', { name: 'Menu' })
     expect(botao).toHaveAttribute('aria-expanded', 'false')
     await userEvent.click(botao)
@@ -139,7 +139,7 @@ describe('menu lateral', () => {
 
   it('Esc fecha a gaveta', async () => {
     stubApi(await rotasPadrao())
-    renderizar(<App />, '/')
+    renderizar(<App />, '/convenios')
     const botao = screen.getByRole('button', { name: 'Menu' })
     await userEvent.click(botao)
     await userEvent.keyboard('{Escape}')
@@ -160,7 +160,7 @@ describe('nomes dos recortes', () => {
 
   it('mostra nome e contagem da API, do maior para o menor', async () => {
     stubApi(await rotasComContagem())
-    renderizar(<App />, '/')
+    renderizar(<App />, '/convenios')
     await waitFor(() =>
       expect(botoesRecorte().map((b) => b.getAttribute('aria-label'))).toEqual([
         'Histórico inicial (342 convênios)',
@@ -175,7 +175,7 @@ describe('nomes dos recortes', () => {
     contagens['89'] = 92
     try {
       stubApi(await rotasComContagem())
-      renderizar(<App />, '/')
+      renderizar(<App />, '/convenios')
       expect(await screen.findByRole('button', { name: 'Primeiro realinhamento (92 convênios)' })).toBeInTheDocument()
     } finally {
       contagens['89'] = 89
@@ -184,18 +184,18 @@ describe('nomes dos recortes', () => {
 
   it('a contagem é do recorte inteiro, mesmo com município selecionado', async () => {
     const api = stubApi(await rotasComContagem())
-    renderizar(<App />, '/?municipio=Paraty')
+    renderizar(<App />, '/convenios?municipio=Paraty')
     expect(await screen.findByRole('button', { name: 'Vigentes (31 convênios)' })).toBeInTheDocument()
-    expect(await cartaoConvenios()).toHaveTextContent('5')
+    await saldos()
     const contagem = api.para('/painel/resumo').filter(ehContagem)
     expect(contagem.map((p) => p.params.get('recorte')).sort()).toEqual(['31', '342', '89'])
   })
 
   it('um pedido de contagem por recorte; o 342 reaproveita o resumo geral do mês padrão', async () => {
     const api = stubApi(await rotasComContagem())
-    renderizar(<App />, '/')
+    renderizar(<App />, '/convenios')
     await screen.findByRole('button', { name: 'Vigentes (31 convênios)' })
-    await cartaoConvenios()
+    await saldos()
     const contagem = api.para('/painel/resumo').filter(ehContagem)
     expect(contagem.map((p) => p.params.get('recorte')).sort()).toEqual(['31', '342', '89'])
   })
@@ -207,7 +207,7 @@ describe('nomes dos recortes', () => {
       'GET /painel/resumo': (p) =>
         ehContagem(p) && p.params.get('recorte') === '89' ? erro(500, 'falha') : rotas['GET /painel/resumo'](p),
     })
-    renderizar(<App />, '/')
+    renderizar(<App />, '/convenios')
     await screen.findByRole('button', { name: 'Vigentes (31 convênios)' })
     const botao = screen.getByRole('button', { name: 'Primeiro realinhamento' })
     await userEvent.click(botao)

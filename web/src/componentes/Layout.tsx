@@ -68,7 +68,7 @@ const MENU = [
 ]
 
 /** Telas que usam o bloco de filtros globais. */
-const TELAS_COM_FILTROS = ['/', '/municipios', '/convenios']
+const TELAS_COM_FILTROS = ['/municipios', '/convenios']
 
 const ID_MENU = 'menu-telas'
 
@@ -133,7 +133,7 @@ export function Layout() {
           </span>
           <div>
             <p className="text-sm font-semibold leading-tight tracking-tight text-white">Painel de convênios</p>
-            <p className="text-xs text-marca-200">SIAFE · Planilha geral</p>
+            <p className="text-xs text-marca-200">Fazenda RJ · SIAFE</p>
           </div>
         </div>
         <p className="px-6 pb-2 text-[0.7rem] font-semibold uppercase tracking-wider text-marca-300" aria-hidden="true">
