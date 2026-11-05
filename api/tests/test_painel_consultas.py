@@ -203,16 +203,36 @@ def test_ordem_pelo_investido_sobre_total_com_nulos_por_ultimo(carga):
 
 
 def test_situacao_com_grupo_nulo(carga):
-    for numero, status in (("A", "Concluído"), ("B", "Concluído"), ("C", "Concluído"), ("D", "Vigente"), ("E", None)):
+    for numero, status in (("A", "Concluído"), ("B", "Concluído"), ("C", "Concluído"), ("D", "Tomada de Contas"), ("E", None)):
         carga.planilha(A342, numero, "Paraty", status_convenio=status)
 
     situacao = _rodar(carga, Q.situacao, Q.Filtro("342"))
     assert situacao["status"] == [
         {"valor": "Concluído", "convenios": 3},
-        {"valor": "Vigente", "convenios": 1},
+        {"valor": "Tomada de Contas", "convenios": 1},
         {"valor": None, "convenios": 1},
     ]
     assert situacao["situacao_vigencia"] == [{"valor": None, "convenios": 5}]
+
+
+def test_status_vigente_e_estar_no_recorte_31(carga):
+    # A e B estão nos Vigentes (31), mesmo com outro status na planilha histórica; C e D a planilha
+    # marca como Vigente, mas saíram do último repasse.
+    for numero, status in (("A", "Vigente"), ("B", "Concluído"), ("C", "Vigente"), ("D", "Vigente"), ("E", "Expirado")):
+        carga.planilha(A342, numero, "Paraty", status_convenio=status)
+    for numero in ("A", "B"):
+        carga.planilha(A89, numero, "Paraty")
+        carga.planilha(A31, numero, "Paraty")
+
+    assert _rodar(carga, Q.situacao, Q.Filtro("342"))["status"] == [
+        {"valor": "Vigente", "convenios": 2},
+        {"valor": "Vigência não confirmada", "convenios": 2},
+        {"valor": "Expirado", "convenios": 1},
+    ]
+    assert _rodar(carga, Q.situacao, Q.Filtro("31"))["status"] == [{"valor": "Vigente", "convenios": 2}]
+    # A lista continua mostrando o status escrito na planilha.
+    linhas = _rodar(carga, Q.lista_convenios, Q.Filtro("342"), 2026, 10).itens
+    assert {l["numero_convenio"]: l["status"] for l in linhas}["B"] == "Concluído"
 
 
 # --- série, lista e datas ---

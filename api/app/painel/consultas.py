@@ -202,20 +202,42 @@ WHERE v.recorte = :recorte
     return _uma(conn, sql, filtro.params())
 
 
+STATUS_VIGENTE = "Vigente"
+STATUS_VIGENCIA_NAO_CONFIRMADA = "Vigência não confirmada"
+
+# Status usado na contagem. A coluna de status da planilha histórica (342) fica desatualizada:
+# marca como "Vigente" convênios que já saíram do último repasse. Por isso, na contagem, vigente é
+# estar no recorte 31 (Vigentes), qualquer que seja o status escrito; quem a planilha marca como
+# "Vigente" mas não está nos 31 vira "Vigência não confirmada". Os demais status ficam como estão.
+_STATUS_EFETIVO = """
+CASE
+    WHEN EXISTS (
+        SELECT 1 FROM v_recorte_convenio v
+        WHERE v.recorte = '31' AND v.numero_convenio = r.numero_convenio AND v.municipio = r.municipio
+    ) THEN :_vigente
+    WHEN r.status = :_vigente THEN :_nao_confirmada
+    ELSE r.status
+END"""
+
+
 def situacao(conn: Connection, filtro: Filtro) -> dict[str, list[dict]]:
-    """Contagem de convênios por status e por situação da vigência (nulo é um grupo)."""
+    """Contagem de convênios por status (ver `_STATUS_EFETIVO`) e por situação da vigência (nulo é um grupo)."""
+    params = {**filtro.params(), "_vigente": STATUS_VIGENTE, "_nao_confirmada": STATUS_VIGENCIA_NAO_CONFIRMADA}
     resultado = {}
-    for coluna in ("status", "situacao_vigencia"):
+    for coluna, expressao in (("status", _STATUS_EFETIVO), ("situacao_vigencia", "r.situacao_vigencia")):
         sql = f"""
-WITH {_CONV}
-SELECT r.{coluna} AS valor, count(*) AS convenios
-FROM v_recorte_convenio r
-JOIN conv USING (numero_convenio, municipio)
-WHERE r.recorte = :recorte
-GROUP BY r.{coluna}
-ORDER BY count(*) DESC, r.{coluna} NULLS LAST
+WITH {_CONV}, base AS (
+    SELECT {expressao} AS valor
+    FROM v_recorte_convenio r
+    JOIN conv USING (numero_convenio, municipio)
+    WHERE r.recorte = :recorte
+)
+SELECT valor, count(*) AS convenios
+FROM base
+GROUP BY valor
+ORDER BY count(*) DESC, valor NULLS LAST
 """
-        resultado[coluna] = _todas(conn, sql, filtro.params())
+        resultado[coluna] = _todas(conn, sql, params)
     return resultado
 
 
