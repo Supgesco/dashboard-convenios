@@ -5,6 +5,7 @@ import { TAMANHO_PAGINA, useConvenios, useRankingRecorte, useResumoRecorte } fro
 import type { LinhaConvenio } from '../api/tipos'
 import { BarrasHorizontais } from '../componentes/BarrasHorizontais'
 import { CaixaErro, Carregando } from '../componentes/Estados'
+import { GraficoRosca } from '../componentes/GraficoRosca'
 import { NumeroAnimado } from '../componentes/NumeroAnimado'
 import { TabelaPaginada, type Coluna } from '../componentes/TabelaPaginada'
 import { useFiltros } from '../filtros'
@@ -17,6 +18,8 @@ const CADASTRADOS = '342'
 const VIGENTES = '31'
 const ORDEM_PADRAO_VIGENTES = '-valor_total'
 const SEM_FILTRO = { municipios: [] } as const
+// A API separa quem a planilha histórica marca como "Vigente" fora do último repasse; na rosca, vai para "Outros".
+const SEM_FATIA_STATUS = ['Vigência não confirmada']
 
 function municipios(n: number | undefined): ReactNode {
   return n === undefined ? null : <p>em {inteiro(n)} {n === 1 ? 'município' : 'municípios'}</p>
@@ -136,10 +139,12 @@ function Status() {
   if (!consulta.data) return <Carregando texto="Carregando os status…" />
   const itens = (consulta.data.situacao?.status ?? []).map((s) => ({ rotulo: s.valor, valor: s.convenios }))
   return (
-    <BarrasHorizontais
+    <GraficoRosca
       titulo="Convênios por status"
-      subtitulo="Todos os convênios cadastrados"
+      subtitulo="Os 5 status mais frequentes entre os cadastrados; os demais somados em “Outros”."
+      nota="“Vigente” são os convênios do último repasse. Os que a planilha ainda marca como vigentes fora dele entram em “Outros”."
       itens={itens}
+      semFatia={SEM_FATIA_STATUS}
       vazio="Nenhum convênio cadastrado."
     />
   )

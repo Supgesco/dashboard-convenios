@@ -69,7 +69,36 @@ describe('Visão geral', () => {
     await rotasCarteira()
     renderizar(<App />, '/')
     const status = await screen.findByRole('region', { name: 'Convênios por status' })
-    expect(within(status).getAllByRole('listitem').map((i) => i.textContent)).toEqual(['EM EXECUÇÃO7', 'Sem informação2'])
+    expect(within(status).getAllByRole('listitem').map((i) => i.textContent)).toEqual([
+      'EM EXECUÇÃO777,8%',
+      'Sem informação222,2%',
+    ])
+    expect(status).toHaveTextContent('9convênios')
+  })
+
+  it('convênios por status: os 5 maiores com fatia própria e o resto somado em "Outros"', async () => {
+    const status = [
+      { valor: 'A', convenios: 1 },
+      { valor: 'B', convenios: 40 },
+      { valor: 'C', convenios: 30 },
+      { valor: null, convenios: 20 },
+      { valor: 'D', convenios: 5 },
+      { valor: 'E', convenios: 2 },
+      { valor: 'F', convenios: 2 },
+    ]
+    await rotasCarteira({
+      'GET /painel/resumo': (p) => {
+        const recorte = (p.params.get('recorte') ?? '31') as '31' | '342'
+        const r = f.resumo({ recorte })
+        if (r.situacao) r.situacao = { ...r.situacao, status }
+        return ok(r)
+      },
+    })
+    renderizar(<App />, '/')
+    const regiao = await screen.findByRole('region', { name: 'Convênios por status' })
+    const itens = within(regiao).getAllByRole('listitem').map((i) => i.textContent)
+    expect(itens).toEqual(['B4040,0%', 'C3030,0%', 'Sem informação2020,0%', 'D55,0%', 'E22,0%', 'Outros33,0%'])
+    expect(regiao).toHaveTextContent('100convênios')
   })
 
   it('top 10 municípios pedido à API sobre os cadastrados, com a quantidade escrita', async () => {

@@ -9,6 +9,8 @@ import { ApiErro } from '../api/cliente'
 import { serie } from '../teste/fixtures'
 import { BarrasHorizontais } from './BarrasHorizontais'
 import { CaixaErro } from './Estados'
+import { agruparTop } from '../rosca'
+import { GraficoRosca } from './GraficoRosca'
 import { GraficoSerie } from './GraficoSerie'
 import { NumeroAnimado } from './NumeroAnimado'
 import { BarraProgresso, Variacao } from '../telas/comum'
@@ -188,6 +190,70 @@ describe('BarrasHorizontais', () => {
   it('lista vazia mostra a mensagem', () => {
     render(<BarrasHorizontais titulo="Top 10" itens={[]} vazio="Nenhum município." />)
     expect(screen.getByRole('region', { name: 'Top 10' })).toHaveTextContent('Nenhum município.')
+    expect(screen.queryByRole('listitem')).not.toBeInTheDocument()
+  })
+})
+
+describe('agruparTop', () => {
+  const itens = (...v: [string | null, number][]) => v.map(([rotulo, valor]) => ({ rotulo, valor }))
+
+  it('até n itens: sem "Outros", do maior para o menor, nulo como "Sem informação"', () => {
+    const r = agruparTop(itens(['B', 1], [null, 3], ['A', 6]))
+    expect(r.map((f) => [f.rotulo, f.valor, f.outros])).toEqual([
+      ['A', 6, false],
+      ['Sem informação', 3, false],
+      ['B', 1, false],
+    ])
+    expect(r.map((f) => f.pct)).toEqual([60, 30, 10])
+  })
+
+  it('empate desempata pelo rótulo; o resto vira um "Outros" com a soma', () => {
+    const r = agruparTop(itens(['Z', 5], ['A', 5], ['M', 4], ['X', 1], ['Y', 2]), 2)
+    expect(r.map((f) => [f.rotulo, f.valor])).toEqual([
+      ['A', 5],
+      ['Z', 5],
+      ['Outros', 7],
+    ])
+    expect(r.at(-1)?.outros).toBe(true)
+  })
+
+  it('cores fixas pela posição e "Outros" em cinza', () => {
+    const r = agruparTop(itens(['a', 7], ['b', 6], ['c', 5], ['d', 4], ['e', 3], ['f', 2]))
+    expect(new Set(r.map((f) => f.cor)).size).toBe(6)
+    expect(r[5].cor).toBe('#94a3b8')
+  })
+
+  it('rótulos em semFatia vão para "Outros" mesmo sendo grandes, e o próximo sobe para o top', () => {
+    const r = agruparTop(itens(['A', 9], ['N', 8], ['B', 3], ['C', 1]), 2, ['N'])
+    expect(r.map((f) => [f.rotulo, f.valor])).toEqual([
+      ['A', 9],
+      ['B', 3],
+      ['Outros', 9],
+    ])
+    expect(r.map((f) => f.pct)).toEqual([42.857142857142854, 14.285714285714285, 42.857142857142854])
+    expect(agruparTop(itens(['A', 2], ['N', 1]), 5, ['N']).map((f) => [f.rotulo, f.valor])).toEqual([
+      ['A', 2],
+      ['Outros', 1],
+    ])
+  })
+
+  it('lista vazia não tem fatias; total zero não tem percentual', () => {
+    expect(agruparTop([])).toEqual([])
+    expect(agruparTop(itens(['a', 0]))[0].pct).toBeNull()
+  })
+})
+
+describe('GraficoRosca', () => {
+  it('legenda com rótulo, quantidade e percentual e o total no centro', () => {
+    render(<GraficoRosca titulo="Por status" itens={[{ rotulo: 'A', valor: 3 }, { rotulo: 'B', valor: 1 }]} />)
+    const regiao = screen.getByRole('region', { name: 'Por status' })
+    expect(within(regiao).getAllByRole('listitem').map((i) => i.textContent)).toEqual(['A375,0%', 'B125,0%'])
+    expect(regiao).toHaveTextContent('4convênios')
+  })
+
+  it('sem itens mostra a mensagem', () => {
+    render(<GraficoRosca titulo="Por status" itens={[]} vazio="Nada." />)
+    expect(screen.getByRole('region', { name: 'Por status' })).toHaveTextContent('Nada.')
     expect(screen.queryByRole('listitem')).not.toBeInTheDocument()
   })
 })

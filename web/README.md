@@ -6,7 +6,7 @@ Telas:
 
 | Endereço | Tela | Endpoints |
 |---|---|---|
-| `/` | Visão geral da carteira, sem filtros: totais de cadastrados (342) e vigentes (31), valores contratuais dos vigentes, status, top 10 municípios e lista dos vigentes | `/painel/resumo`, `/painel/municipios`, `/painel/convenios` |
+| `/` | Visão geral da carteira, sem filtros: totais de cadastrados (342) e vigentes (31), valores contratuais dos vigentes, rosca de status (os 5 mais frequentes + "Outros", `src/rosca.ts`; "Vigente" é estar nos 31, e quem a planilha marca como Vigente fora deles, que a API conta como "Vigência não confirmada", entra sempre em "Outros"), top 10 municípios e lista dos vigentes | `/painel/resumo`, `/painel/municipios`, `/painel/convenios` |
 | `/municipios` | Ranking de municípios | `/painel/municipios` |
 | `/convenios` | Cards dos 4 saldos SIAFE do filtro e lista de convênios | `/painel/resumo`, `/painel/convenios` |
 | `/convenio?numero=&municipio=` | Detalhe de um convênio | `/painel/convenio` |
