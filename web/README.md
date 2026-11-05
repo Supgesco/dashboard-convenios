@@ -14,7 +14,7 @@ Telas:
 
 Os filtros (`recorte`, `municipio` repetível, `ano`/`mes`, `pagina`, `ordem`) ficam na URL. Sem `ano`/`mes`, as telas com filtro usam o último mês com dados do SIAFE. A Visão geral ignora recorte, município e mês (só lê `pagina` e `ordem` da lista dos vigentes), mas os mantém na URL para as outras telas.
 
-As telas ficam à direita de uma barra lateral de navegação. Em telas estreitas, a barra lateral vira uma gaveta aberta pelo botão "Menu". Municípios e Convênios têm o bloco de filtros no topo.
+As telas ficam à direita de uma barra lateral de navegação. Em telas estreitas, a barra lateral vira uma gaveta aberta pelo botão "Menu". Municípios e Convênios têm uma barra de filtros compacta no topo (em tela larga, quando ela sai da tela ao rolar, fica presa no topo como um cabeçalho): recorte num seletor segmentado, municípios numa lista com busca (os escolhidos viram chips removíveis) e o mês de referência.
 
 Os recortes aparecem pelo nome, do maior para o menor (cada um está contido no anterior), e a URL continua usando o número:
 

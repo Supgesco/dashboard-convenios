@@ -64,11 +64,13 @@ describe('barra de filtros', () => {
   it('as opções de municípios seguem o recorte', async () => {
     const api = stubApi(await rotasPadrao())
     renderizar(<App />, '/convenios?recorte=342')
-    await userEvent.click(screen.getByText(/Municípios: todos/))
+    await userEvent.click(screen.getByRole('button', { name: /^Municípios/ }))
     const lista = await screen.findByRole('list', { name: 'Municípios do recorte' })
     expect(within(lista).getByRole('checkbox', { name: 'Angra dos Reis' })).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: /^Vigentes/ }))
+    // Clicar fora fecha o popover; ao reabrir, a lista já é a do novo recorte.
+    await userEvent.click(screen.getByRole('button', { name: /^Municípios/ }))
     await waitFor(() =>
       expect(
         within(screen.getByRole('list', { name: 'Municípios do recorte' })).getByRole('checkbox', { name: 'Niterói' }),
@@ -83,10 +85,24 @@ describe('barra de filtros', () => {
   it('escolher município põe o filtro na URL', async () => {
     stubApi(await rotasPadrao())
     renderizar(<App />, '/convenios')
-    await userEvent.click(screen.getByText(/Municípios: todos/))
+    await userEvent.click(screen.getByRole('button', { name: /^Municípios/ }))
     await userEvent.click(await screen.findByLabelText('Paraty'))
     expect(urlAtual().searchParams.getAll('municipio')).toEqual(['Paraty'])
     await userEvent.click(screen.getByRole('button', { name: 'Remover Paraty' }))
+    expect(urlAtual().searchParams.has('municipio')).toBe(false)
+  })
+
+  it('Esc fecha a lista de municípios, e "Limpar municípios" tira todos do filtro', async () => {
+    stubApi(await rotasPadrao())
+    renderizar(<App />, '/convenios?municipio=Paraty&municipio=Niterói')
+    const botao = screen.getByRole('button', { name: /^Municípios/ })
+    expect(botao).toHaveTextContent('2 selecionados')
+    await userEvent.click(botao)
+    expect(await screen.findByRole('list', { name: 'Municípios do recorte' })).toBeInTheDocument()
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('list', { name: 'Municípios do recorte' })).not.toBeInTheDocument()
+    expect(botao).toHaveAttribute('aria-expanded', 'false')
+    await userEvent.click(screen.getByRole('button', { name: 'Limpar municípios' }))
     expect(urlAtual().searchParams.has('municipio')).toBe(false)
   })
 
@@ -115,10 +131,10 @@ describe('barra de filtros', () => {
     stubApi(await rotasPadrao())
     renderizar(<App />, '/convenios?ano=2025&mes=3')
     expect(await screen.findByLabelText('Mês de referência')).toHaveValue('2025-03')
-    await userEvent.click(screen.getByRole('button', { name: 'usar o último disponível' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Voltar ao último mês' }))
     expect(urlAtual().searchParams.has('ano')).toBe(false)
     await waitFor(() => expect(screen.getByLabelText('Mês de referência')).toHaveValue('2026-10'))
-    expect(screen.getByText('(último disponível)')).toBeInTheDocument()
+    expect(screen.getByText('último disponível')).toBeInTheDocument()
   })
 })
 
