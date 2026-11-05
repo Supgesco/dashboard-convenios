@@ -157,6 +157,51 @@ def test_percentual_nulo_com_repasse_zero(carga):
     assert linha["execucao_pct"] is None
 
 
+def test_investido_sobre_total_e_quociente_de_somas(carga):
+    for numero, investido, total in (("A", "50", "200"), ("B", "300", "300")):
+        carga.planilha(A342, numero, "Paraty")
+        carga.planilha(A89, numero, "Paraty", total_investido_estado=Decimal(investido),
+                       valor_total_inicial=Decimal(total))
+
+    assert _rodar(carga, Q.contratual, Q.Filtro("89"))["investido_sobre_total_pct"] == Decimal("70.00")
+    [municipio] = _rodar(carga, Q.ranking_municipios, Q.Filtro("89"), 2026, 10).itens
+    assert municipio["investido_sobre_total_pct"] == Decimal("70.00")
+    linhas = _rodar(carga, Q.lista_convenios, Q.Filtro("89"), 2026, 10).itens
+    assert [l["investido_sobre_total_pct"] for l in linhas] == [Decimal("25.00"), Decimal("100.00")]
+
+
+def test_investido_sobre_total_difere_da_execucao(carga):
+    carga.planilha(A342, "A", "Paraty")
+    carga.planilha(A89, "A", "Paraty", valor_total_inicial=Decimal("1000"), repasse_inicial=Decimal("800"),
+                   total_investido_estado=Decimal("400"))
+
+    [bloco] = _rodar(carga, Q.contratual_convenio, "A", "Paraty")
+    assert (bloco["investido_sobre_total_pct"], bloco["execucao_pct"]) == (Decimal("40.00"), Decimal("50.00"))
+    [linha] = _rodar(carga, Q.lista_convenios, Q.Filtro("89"), 2026, 10).itens
+    assert (linha["investido_sobre_total_pct"], linha["execucao_pct"]) == (Decimal("40.00"), Decimal("50.00"))
+
+
+def test_investido_sobre_total_nulo_com_total_zero_ou_nulo(carga):
+    carga.planilha(A342, "A", "Paraty")
+    carga.planilha(A89, "A", "Paraty", total_investido_estado=Decimal("10"), valor_total_inicial=Decimal("0"))
+    carga.planilha(A342, "B", "Resende")
+    carga.planilha(A89, "B", "Resende", total_investido_estado=Decimal("10"))
+
+    assert _rodar(carga, Q.contratual, Q.Filtro("89", ["Paraty"]))["investido_sobre_total_pct"] is None
+    linhas = _rodar(carga, Q.lista_convenios, Q.Filtro("89"), 2026, 10).itens
+    assert [l["investido_sobre_total_pct"] for l in linhas] == [None, None]
+
+
+def test_ordem_pelo_investido_sobre_total_com_nulos_por_ultimo(carga):
+    for numero, investido, total in (("A", "10", "100"), ("B", "90", "100"), ("C", "10", None)):
+        carga.planilha(A342, numero, "Paraty")
+        carga.planilha(A89, numero, "Paraty", total_investido_estado=Decimal(investido),
+                       **({"valor_total_inicial": Decimal(total)} if total else {}))
+
+    pagina = _rodar(carga, Q.lista_convenios, Q.Filtro("89"), 2026, 10, Q.Pagina(ordem="-investido_sobre_total_pct"))
+    assert [l["numero_convenio"] for l in pagina.itens] == ["B", "A", "C"]
+
+
 def test_situacao_com_grupo_nulo(carga):
     for numero, status in (("A", "Concluído"), ("B", "Concluído"), ("C", "Concluído"), ("D", "Vigente"), ("E", None)):
         carga.planilha(A342, numero, "Paraty", status_convenio=status)

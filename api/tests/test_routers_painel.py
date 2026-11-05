@@ -223,6 +223,7 @@ def test_valores_contratuais_do_31(api, carga):
         "investido_estado": 400,
         "a_repassar": 600,
         "execucao_pct": 50,
+        "investido_sobre_total_pct": 40,
     }
 
 
@@ -251,6 +252,14 @@ def test_percentual_quociente_de_somas(api, carga):
         carga.planilha(A342, numero, "Paraty")
         carga.planilha(A89, numero, "Paraty", total_investido_estado=Decimal(investido), repasse_inicial=Decimal(repasse))
     assert api.get("/painel/resumo", params={"recorte": "89"}).json()["contratual"]["execucao_pct"] == 87.5
+
+
+def test_investido_sobre_total_no_ranking_e_na_lista(api, carga):
+    _carteira(carga)
+    ranking = api.get("/painel/municipios", params={"recorte": "31"}).json()["itens"]
+    assert [(i["municipio"], i["investido_sobre_total_pct"]) for i in ranking] == [("Paraty", 40), ("Resende", 40)]
+    lista = api.get("/painel/convenios", params={"recorte": "31", "ordem": "-investido_sobre_total_pct"}).json()
+    assert [i["investido_sobre_total_pct"] for i in lista["itens"]] == [40, 40]
 
 
 def test_recorte_342_sem_contratual_e_com_situacao(api, carga):
@@ -556,6 +565,7 @@ def test_detalhe_contratual_nas_duas_abas(api, carga):
     assert realinhado == [{
         "recorte": "89", "valor_total": 120.0, "repasse_estado": 100.0, "contrapartida": None,
         "investido_estado": 50.0, "a_repassar": None, "execucao_pct": 50.0,
+        "investido_sobre_total_pct": 41.67,
     }]
 
 

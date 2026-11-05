@@ -19,8 +19,8 @@ CONTRATUAIS = ("valor_total", "repasse_estado", "contrapartida", "investido_esta
 
 # Campos aceitos em `ordem` (com `-` na frente para decrescente). O ORDER BY é montado só a
 # partir destes nomes, que são colunas da consulta externa; o texto recebido nunca entra no SQL.
-ORDEM_RANKING = ("municipio", "convenios", *SALDOS, *CONTRATUAIS, "execucao_pct")
-ORDEM_LISTA = ("numero_convenio", "municipio", "status", "fase", *SALDOS, *CONTRATUAIS, "execucao_pct")
+ORDEM_RANKING = ("municipio", "convenios", *SALDOS, *CONTRATUAIS, "execucao_pct", "investido_sobre_total_pct")
+ORDEM_LISTA = ("numero_convenio", "municipio", "status", "fase", *SALDOS, *CONTRATUAIS, "execucao_pct", "investido_sobre_total_pct")
 
 
 @dataclass(frozen=True)
@@ -118,7 +118,8 @@ _SOMA_CONTRATUAIS = """
     round(sum(v.contrapartida), 2) AS contrapartida,
     round(sum(v.investido_estado), 2) AS investido_estado,
     round(sum(v.a_repassar), 2) AS a_repassar,
-    round(100 * sum(v.investido_estado) / nullif(sum(v.repasse_estado), 0), 2) AS execucao_pct"""
+    round(100 * sum(v.investido_estado) / nullif(sum(v.repasse_estado), 0), 2) AS execucao_pct,
+    round(100 * sum(v.investido_estado) / nullif(sum(v.valor_total), 0), 2) AS investido_sobre_total_pct"""
 
 
 def _uma(conn: Connection, sql: str, params: dict) -> dict:
@@ -263,7 +264,8 @@ SELECT
         SELECT 1 FROM cod_mun c JOIN compartilhado x USING (codigo) WHERE c.municipio = m.municipio
     ) AS codigo_compartilhado,
     sa.a_pagar, sa.a_comprovar, sa.a_aprovar, sa.aprovados,
-    ct.valor_total, ct.repasse_estado, ct.contrapartida, ct.investido_estado, ct.a_repassar, ct.execucao_pct
+    ct.valor_total, ct.repasse_estado, ct.contrapartida, ct.investido_estado, ct.a_repassar, ct.execucao_pct,
+    ct.investido_sobre_total_pct
 FROM (SELECT municipio, count(*) AS convenios FROM conv GROUP BY municipio) m
 LEFT JOIN saldo sa USING (municipio)
 LEFT JOIN contr ct USING (municipio)
@@ -312,7 +314,8 @@ SELECT
     round(v.contrapartida, 2) AS contrapartida,
     round(v.investido_estado, 2) AS investido_estado,
     round(v.a_repassar, 2) AS a_repassar,
-    round(100 * v.investido_estado / nullif(v.repasse_estado, 0), 2) AS execucao_pct
+    round(100 * v.investido_estado / nullif(v.repasse_estado, 0), 2) AS execucao_pct,
+    round(100 * v.investido_estado / nullif(v.valor_total, 0), 2) AS investido_sobre_total_pct
 FROM v_recorte_convenio r
 JOIN conv USING (numero_convenio, municipio)
 JOIN v_convenio c USING (numero_convenio, municipio)
@@ -393,7 +396,8 @@ SELECT
     round(v.contrapartida, 2) AS contrapartida,
     round(v.investido_estado, 2) AS investido_estado,
     round(v.a_repassar, 2) AS a_repassar,
-    round(100 * v.investido_estado / nullif(v.repasse_estado, 0), 2) AS execucao_pct
+    round(100 * v.investido_estado / nullif(v.repasse_estado, 0), 2) AS execucao_pct,
+    round(100 * v.investido_estado / nullif(v.valor_total, 0), 2) AS investido_sobre_total_pct
 FROM v_valor_contratual v
 WHERE v.numero_convenio = :numero AND v.municipio = :municipio
 ORDER BY v.recorte::int

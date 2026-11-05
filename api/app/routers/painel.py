@@ -57,6 +57,7 @@ class Contratual(BaseModel):
     investido_estado: float | None
     a_repassar: float | None
     execucao_pct: float | None
+    investido_sobre_total_pct: float | None
 
 
 class Contagem(BaseModel):
