@@ -1,20 +1,250 @@
+import type { ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router'
 
 import { ApiErro } from '../api/cliente'
 import { useConvenio } from '../api/hooks'
+import type { DetalheConvenio } from '../api/tipos'
 import { CaixaErro, Carregando } from '../componentes/Estados'
 import { GraficoSerie } from '../componentes/GraficoSerie'
 import { lerFiltros, useMesReferencia } from '../filtros'
-import { AUSENTE, data, mesAno, moeda } from '../formato'
-import { NOME_RECORTE, nomesRecortes } from '../recortes'
-import { BlocoContratual, CAMPOS_SALDO, CartoesSaldo, linkDetalhe } from './comum'
+import { AUSENTE, data, mesAno } from '../formato'
+import { NOME_RECORTE, ORDEM_EXIBICAO } from '../recortes'
+import { BlocoContratual, CartoesSaldo, linkDetalhe } from './comum'
 
-function Campo({ rotulo, children }: { rotulo: string; children: React.ReactNode }) {
+// Ícones em linha (traço 1.9), sem biblioteca.
+function Icone({ children, className = 'size-4' }: { children: ReactNode; className?: string }) {
   return (
-    <div>
-      <dt className="text-xs font-medium text-slate-500">{rotulo}</dt>
-      <dd className="mt-0.5 font-medium text-slate-900">{children}</dd>
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className={`shrink-0 ${className}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.9}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {children}
+    </svg>
+  )
+}
+
+const ICONES = {
+  voltar: <path d="M15 18l-6-6 6-6" />,
+  local: (
+    <>
+      <path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z" />
+      <circle cx="12" cy="9.5" r="2.5" />
+    </>
+  ),
+  calendario: (
+    <>
+      <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+      <path d="M3.5 10h17M8 3v4M16 3v4" />
+    </>
+  ),
+  fase: <path d="M4 12h4l3-8 4 16 3-8h2" />,
+  codigo: <path d="M9 7l-5 5 5 5M15 7l5 5-5 5" />,
+  camadas: <path d="m12 3 9 5-9 5-9-5 9-5ZM3 13l9 5 9-5" />,
+  alerta: (
+    <>
+      <path d="M12 3 2 20h20L12 3Z" />
+      <path d="M12 10v4M12 17h.01" />
+    </>
+  ),
+  vazio: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8v4M12 16h.01" />
+    </>
+  ),
+}
+
+// A API manda a fase em minúsculas e sem acento; valor desconhecido aparece como veio.
+const NOME_FASE: Record<string, string> = { vigente: 'Vigente', realinhado: 'Realinhado', historico: 'Histórico' }
+
+/** Um fato do convênio no topo: ícone, rótulo pequeno e valor em branco. */
+function Fato({
+  icone,
+  rotulo,
+  className = '',
+  children,
+}: {
+  icone: ReactNode
+  rotulo: string
+  className?: string
+  children: ReactNode
+}) {
+  return (
+    <div className={`flex gap-3 ${className}`}>
+      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white/10 text-marca-100 ring-1 ring-white/10">
+        <Icone>{icone}</Icone>
+      </span>
+      <div className="min-w-0">
+        <dt className="text-xs font-medium text-marca-200">{rotulo}</dt>
+        <dd className="mt-0.5 text-sm font-semibold text-white">{children}</dd>
+      </div>
     </div>
+  )
+}
+
+/** "Vigente" ganha o verde dos vigentes; os demais status ficam neutros sobre o fundo escuro. */
+function SeloStatus({ status }: { status: string }) {
+  const vigente = status.trim().toLowerCase() === 'vigente'
+  return (
+    <span
+      className={`selo ring-1 ${
+        vigente ? 'bg-emerald-400/20 text-emerald-50 ring-emerald-300/40' : 'bg-white/10 text-white ring-white/20'
+      }`}
+    >
+      {vigente && <span aria-hidden="true" className="size-1.5 rounded-full bg-emerald-300" />}
+      {status}
+    </span>
+  )
+}
+
+/** Topo da tela: título, status, objeto e os dados de identificação num card de destaque. */
+function Identificacao({ d }: { d: DetalheConvenio }) {
+  const recortes = ORDEM_EXIBICAO.filter((r) => d.recortes.includes(r))
+  return (
+    <section
+      aria-label="Identificação"
+      className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-marca-700 via-marca-800 to-marca-950 p-6 text-white shadow-cartao-alto sm:p-8"
+    >
+      {/* Brilhos decorativos */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-24 -right-16 size-72 rounded-full bg-marca-400/25 blur-3xl"
+      />
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-28 left-1/3 size-64 rounded-full bg-sky-300/10 blur-3xl"
+      />
+
+      <div className="relative">
+        <Link
+          to="/convenios"
+          className="group inline-flex items-center gap-1 rounded-lg text-sm font-medium text-marca-100 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+        >
+          <Icone className="size-4 transition-transform group-hover:-translate-x-0.5">{ICONES.voltar}</Icone>
+          Convênios
+        </Link>
+
+        <div className="mt-4 flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+            Convênio <span className="tabular-nums">{d.numero_convenio}</span>
+            {' '}
+            <span className="text-marca-300">·</span>{' '}
+            <span className="inline-flex items-center gap-1.5">
+              <Icone className="size-5 text-marca-200 sm:size-6">{ICONES.local}</Icone>
+              {d.municipio}
+            </span>
+          </h1>
+          {(d.status || d.situacao_vigencia) && (
+            <div className="flex flex-wrap gap-2 pt-1.5">
+              {d.status && <SeloStatus status={d.status} />}
+              {d.situacao_vigencia && (
+                <span className="selo bg-white/10 text-marca-50 ring-1 ring-white/20">{d.situacao_vigencia}</span>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-5 max-w-4xl">
+          <p className="text-xs font-semibold uppercase tracking-wider text-marca-200">Objeto</p>
+          <p className="mt-1 text-base leading-relaxed text-marca-50">{d.objeto ?? AUSENTE}</p>
+        </div>
+
+        <dl className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 border-t border-white/10 pt-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <Fato icone={ICONES.calendario} rotulo="Fim da vigência">
+            <span className="tabular-nums">{data(d.vigencia_final)}</span>
+          </Fato>
+          <Fato icone={ICONES.fase} rotulo="Fase">
+            {NOME_FASE[d.fase] ?? d.fase}
+          </Fato>
+          <Fato icone={ICONES.codigo} rotulo="Código SEOBRAS">
+            <span className="tabular-nums">{d.codigo_seobras ?? AUSENTE}</span>
+          </Fato>
+          <Fato icone={ICONES.codigo} rotulo="Código SEIOP">
+            <span className="tabular-nums">{d.codigo_seiop ?? AUSENTE}</span>
+          </Fato>
+          <Fato icone={ICONES.camadas} rotulo="Recortes" className="sm:col-span-2">
+            {recortes.length === 0 ? (
+              AUSENTE
+            ) : (
+              <ul aria-label="Recortes" className="mt-0.5 flex flex-wrap gap-1.5">
+                {recortes.map((r) => (
+                  <li
+                    key={r}
+                    className={`selo ring-1 ${
+                      r === '31'
+                        ? 'bg-emerald-400/20 text-emerald-50 ring-emerald-300/40'
+                        : 'bg-white/10 text-white ring-white/20'
+                    }`}
+                  >
+                    {NOME_RECORTE[r]}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Fato>
+        </dl>
+      </div>
+    </section>
+  )
+}
+
+function Compartilhado({ d, busca }: { d: DetalheConvenio; busca: URLSearchParams }) {
+  return (
+    <section
+      aria-label="Código compartilhado"
+      className="flex animate-surgir gap-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-5 text-sm text-amber-950 shadow-cartao"
+    >
+      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-amber-100 text-amber-700">
+        <Icone className="size-5">{ICONES.alerta}</Icone>
+      </span>
+      <div className="min-w-0">
+        <p className="font-semibold">Código compartilhado com outros convênios</p>
+        <p className="mt-0.5 text-amber-900">
+          Um código SIAFE deste convênio também é usado por:
+        </p>
+        <ul className="mt-3 flex flex-wrap gap-2">
+          {d.compartilhado_com.map((c) => (
+            <li key={`${c.numero_convenio}|${c.municipio}|${c.codigo}`} className="flex items-center gap-1.5">
+              <Link
+                to={linkDetalhe(c.numero_convenio, c.municipio, busca)}
+                className="rounded-full border border-amber-300 bg-white px-3 py-1 font-medium text-amber-900 transition-colors hover:border-amber-400 hover:bg-amber-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600"
+              >
+                {c.numero_convenio} · {c.municipio}
+              </Link>
+              <span className="text-xs text-amber-800">(código {c.codigo})</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )
+}
+
+/** Cabeçalho de seção: título, subtítulo e, à direita, um selo opcional (ex.: o mês). */
+function CabecalhoSecao({ titulo, subtitulo, selo }: { titulo: string; subtitulo?: string; selo?: ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-end justify-between gap-2">
+      <div>
+        <h2 className="titulo-secao">{titulo}</h2>
+        {subtitulo && <p className="subtitulo-secao">{subtitulo}</p>}
+      </div>
+      {selo}
+    </div>
+  )
+}
+
+function Aviso({ children }: { children: ReactNode }) {
+  return (
+    <p className="flex items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-white/60 px-5 py-4 text-sm text-slate-600">
+      <Icone className="size-5 text-slate-400">{ICONES.vazio}</Icone>
+      <span>{children}</span>
+    </p>
   )
 }
 
@@ -30,19 +260,22 @@ export function TelaDetalhe() {
     const erro = consulta.error
     if (erro instanceof ApiErro && erro.status === 404) {
       return (
-        <section className="cartao">
+        <section className="cartao flex flex-col items-start gap-1">
+          <span className="mb-2 grid size-11 place-items-center rounded-xl bg-marca-50 text-marca-600">
+            <Icone className="size-5">{ICONES.vazio}</Icone>
+          </span>
           <h1 className="titulo-tela">Convênio não encontrado</h1>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="text-sm text-slate-600">
             Não há convênio {numero} em {municipio}.
           </p>
-          <Link to="/convenios" className="botao-link mt-3 inline-block">
+          <Link to="/convenios" className="botao-secundario mt-3 inline-block">
             Ir para a lista de convênios
           </Link>
         </section>
       )
     }
     return (
-      <div>
+      <div className="space-y-3">
         <CaixaErro erro={erro} onTentar={() => void consulta.refetch()} titulo="Não foi possível abrir o convênio" />
         <Link to="/convenios" className="botao-link">
           Ir para a lista de convênios
@@ -52,82 +285,54 @@ export function TelaDetalhe() {
   }
   if (!d) return <Carregando />
 
-  const anterior = d.referencia.mes === 1 ? { ano: d.referencia.ano - 1, mes: 12 } : { ano: d.referencia.ano, mes: d.referencia.mes - 1 }
+  const { ano, mes } = d.referencia
+  const anterior = mes === 1 ? mesAno(ano - 1, 12) : mesAno(ano, mes - 1)
 
   return (
-    <div className="space-y-6">
-      <header>
-        <Link to="/convenios" className="botao-link">
-          ← Convênios
-        </Link>
-        <h1 className="titulo-tela mt-2">
-          Convênio {d.numero_convenio} · {d.municipio}
-        </h1>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {d.status && <span className="selo bg-marca-100 text-marca-800">{d.status}</span>}
-          {d.situacao_vigencia && (
-            <span className="selo border border-slate-200 bg-white text-slate-700">{d.situacao_vigencia}</span>
-          )}
-        </div>
-      </header>
+    <div className="space-y-8">
+      <Identificacao d={d} />
 
-      <section className="cartao" aria-label="Identificação">
-        <h2 className="titulo-secao">Identificação</h2>
-        <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 text-sm md:grid-cols-4">
-          <Campo rotulo="Fase">{d.fase}</Campo>
-          <Campo rotulo="Status">{d.status ?? AUSENTE}</Campo>
-          <Campo rotulo="Situação da vigência">{d.situacao_vigencia ?? AUSENTE}</Campo>
-          <Campo rotulo="Fim da vigência">{data(d.vigencia_final)}</Campo>
-          <Campo rotulo="Código SEOBRAS">{d.codigo_seobras ?? AUSENTE}</Campo>
-          <Campo rotulo="Código SEIOP">{d.codigo_seiop ?? AUSENTE}</Campo>
-          <Campo rotulo="Recortes">{nomesRecortes(d.recortes)}</Campo>
-        </dl>
-        <div className="mt-5 rounded-xl bg-gelo px-4 py-3.5 text-sm">
-          <p className="text-xs font-medium text-slate-600">Objeto</p>
-          <p className="mt-1 leading-relaxed text-slate-800">{d.objeto ?? AUSENTE}</p>
-        </div>
-        {d.codigo_compartilhado && (
-          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-            <p className="font-medium">Código compartilhado com outros convênios</p>
-            <ul className="mt-1 list-inside list-disc">
-              {d.compartilhado_com.map((c) => (
-                <li key={`${c.numero_convenio}|${c.municipio}|${c.codigo}`}>
-                  <Link to={linkDetalhe(c.numero_convenio, c.municipio, busca)} className="botao-link">
-                    {c.numero_convenio} · {c.municipio}
-                  </Link>{' '}
-                  (código {c.codigo})
-                </li>
-              ))}
-            </ul>
+      {d.codigo_compartilhado && <Compartilhado d={d} busca={busca} />}
+
+      <section aria-label="Saldos do mês" className="space-y-4">
+        <CabecalhoSecao
+          titulo="Saldos SIAFE"
+          subtitulo={`Posição do mês, comparada a ${anterior}.`}
+          selo={
+            <span className="selo bg-marca-50 py-1 text-marca-700 ring-1 ring-marca-100">
+              <Icone className="size-3.5">{ICONES.calendario}</Icone>
+              {mesAno(ano, mes)}
+            </span>
+          }
+        />
+        {!d.saldos && <Aviso>O SIAFE não tem dados de {mesAno(ano, mes)}.</Aviso>}
+        <CartoesSaldo saldos={d.saldos} anterior={d.mes_anterior} mesAnterior={anterior} />
+      </section>
+
+      <section className="space-y-4">
+        <CabecalhoSecao
+          titulo="Valores contratuais"
+          subtitulo="Da planilha de convênios, um bloco por recorte em que o convênio aparece."
+        />
+        {d.contratual.length === 0 ? (
+          <Aviso>
+            Não há valores contratuais para este convênio: ele não está nos recortes Vigentes nem Primeiro
+            realinhamento.
+          </Aviso>
+        ) : (
+          <div className={`grade-surgir grid gap-5 ${d.contratual.length > 1 ? 'lg:grid-cols-2' : ''}`}>
+            {d.contratual.map((c) => (
+              <BlocoContratual
+                key={c.recorte}
+                titulo={`Valores contratuais · ${NOME_RECORTE[c.recorte]}`}
+                recorte={NOME_RECORTE[c.recorte]}
+                destaque={c.recorte === '31'}
+                valores={c}
+              />
+            ))}
           </div>
         )}
       </section>
-
-      <section aria-label="Saldos do mês" className="space-y-3">
-        <h2 className="titulo-secao">Saldos SIAFE · {mesAno(d.referencia.ano, d.referencia.mes)}</h2>
-        {!d.saldos && (
-          <p className="text-sm text-slate-600">O SIAFE não tem dados de {mesAno(d.referencia.ano, d.referencia.mes)}.</p>
-        )}
-        <CartoesSaldo saldos={d.saldos} anterior={d.mes_anterior} />
-        <p className="text-xs text-slate-600">
-          Mês anterior ({mesAno(anterior.ano, anterior.mes)}):{' '}
-          {d.mes_anterior
-            ? CAMPOS_SALDO.map(({ campo, rotulo }) => `${rotulo} ${moeda(d.mes_anterior?.[campo])}`).join(' · ')
-            : 'sem dados'}
-        </p>
-      </section>
-
-      {d.contratual.length === 0 ? (
-        <p className="cartao text-sm text-slate-600">
-          Não há valores contratuais para este convênio: ele não está nos recortes Vigentes nem Primeiro realinhamento.
-        </p>
-      ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
-          {d.contratual.map((c) => (
-            <BlocoContratual key={c.recorte} titulo={`Valores contratuais · ${NOME_RECORTE[c.recorte]}`} valores={c} />
-          ))}
-        </div>
-      )}
 
       <GraficoSerie titulo="Saldos SIAFE do convênio por mês" pontos={d.serie} />
     </div>

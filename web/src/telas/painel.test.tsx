@@ -344,10 +344,15 @@ describe('Detalhe do convênio', () => {
     const id = screen.getByRole('region', { name: 'Identificação' })
     expect(id).toHaveTextContent('Obra sintética de teste')
     expect(id).toHaveTextContent('30/06/2027')
-    expect(id).toHaveTextContent('Histórico inicial, Primeiro realinhamento, Vigentes')
+    const recortes = within(within(id).getByRole('list', { name: 'Recortes' })).getAllByRole('listitem')
+    expect(recortes.map((r) => r.textContent)).toEqual(['Histórico inicial', 'Primeiro realinhamento', 'Vigentes'])
     expect(screen.getByRole('region', { name: 'Valores contratuais · Vigentes' })).toHaveTextContent('R$ 5.000,00')
     expect(screen.getByRole('region', { name: 'Valores contratuais · Primeiro realinhamento' })).toHaveTextContent('R$ 6.000,00')
-    expect(screen.getByRole('region', { name: 'Saldos do mês' })).toHaveTextContent('A comprovar —')
+    const saldos = screen.getByRole('region', { name: 'Saldos do mês' })
+    // Cada card mostra também o valor do mês anterior (out/2026 → set/2026); ausente vira "—".
+    expect(within(saldos).getByLabelText('A pagar')).toHaveTextContent('Em set/2026: R$ 900,00')
+    expect(within(saldos).getByLabelText('A comprovar')).toHaveTextContent('Em set/2026: —')
+    expect(screen.getByRole('progressbar', { name: 'Execução de Valores contratuais · Vigentes' })).toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'Saldos SIAFE do convênio por mês' })).toBeInTheDocument()
   })
 
