@@ -21,6 +21,8 @@ CONTRATUAIS = ("valor_total", "repasse_estado", "contrapartida", "investido_esta
 # partir destes nomes, que são colunas da consulta externa; o texto recebido nunca entra no SQL.
 ORDEM_RANKING = ("municipio", "convenios", *SALDOS, *CONTRATUAIS, "execucao_pct", "investido_sobre_total_pct")
 ORDEM_LISTA = ("numero_convenio", "municipio", "status", "fase", *SALDOS, *CONTRATUAIS, "execucao_pct", "investido_sobre_total_pct")
+ORDEM_TOMADA_CONTAS = ("municipio", "numero_convenio", "codigo_seobras", "valor_siafe", "status")
+ORDEM_PRESTACAO_CONTAS = ("municipio", "numero_convenio", "parcela", "valor_repasse", "valor_executado", "situacao")
 
 
 @dataclass(frozen=True)
@@ -448,3 +450,130 @@ def datas_cargas(conn: Connection) -> DatasCargas:
         planilha_importada_em=planilha.fim if planilha else None,
         arquivo=planilha.arquivo if planilha else None,
     )
+
+
+def consultar_tomada_contas(
+    conn: Connection,
+    municipios: list[str] | None = None,
+    busca: str | None = None,
+    pagina: Pagina = Pagina(),
+) -> Paginado:
+    """Lista paginada da aba Tomada de Contas com filtros por município e texto livre."""
+    where = ["(CAST(:municipios AS text[]) IS NULL OR t.municipio = ANY(CAST(:municipios AS text[])))"]
+    params: dict = {"municipios": municipios or None}
+
+    if busca:
+        where.append(
+            "(t.numero_convenio ILIKE :busca OR t.municipio ILIKE :busca OR t.objeto ILIKE :busca "
+            "OR t.processo_sei ILIKE :busca OR t.status ILIKE :busca OR t.parecer_comissao ILIKE :busca)"
+        )
+        params["busca"] = f"%{busca}%"
+
+    base = f"""
+SELECT
+    t.id,
+    t.municipio,
+    t.numero_convenio,
+    t.codigo_seobras,
+    round(t.valor_siafe, 2) AS valor_siafe,
+    t.objeto,
+    t.parecer_comissao,
+    t.processo_sei,
+    t.status
+FROM planilha_tomada_contas t
+WHERE {" AND ".join(where)}
+"""
+    return _paginar(conn, base, params, pagina, ORDEM_TOMADA_CONTAS, ("municipio", "numero_convenio"))
+
+
+def consultar_prestacao_contas(
+    conn: Connection,
+    municipios: list[str] | None = None,
+    numero_convenio: str | None = None,
+    busca: str | None = None,
+    pagina: Pagina = Pagina(),
+) -> Paginado:
+    """Lista paginada da aba Prestação de Contas com filtros."""
+    where = ["(CAST(:municipios AS text[]) IS NULL OR p.municipio = ANY(CAST(:municipios AS text[])))"]
+    params: dict = {"municipios": municipios or None}
+
+    if numero_convenio:
+        where.append("p.numero_convenio = :numero_convenio")
+        params["numero_convenio"] = numero_convenio
+
+    if busca:
+        where.append(
+            "(p.numero_convenio ILIKE :busca OR p.municipio ILIKE :busca OR p.processo ILIKE :busca "
+            "OR p.observacao ILIKE :busca OR p.situacao ILIKE :busca OR p.baixa_apresentacao ILIKE :busca "
+            "OR p.baixa_aprovacao ILIKE :busca)"
+        )
+        params["busca"] = f"%{busca}%"
+
+    base = f"""
+SELECT
+    p.id,
+    p.item,
+    p.municipio,
+    p.cnpj,
+    p.numero_convenio,
+    p.codigo_seobras,
+    p.codigo_seiop,
+    p.parcela,
+    round(p.valor_repasse, 2) AS valor_repasse,
+    p.processo,
+    round(p.valor_executado, 2) AS valor_executado,
+    p.baixa_apresentacao,
+    p.baixa_aprovacao,
+    p.observacao,
+    p.situacao
+FROM planilha_prestacao_contas p
+WHERE {" AND ".join(where)}
+"""
+    return _paginar(conn, base, params, pagina, ORDEM_PRESTACAO_CONTAS, ("municipio", "numero_convenio", "parcela"))
+
+
+def tomada_contas_convenio(conn: Connection, numero: str, municipio: str) -> dict | None:
+    """Registro de Tomada de Contas do convênio específico, se houver."""
+    sql = """
+SELECT
+    id,
+    municipio,
+    numero_convenio,
+    codigo_seobras,
+    round(valor_siafe, 2) AS valor_siafe,
+    objeto,
+    parecer_comissao,
+    processo_sei,
+    status
+FROM planilha_tomada_contas
+WHERE numero_convenio = :numero AND municipio = :municipio
+LIMIT 1
+"""
+    linha = conn.execute(text(sql), {"numero": numero, "municipio": municipio}).mappings().first()
+    return dict(linha) if linha else None
+
+
+def prestacao_contas_convenio(conn: Connection, numero: str, municipio: str) -> list[dict]:
+    """Todas as parcelas de Prestação de Contas do convênio específico em ordem."""
+    sql = """
+SELECT
+    id,
+    item,
+    municipio,
+    cnpj,
+    numero_convenio,
+    codigo_seobras,
+    codigo_seiop,
+    parcela,
+    round(valor_repasse, 2) AS valor_repasse,
+    processo,
+    round(valor_executado, 2) AS valor_executado,
+    baixa_apresentacao,
+    baixa_aprovacao,
+    observacao,
+    situacao
+FROM planilha_prestacao_contas
+WHERE numero_convenio = :numero AND municipio = :municipio
+ORDER BY coalesce(parcela, 0), id
+"""
+    return _todas(conn, sql, {"numero": numero, "municipio": municipio})

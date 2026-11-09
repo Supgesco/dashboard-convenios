@@ -10,7 +10,10 @@ class Base(DeclarativeBase):
 
 def make_engine(url: str) -> Engine:
     # hide_parameters evita que valores de bind apareçam em mensagens de erro/log.
-    return create_engine(url, hide_parameters=True, pool_pre_ping=True)
+    args = {}
+    if "postgresql" in url:
+        args["connect_timeout"] = 1
+    return create_engine(url, hide_parameters=True, pool_pre_ping=True, connect_args=args)
 
 
 engine = make_engine(get_settings().database_url.get_secret_value())

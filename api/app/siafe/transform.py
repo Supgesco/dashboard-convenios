@@ -24,6 +24,13 @@ def _texto(valor: str) -> str:
     return valor.strip()
 
 
+def _conta_corrente(valor: str) -> str:
+    texto = valor.strip()
+    if texto.isdigit() and len(texto) <= 6:
+        return texto.zfill(6)
+    return texto
+
+
 def _dinheiro(valor: str) -> Decimal:
     try:
         d = Decimal(valor.strip())
@@ -71,7 +78,7 @@ def _coluna(nome: str, conv: Callable[[str], Any]) -> Callable[[str], dict[str, 
 # Campo da FlexVision (normalizado em NFC) -> função que produz as colunas.
 CAMPOS: dict[str, Callable[[str], dict[str, Any]]] = {
     "Unidade Gestora": _ug,
-    "Conta Corrente": _coluna("conta_corrente", _texto),
+    "Conta Corrente": _coluna("conta_corrente", _conta_corrente),
     "Conta contábil": _conta_contabil,
     "Credor": _credor,
     "Convenios a pagar": _coluna("convenios_a_pagar", _dinheiro),

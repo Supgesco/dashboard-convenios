@@ -14,13 +14,13 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    siafe_url: str
-    siafe_user: str
-    siafe_password: SecretStr
-    siafe_ug: str
-    siafe_consulta: str
+    siafe_url: str = "https://siafe.fazenda.rj.gov.br"
+    siafe_user: str = "usuario"
+    siafe_password: SecretStr = SecretStr("senha")
+    siafe_ug: str = "530100"
+    siafe_consulta: str = "1"
 
-    database_url: SecretStr
+    database_url: SecretStr = SecretStr("sqlite:///:memory:")
 
     siafe_timeout_seconds: float = 60.0
 

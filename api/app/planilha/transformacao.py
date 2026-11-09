@@ -105,7 +105,8 @@ def municipio(valor: Any) -> Resultado:
     return (oficial, None) if oficial else (texto, "municipio_desconhecido")
 
 
-_NUMERO_CONVENIO = re.compile(r"^(\d{1,3})(?:[-/]([A-Za-z]))?/(\d{2}|\d{4})$")
+_NUMERO_CONVENIO_BARRA = re.compile(r"^(\d{1,3})(?:[-/]?([A-Za-z]))?/(20\d{2}|\d{2,4})$")
+_NUMERO_CONVENIO_COLADO = re.compile(r"^(\d{1,3})(?:[-/]?([A-Za-z]))?(20\d{2})$")
 
 
 def numero_convenio(valor: Any) -> Resultado:
@@ -113,7 +114,10 @@ def numero_convenio(valor: Any) -> Resultado:
         return None, None
     if not isinstance(valor, str):
         return None, "numero_convenio_invalido"
-    m = _NUMERO_CONVENIO.match("".join(valor.split()))
+    texto = "".join(valor.split())
+    m = _NUMERO_CONVENIO_BARRA.match(texto)
+    if not m:
+        m = _NUMERO_CONVENIO_COLADO.match(texto)
     if not m:
         return None, "numero_convenio_invalido"
     numero, letra, ano = m.groups()
@@ -123,9 +127,10 @@ def numero_convenio(valor: Any) -> Resultado:
 
 
 _CODIGO = re.compile(r"^\d{1,6}$")
+_CODIGO_DIGITOS = re.compile(r"\d+")
 
 
-def codigo(valor: Any) -> Resultado:
+def codigo(valor: Any, tipo: str | None = None) -> Resultado:
     if ausente(valor):
         return None, None
     if isinstance(valor, bool):
@@ -138,9 +143,34 @@ def codigo(valor: Any) -> Resultado:
         texto = "".join(valor.split()).lstrip("'")
     else:
         return None, "codigo_invalido"
-    if not _CODIGO.match(texto):
-        return None, "codigo_invalido"
-    return texto.zfill(6), None
+
+    if _CODIGO.match(texto):
+        return texto.zfill(6), None
+
+    if tipo in ("SEOBRAS", "SEIOP"):
+        # Trata casos com prefixo textual ('CV240010', 'SEOBRAS 240010', 'SEIOP 109')
+        partes = _CODIGO_DIGITOS.findall(texto)
+        if len(partes) == 1 and len(partes[0]) <= 6:
+            return partes[0].zfill(6), None
+        # Trata casos compostos como '210014/007645' ou '210014-007645'
+        if len(partes) == 2:
+            p1, p2 = partes
+            seiop_val = p1 if p1.startswith(("2100", "2101")) else (p2 if p2.startswith(("2100", "2101")) else None)
+            seobras_val = p2 if seiop_val == p1 else (p1 if seiop_val == p2 else None)
+            if not seiop_val or not seobras_val:
+                seiop_val, seobras_val = p1, p2
+            escolhido = seiop_val if tipo == "SEIOP" else seobras_val
+            if escolhido and len(escolhido) <= 6:
+                return escolhido.zfill(6), None
+
+        # Trata caso colado de 12 dígitos como '210014007645'
+        if len(texto) == 12 and texto.isdigit():
+            seiop_val = texto[:6]
+            seobras_val = texto[6:]
+            escolhido = seiop_val if tipo == "SEIOP" else seobras_val
+            return escolhido.zfill(6), None
+
+    return None, "codigo_invalido"
 
 
 def data(valor: Any) -> Resultado:
@@ -201,6 +231,13 @@ _FUNCOES: dict[Papel, Callable[[Any], Resultado]] = {
 def tratar(coluna: Coluna, valor: Any) -> Resultado:
     if coluna.papel is Papel.CATEGORIA:
         return categoria(valor, coluna.vocabulario)
+    if coluna.papel is Papel.CODIGO:
+        tipo = None
+        if "seobras" in coluna.nome:
+            tipo = "SEOBRAS"
+        elif "seiop" in coluna.nome:
+            tipo = "SEIOP"
+        return codigo(valor, tipo=tipo)
     return _FUNCOES[coluna.papel](valor)
 
 
