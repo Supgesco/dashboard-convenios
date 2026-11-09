@@ -97,6 +97,80 @@ describe('TabelaPaginada', () => {
     expect(proximaOrdem('-x', 'x')).toBe('x')
     expect(proximaOrdem('y', 'x')).toBe('x')
   })
+
+  it('botão Editar em cada linha abre o modal, atualiza o item sem navegar e chama onSalvarEdicao', async () => {
+    const onLinha = vi.fn()
+    const onSalvarEdicao = vi.fn()
+    render(
+      <TabelaPaginada
+        colunas={COLUNAS}
+        itens={[{ nome: 'Município A', valor: 100 }]}
+        chave={(i) => i.nome}
+        total={1}
+        pagina={1}
+        tamanho={20}
+        ordem={null}
+        onOrdem={() => {}}
+        onPagina={() => {}}
+        onLinha={onLinha}
+        onSalvarEdicao={onSalvarEdicao}
+        unidade={['município', 'municípios']}
+      />,
+    )
+
+    const botaoEditar = screen.getByRole('button', { name: 'Editar' })
+    await userEvent.click(botaoEditar)
+    expect(onLinha).not.toHaveBeenCalled()
+
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByText('Editar registro')).toBeInTheDocument()
+
+    const inputNome = within(dialog).getByLabelText('Nome')
+    await userEvent.clear(inputNome)
+    await userEvent.type(inputNome, 'Município Editado')
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Salvar alterações' }))
+
+    expect(onSalvarEdicao).toHaveBeenCalledWith(
+      { nome: 'Município A', valor: 100 },
+      expect.objectContaining({ nome: 'Município Editado' }),
+    )
+    expect(screen.getByText('Município Editado')).toBeInTheDocument()
+  })
+
+  it('botão Remover exige confirmação de duas etapas antes de chamar onRemoverItem', async () => {
+    const onRemoverItem = vi.fn().mockResolvedValue(undefined)
+    render(
+      <TabelaPaginada
+        colunas={COLUNAS}
+        itens={[{ nome: 'Convênio 999999', valor: 100 }]}
+        chave={(i) => i.nome}
+        total={1}
+        pagina={1}
+        tamanho={20}
+        ordem={null}
+        onOrdem={() => {}}
+        onPagina={() => {}}
+        onRemoverItem={onRemoverItem}
+        unidade={['convênio', 'convênios']}
+      />,
+    )
+
+    await userEvent.click(screen.getByRole('button', { name: 'Remover' }))
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByText('Etapa 1 de 2')).toBeInTheDocument()
+    expect(within(dialog).getByText('Remover convênio?')).toBeInTheDocument()
+    expect(onRemoverItem).not.toHaveBeenCalled()
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Continuar (1/2)' }))
+    expect(within(dialog).getByText('Etapa 2 de 2')).toBeInTheDocument()
+    expect(within(dialog).getByText('Confirmação final de exclusão')).toBeInTheDocument()
+    expect(onRemoverItem).not.toHaveBeenCalled()
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Confirmar exclusão definitiva' }))
+    expect(onRemoverItem).toHaveBeenCalledWith({ nome: 'Convênio 999999', valor: 100 })
+    expect(screen.queryByText('Convênio 999999')).not.toBeInTheDocument()
+  })
 })
 
 describe('CaixaErro', () => {
