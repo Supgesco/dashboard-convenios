@@ -11,7 +11,7 @@ const API_URL = process.env.API_URL ?? 'http://localhost:8010'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    host: 'localhost',
+    host: true,
     port: 5180,
     // Falha em vez de pular para outra porta sem avisar.
     strictPort: true,
