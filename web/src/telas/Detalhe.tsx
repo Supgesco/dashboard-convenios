@@ -7,7 +7,7 @@ import type { DetalheConvenio } from '../api/tipos'
 import { CaixaErro, Carregando } from '../componentes/Estados'
 import { GraficoSerie } from '../componentes/GraficoSerie'
 import { lerFiltros, useMesReferencia } from '../filtros'
-import { AUSENTE, data, mesAno } from '../formato'
+import { AUSENTE, data, mesAno, moeda } from '../formato'
 import { NOME_RECORTE, ORDEM_EXIBICAO } from '../recortes'
 import { BlocoContratual, CartoesSaldo, linkDetalhe } from './comum'
 
@@ -335,6 +335,70 @@ export function TelaDetalhe() {
       </section>
 
       <GraficoSerie titulo="Saldos SIAFE do convênio por mês" pontos={d.serie} />
+
+      {d.tomada_contas && (
+        <section aria-label="Tomada de Contas" className="space-y-4">
+          <CabecalhoSecao
+            titulo="Tomada de Contas"
+            subtitulo="Registro de apuração administrativa vinculado a este convênio."
+          />
+          <div className="cartao grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <p className="text-xs font-medium text-slate-500">Valor SIAFE</p>
+              <p className="mt-1 font-semibold tabular-nums text-amber-800">{moeda(d.tomada_contas.valor_siafe)}</p>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-500">Processo SEI / Adm.</p>
+              <p className="mt-1 text-sm font-medium text-slate-800">{d.tomada_contas.processo_sei ?? AUSENTE}</p>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-500">Parecer da Comissão</p>
+              <p className="mt-1 text-sm text-slate-700">{d.tomada_contas.parecer_comissao ?? AUSENTE}</p>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-500">Status</p>
+              <p className="mt-1 text-sm font-semibold text-slate-900">{d.tomada_contas.status ?? AUSENTE}</p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {d.prestacao_contas && d.prestacao_contas.length > 0 && (
+        <section aria-label="Prestação de Contas" className="space-y-4">
+          <CabecalhoSecao
+            titulo="Prestação de Contas · Parcelas"
+            subtitulo={`${d.prestacao_contas.length} parcela(s) registrada(s) na planilha de execução.`}
+          />
+          <div className="cartao overflow-x-auto p-0">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-slate-200 bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-600">
+                <tr>
+                  <th className="px-4 py-3">Parcela</th>
+                  <th className="px-4 py-3 text-right">Valor Repasse</th>
+                  <th className="px-4 py-3 text-right">Valor Executado</th>
+                  <th className="px-4 py-3">Processo</th>
+                  <th className="px-4 py-3">Baixa Apresentação</th>
+                  <th className="px-4 py-3">Baixa Aprovação</th>
+                  <th className="px-4 py-3">Situação</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {d.prestacao_contas.map((p) => (
+                  <tr key={p.id} className="hover:bg-slate-50/80">
+                    <td className="px-4 py-2.5 font-medium tabular-nums">{p.parcela ?? AUSENTE}</td>
+                    <td className="px-4 py-2.5 text-right tabular-nums">{moeda(p.valor_repasse)}</td>
+                    <td className="px-4 py-2.5 text-right tabular-nums">{moeda(p.valor_executado)}</td>
+                    <td className="px-4 py-2.5 font-mono text-xs text-slate-600">{p.processo ?? AUSENTE}</td>
+                    <td className="px-4 py-2.5 text-xs text-slate-600">{p.baixa_apresentacao ?? AUSENTE}</td>
+                    <td className="px-4 py-2.5 text-xs text-slate-600">{p.baixa_aprovacao ?? AUSENTE}</td>
+                    <td className="px-4 py-2.5 text-xs font-medium text-slate-800">{p.situacao ?? AUSENTE}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
     </div>
   )
 }

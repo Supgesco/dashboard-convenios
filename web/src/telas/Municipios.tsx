@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router'
 
-import { TAMANHO_PAGINA, useMunicipios } from '../api/hooks'
+import { TAMANHO_PAGINA, useEditarMunicipio, useMunicipios } from '../api/hooks'
 import type { LinhaMunicipio } from '../api/tipos'
 import { CaixaErro, Carregando } from '../componentes/Estados'
 import { TabelaPaginada, type Coluna } from '../componentes/TabelaPaginada'
@@ -45,6 +45,7 @@ export function TelaMunicipios() {
   const { filtros, busca, mudar, limpar } = useFiltros()
   const ref = useMesReferencia(filtros.mes)
   const consulta = useMunicipios(filtros, ref.mes, filtros, { enabled: ref.resolvido })
+  const editar = useEditarMunicipio()
   const navegar = useNavigate()
   const colunas = filtros.recorte === '342' ? BASE : [...BASE, ...CONTRATUAIS]
   const d = consulta.data
@@ -80,6 +81,7 @@ export function TelaMunicipios() {
             unidade={['município', 'municípios']}
             vazio="Nenhum município com convênio neste filtro."
             atualizando={consulta.isPlaceholderData}
+            onSalvarEdicao={(item, alt) => editar.mutateAsync({ ...alt, municipio: item.municipio })}
           />
           <LegendaCompartilhado />
         </>

@@ -77,6 +77,10 @@
   body {
     @apply bg-gelo text-slate-900 antialiased;
   }
+  input::-ms-reveal,
+  input::-ms-clear {
+    display: none;
+  }
 }
 
 @layer components {

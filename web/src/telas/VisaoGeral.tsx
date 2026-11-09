@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router'
 
-import { TAMANHO_PAGINA, useConvenios, useRankingRecorte, useResumoRecorte } from '../api/hooks'
+import { TAMANHO_PAGINA, useConvenios, useEditarConvenio, useRankingRecorte, useRemoverConvenio, useResumoRecorte } from '../api/hooks'
 import type { LinhaConvenio } from '../api/tipos'
 import { BarrasHorizontais } from '../componentes/BarrasHorizontais'
 import { CaixaErro, Carregando } from '../componentes/Estados'
@@ -199,6 +199,8 @@ function ListaVigentes() {
   const { filtros, mudar } = useFiltros()
   const ordem = filtros.ordem ?? ORDEM_PADRAO_VIGENTES
   const consulta = useConvenios({ recorte: VIGENTES, ...SEM_FILTRO }, null, { pagina: filtros.pagina, ordem })
+  const editar = useEditarConvenio()
+  const remover = useRemoverConvenio()
   const navegar = useNavigate()
   const d = consulta.data
 
@@ -228,6 +230,12 @@ function ListaVigentes() {
           unidade={['convênio vigente', 'convênios vigentes']}
           vazio="Nenhum convênio vigente."
           atualizando={consulta.isPlaceholderData}
+          onSalvarEdicao={(item, alt) =>
+            editar.mutateAsync({ ...alt, numero_convenio: item.numero_convenio, municipio: item.municipio })
+          }
+          onRemoverItem={(item) =>
+            remover.mutateAsync({ numero: item.numero_convenio, municipio: item.municipio })
+          }
         />
       )}
     </section>

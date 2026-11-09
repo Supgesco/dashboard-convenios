@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState, type ReactNode } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 
+import { useAuth } from '../autenticacao'
 import { buscaGlobal, useFiltros } from '../filtros'
 import { BarraFiltros } from './BarraFiltros'
 
@@ -57,6 +58,28 @@ const MENU = [
     ),
   },
   {
+    para: '/prestacao-de-contas',
+    rotulo: 'Prestação de Contas',
+    icone: (
+      <Icone>
+        <path d="M9 11l3 3L22 4" />
+        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+      </Icone>
+    ),
+  },
+  {
+    para: '/tomada-de-contas',
+    rotulo: 'Tomada de Contas',
+    icone: (
+      <Icone>
+        <path d="M12 3v18" />
+        <path d="M3 7l9-4 9 4" />
+        <path d="M6 10l-3 6h6l-3-6z" />
+        <path d="M18 10l-3 6h6l-3-6z" />
+      </Icone>
+    ),
+  },
+  {
     para: '/cargas',
     rotulo: 'Cargas',
     icone: (
@@ -85,13 +108,15 @@ function FaixaDesenvolvimento() {
 }
 
 /** Telas que usam o bloco de filtros globais. */
-const TELAS_COM_FILTROS = ['/municipios', '/convenios']
+const TELAS_COM_FILTROS = ['/municipios', '/convenios', '/prestacao-de-contas', '/tomada-de-contas']
 
 const ID_MENU = 'menu-telas'
 
 export function Layout() {
   const { pathname } = useLocation()
   const { filtros, busca, limpar } = useFiltros()
+  const { usuario, logout } = useAuth()
+  const navegar = useNavigate()
   const [aberto, setAberto] = useState(false)
   const comFiltros = TELAS_COM_FILTROS.includes(pathname)
   // No detalhe, `municipio` é parte da chave do convênio, não filtro: o menu leva só o mês.
@@ -99,6 +124,11 @@ export function Layout() {
     pathname === '/convenio'
       ? buscaGlobal(new URLSearchParams([...busca].filter(([k]) => k === 'ano' || k === 'mes')))
       : buscaGlobal(busca)
+
+  const handleLogout = () => {
+    logout()
+    navegar('/login')
+  }
 
   // A gaveta (tela estreita) fecha ao escolher uma tela, com Esc e com clique no fundo.
   useEffect(() => {
@@ -115,20 +145,32 @@ export function Layout() {
       <FaixaDesenvolvimento />
       <div className="min-h-screen lg:grid lg:grid-cols-[15rem_1fr]">
         {/* Barra superior só em tela estreita */}
-        <header className="sticky top-0 z-30 flex items-center gap-3 bg-marca-900 px-4 py-2.5 text-white shadow-md lg:hidden">
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-3 py-1.5 text-sm text-white hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-            aria-expanded={aberto}
-            aria-controls={ID_MENU}
-            onClick={() => setAberto((a) => !a)}
-          >
-            <Icone>
-              <path d="M4 7h16M4 12h16M4 17h16" />
-            </Icone>
-            Menu
-          </button>
-          <span className="font-semibold">Painel de convênios</span>
+        <header className="sticky top-0 z-30 flex items-center justify-between bg-marca-900 px-4 py-2.5 text-white shadow-md lg:hidden">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-3 py-1.5 text-sm text-white hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              aria-expanded={aberto}
+              aria-controls={ID_MENU}
+              onClick={() => setAberto((a) => !a)}
+            >
+              <Icone>
+                <path d="M4 7h16M4 12h16M4 17h16" />
+              </Icone>
+              Menu
+            </button>
+            <span className="font-semibold text-sm">Painel de convênios</span>
+          </div>
+          {usuario && (
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-lg border border-white/20 px-2.5 py-1 text-xs text-white/90 hover:bg-white/10"
+              title="Encerrar sessão"
+            >
+              Sair
+            </button>
+          )}
         </header>
 
         <AnimatePresence>
@@ -155,11 +197,26 @@ export function Layout() {
           <div className="flex items-center gap-3 px-5 pb-6 pt-6">
             <span
               aria-hidden="true"
-              className="grid size-9 place-items-center rounded-xl bg-white/10 text-white ring-1 ring-white/15 transition-transform duration-300 hover:rotate-[-6deg] hover:scale-105"
+              className="grid size-10 shrink-0 place-items-center rounded-xl border border-cyan-400/25 bg-gradient-to-br from-slate-900 via-marca-900 to-cyan-950 p-1.5 text-white shadow-md ring-1 ring-white/10 transition-transform duration-300 hover:scale-105"
             >
-              <Icone>
-                <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
-              </Icone>
+              <svg viewBox="0 0 64 64" className="size-full" fill="none">
+                <rect x="12" y="30" width="9" height="20" rx="2.5" fill="#38BDF8" opacity="0.85" />
+                <rect x="27.5" y="20" width="9" height="30" rx="2.5" fill="#22D3EE" />
+                <rect x="43" y="13" width="9" height="37" rx="2.5" fill="#34D399" />
+                <path
+                  d="M10 42C20 41 26 34 33 27C39 21 45 16 54 11"
+                  stroke="#A7F3D0"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M45 10.5H54.5V20"
+                  stroke="#34D399"
+                  strokeWidth="3.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </span>
             <div>
               <p className="text-sm font-semibold leading-tight tracking-tight text-white">Painel de convênios</p>
@@ -212,6 +269,34 @@ export function Layout() {
               ))}
             </ul>
           </nav>
+
+          {/* Usuário logado e ação de sair */}
+          {usuario && (
+            <div className="mt-auto border-t border-white/10 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-semibold text-white">{usuario.nome}</p>
+                  <p className="truncate text-[10px] text-marca-200">{usuario.email}</p>
+                  <span className="mt-1 inline-block rounded bg-white/10 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-cyan-300">
+                    {usuario.perfil}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="rounded-lg border border-white/10 p-2 text-marca-200 hover:bg-white/10 hover:text-white"
+                  title="Sair do sistema"
+                  aria-label="Sair do sistema"
+                >
+                  <Icone>
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                  </Icone>
+                </button>
+              </div>
+            </div>
+          )}
         </aside>
 
         <main className="min-w-0 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
