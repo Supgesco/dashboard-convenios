@@ -1,12 +1,17 @@
 import { MotionConfig } from 'motion/react'
 import { Link, Route, Routes } from 'react-router'
 
+import { ProvedorAutenticacao } from './autenticacao'
 import { Layout } from './componentes/Layout'
+import { RotaProtegida } from './componentes/RotaProtegida'
+import { ANIMAR } from './movimento'
 import { TelaCargas } from './telas/Cargas'
 import { TelaConvenios } from './telas/Convenios'
 import { TelaDetalhe } from './telas/Detalhe'
+import { TelaLogin } from './telas/Login'
 import { TelaMunicipios } from './telas/Municipios'
-import { ANIMAR } from './movimento'
+import { TelaPrestacaoContas } from './telas/PrestacaoContas'
+import { TelaTomadaContas } from './telas/TomadaContas'
 import { TelaVisaoGeral } from './telas/VisaoGeral'
 
 function NaoEncontrado() {
@@ -24,17 +29,24 @@ function NaoEncontrado() {
 export default function App() {
   // Anima mesmo com "reduzir movimento" no sistema (ver `movimento.ts`).
   return (
-    <MotionConfig reducedMotion={ANIMAR ? 'never' : 'always'}>
-      <Routes>
-        <Route element={<Layout />}>
-          <Route index element={<TelaVisaoGeral />} />
-          <Route path="municipios" element={<TelaMunicipios />} />
-          <Route path="convenios" element={<TelaConvenios />} />
-          <Route path="convenio" element={<TelaDetalhe />} />
-          <Route path="cargas" element={<TelaCargas />} />
-          <Route path="*" element={<NaoEncontrado />} />
-        </Route>
-      </Routes>
-    </MotionConfig>
+    <ProvedorAutenticacao>
+      <MotionConfig reducedMotion={ANIMAR ? 'never' : 'always'}>
+        <Routes>
+          <Route path="/login" element={<TelaLogin />} />
+          <Route element={<RotaProtegida />}>
+            <Route element={<Layout />}>
+              <Route index element={<TelaVisaoGeral />} />
+              <Route path="municipios" element={<TelaMunicipios />} />
+              <Route path="convenios" element={<TelaConvenios />} />
+              <Route path="prestacao-de-contas" element={<TelaPrestacaoContas />} />
+              <Route path="tomada-de-contas" element={<TelaTomadaContas />} />
+              <Route path="convenio" element={<TelaDetalhe />} />
+              <Route path="cargas" element={<TelaCargas />} />
+              <Route path="*" element={<NaoEncontrado />} />
+            </Route>
+          </Route>
+        </Routes>
+      </MotionConfig>
+    </ProvedorAutenticacao>
   )
 }
