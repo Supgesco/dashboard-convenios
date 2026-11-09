@@ -1,0 +1,62 @@
+name: Deploy convênios (homologação)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-convenios
+  cancel-in-progress: false
+
+jobs:
+  homologacao:
+    runs-on: [self-hosted, convenios]
+    env:
+      WEB_DIR: /var/www/html/convenios
+      API_DIR: /var/www/html/convenios/api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Front (build para /convenios/)
+        working-directory: web
+        env:
+          VITE_API_BASE: /convenios/api
+        run: |
+          npm ci
+          npx tsc -b
+          npx vite build --base=/convenios/
+
+      - name: Front (publicar)
+        run: |
+          mkdir -p "$WEB_DIR"
+          # A pasta api/ fica dentro de WEB_DIR: o --delete não pode apagá-la.
+          rsync -a --delete --exclude='/api/' web/dist/ "$WEB_DIR/"
+
+      - name: API (código)
+        run: |
+          mkdir -p "$API_DIR"
+          # .env e .venv ficam no servidor: o .env é criado à mão uma vez.
+          rsync -a --delete \
+            --exclude='.env' --exclude='.venv' --exclude='__pycache__' \
+            --exclude='.pytest_cache' --exclude='tests' \
+            api/ "$API_DIR/"
+
+      - name: API (dependências e migrações)
+        working-directory: /var/www/html/convenios/api
+        run: |
+          uv sync --frozen --no-dev
+          .venv/bin/alembic upgrade head
+
+      - name: API (reiniciar)
+        run: |
+          sudo /usr/bin/systemctl restart convenios-api
+          curl -fsS --retry 15 --retry-delay 2 --retry-connrefused \
+            http://127.0.0.1:8010/openapi.json > /dev/null
+          echo "API no ar."
