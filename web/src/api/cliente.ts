@@ -1,4 +1,5 @@
 // Cliente HTTP fino: monta a URL, serializa parâmetros repetidos e transforma falhas em ApiErro.
+import { atenderEstatico, emModoEstatico } from './modoEstatico'
 
 export const API_BASE = (import.meta.env.VITE_API_BASE ?? '/api').replace(/\/$/, '')
 
@@ -41,12 +42,23 @@ export function montarUrl(caminho: string, parametros: Parametros = {}): string 
   return `${API_BASE}${caminho}${query ? `?${query}` : ''}`
 }
 
-async function requisitar<T>(metodo: 'GET' | 'POST', caminho: string, parametros?: Parametros): Promise<T> {
+async function requisitar<T>(
+  metodo: 'GET' | 'POST' | 'PUT' | 'DELETE',
+  caminho: string,
+  parametros?: Parametros,
+  body?: unknown,
+): Promise<T> {
+  if (emModoEstatico()) {
+    return atenderEstatico<T>(metodo, caminho, parametros, body)
+  }
   let resposta: Response
   try {
+    const headers: Record<string, string> = { Accept: 'application/json' }
+    if (body !== undefined) headers['Content-Type'] = 'application/json'
     resposta = await fetch(montarUrl(caminho, parametros), {
       method: metodo,
-      headers: { Accept: 'application/json' },
+      headers,
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     })
   } catch {
     throw new ApiErro(0, null)
@@ -67,6 +79,18 @@ export function apiGet<T>(caminho: string, parametros?: Parametros): Promise<T> 
 
 export function apiPost<T>(caminho: string, parametros?: Parametros): Promise<T> {
   return requisitar<T>('POST', caminho, parametros)
+}
+
+export function apiPostJson<T>(caminho: string, body: unknown): Promise<T> {
+  return requisitar<T>('POST', caminho, undefined, body)
+}
+
+export function apiPut<T>(caminho: string, body: unknown): Promise<T> {
+  return requisitar<T>('PUT', caminho, undefined, body)
+}
+
+export function apiDelete<T>(caminho: string, parametros?: Parametros): Promise<T> {
+  return requisitar<T>('DELETE', caminho, parametros)
 }
 
 /** Texto legível para o `detail` da API (texto, objeto {msg, ...} ou a lista de validação do FastAPI). */

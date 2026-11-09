@@ -1,11 +1,13 @@
 import { motion } from 'motion/react'
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { useLocation } from 'react-router'
 
 import { useContagemRecortes, useOpcoesMunicipios } from '../api/hooks'
 import type { Recorte } from '../api/tipos'
 import { useFiltros, useMesReferencia } from '../filtros'
 import { inteiro } from '../formato'
 import { NOME_RECORTE, ORDEM_EXIBICAO, rotuloRecorte } from '../recortes'
+import { useExibirNovoConvenio } from '../telas/NovoConvenio'
 
 // Ícones pequenos em linha (16px), no mesmo traço dos do menu.
 function Icone({ children, className = 'size-4' }: { children: ReactNode; className?: string }) {
@@ -90,7 +92,7 @@ function SeletorRecorte() {
 }
 
 const PILULA =
-  'inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 transition-colors hover:border-marca-200 hover:bg-marca-50/40'
+  'inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 transition-all hover:border-marca-200 hover:bg-marca-50/40 active:border-marca-500 active:bg-marca-50/50 active:ring-2 active:ring-marca-100'
 
 /** Botão que abre a lista de municípios do recorte (busca + caixas de seleção), num popover próprio. */
 function SeletorMunicipios({
@@ -139,8 +141,8 @@ function SeletorMunicipios({
         aria-expanded={aberto}
         aria-controls={idPainel}
         onClick={() => setAberto((a) => !a)}
-        className={`${PILULA} focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-600 ${
-          aberto || n ? 'border-marca-200 bg-marca-50/50' : ''
+        className={`${PILULA} focus-visible:border-marca-500 focus-visible:ring-2 focus-visible:ring-marca-100 focus-visible:outline-none ${
+          aberto ? 'border-marca-500 bg-marca-50/50 ring-2 ring-marca-100' : n ? 'border-marca-200 bg-marca-50/50' : ''
         }`}
       >
         {ICONE_LOCAL}
@@ -225,12 +227,14 @@ function SeletorMunicipios({
 }
 
 function SeletorMes() {
+  const { pathname } = useLocation()
   const { filtros, mudar } = useFiltros()
   const ref = useMesReferencia(filtros.mes)
+  const [exibirNovo, setExibirNovo] = useExibirNovoConvenio()
   const valorMes = ref.mes ? `${ref.mes.ano}-${String(ref.mes.mes).padStart(2, '0')}` : ''
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <div className={`${PILULA} focus-within:border-marca-500 focus-within:ring-2 focus-within:ring-marca-100`}>
+      <div className={`${PILULA} focus-within:border-marca-500 focus-within:bg-marca-50/50 focus-within:ring-2 focus-within:ring-marca-100`}>
         {ICONE_CALENDARIO}
         <label htmlFor="mes-referencia" className="text-slate-500">
           Mês<span className="sr-only"> de referência</span>
@@ -247,6 +251,21 @@ function SeletorMes() {
           }}
         />
       </div>
+      {pathname === '/convenios' && (
+        <button
+          type="button"
+          aria-pressed={exibirNovo}
+          onClick={() => setExibirNovo(!exibirNovo)}
+          className={`${PILULA} focus-visible:border-marca-500 focus-visible:ring-2 focus-visible:ring-marca-100 focus-visible:outline-none`}
+        >
+          <Icone className="size-4 text-slate-400">
+            {exibirNovo ? <path d="M19 12H5M12 19l-7-7 7-7" /> : <path d="M12 5v14M5 12h14" />}
+          </Icone>
+          <span className="font-semibold text-slate-900">
+            {exibirNovo ? 'Voltar para Convênios' : 'Novo Convênio'}
+          </span>
+        </button>
+      )}
       {ref.daUrl ? (
         <button
           type="button"

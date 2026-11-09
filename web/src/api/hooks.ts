@@ -9,7 +9,7 @@ import {
 } from '@tanstack/react-query'
 import { useEffect, useRef } from 'react'
 
-import { ApiErro, apiGet, apiPost } from './cliente'
+import { ApiErro, apiDelete, apiGet, apiPost, apiPostJson, apiPut } from './cliente'
 import { RECORTES } from './tipos'
 import type {
   Convenios,
@@ -17,9 +17,15 @@ import type {
   ExecucaoIniciada,
   ExecucaoStatus,
   Execucoes,
+  LinhaConvenio,
+  LinhaMunicipio,
+  LinhaPrestacaoContas,
+  LinhaTomadaContas,
   Municipios,
+  PrestacaoContasResposta,
   Recorte,
   Resumo,
+  TomadaContasResposta,
 } from './tipos'
 
 /** Mês pedido à API; `null` deixa a API escolher (mês corrente). */
@@ -191,6 +197,34 @@ export function useConvenio(numero: string, municipio: string, mes: MesConsulta,
   })
 }
 
+export function useTomadaContas(municipios: readonly string[], pagina: PaginaApi) {
+  return useQuery({
+    queryKey: ['tomada-contas', [...municipios].sort(), pagina],
+    queryFn: () =>
+      apiGet<TomadaContasResposta>('/painel/tomada-contas', {
+        municipio: [...municipios],
+        pagina: pagina.pagina,
+        tamanho: TAMANHO_PAGINA,
+        ordem: pagina.ordem,
+      }),
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function usePrestacaoContas(municipios: readonly string[], pagina: PaginaApi) {
+  return useQuery({
+    queryKey: ['prestacao-contas', [...municipios].sort(), pagina],
+    queryFn: () =>
+      apiGet<PrestacaoContasResposta>('/painel/prestacao-contas', {
+        municipio: [...municipios],
+        pagina: pagina.pagina,
+        tamanho: TAMANHO_PAGINA,
+        ordem: pagina.ordem,
+      }),
+    placeholderData: keepPreviousData,
+  })
+}
+
 /** Última carga SIAFE; `null` quando nenhuma carga foi feita (a API responde 404). */
 export function useStatusCarga() {
   const queryClient = useQueryClient()
@@ -252,6 +286,123 @@ export function useDispararCarga() {
     onSettled: async () => {
       await queryClient.invalidateQueries({ queryKey: ['status-carga'] })
       await queryClient.invalidateQueries({ queryKey: ['execucoes'] })
+    },
+  })
+}
+
+export function useEditarConvenio() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: Partial<LinhaConvenio> & { numero_convenio: string; municipio: string }) =>
+      apiPut<LinhaConvenio>('/painel/convenios', payload),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['convenios'] })
+      await queryClient.invalidateQueries({ queryKey: ['resumo'] })
+      await queryClient.invalidateQueries({ queryKey: ['resumo-geral'] })
+      await queryClient.invalidateQueries({ queryKey: ['convenio'] })
+    },
+  })
+}
+
+export function useEditarMunicipio() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: Partial<LinhaMunicipio> & { municipio: string }) =>
+      apiPut<LinhaMunicipio>('/painel/municipios', payload),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['municipios'] })
+      await queryClient.invalidateQueries({ queryKey: ['ranking-recorte'] })
+      await queryClient.invalidateQueries({ queryKey: ['municipios-recorte'] })
+      await queryClient.invalidateQueries({ queryKey: ['resumo'] })
+    },
+  })
+}
+
+export function useEditarTomadaContas() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...payload }: Partial<LinhaTomadaContas> & { id: number }) =>
+      apiPut<LinhaTomadaContas>(`/painel/tomada-contas/${id}`, payload),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['tomada-contas'] })
+      await queryClient.invalidateQueries({ queryKey: ['convenio'] })
+    },
+  })
+}
+
+export function useEditarPrestacaoContas() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...payload }: Partial<LinhaPrestacaoContas> & { id: number }) =>
+      apiPut<LinhaPrestacaoContas>(`/painel/prestacao-contas/${id}`, payload),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['prestacao-contas'] })
+      await queryClient.invalidateQueries({ queryKey: ['convenio'] })
+    },
+  })
+}
+
+export interface NovoConvenioPayload {
+  numero_convenio: string
+  municipio: string
+  recortes: Recorte[]
+  status?: string
+  fase?: string
+  situacao_vigencia?: string
+  vigencia_inicio?: string | null
+  vigencia_final?: string | null
+  termo_realinhamento?: string | null
+  objeto?: string | null
+  codigo_seobras?: string | null
+  codigo_seiop?: string | null
+  cnpj?: string | null
+  processo_sei?: string | null
+  a_pagar?: number
+  a_comprovar?: number
+  a_aprovar?: number
+  aprovados?: number
+  valor_total?: number
+  repasse_estado?: number
+  contrapartida?: number
+  investido_estado?: number
+  a_repassar?: number
+  incluir_prestacao?: boolean
+  parcela?: number
+  baixa_apresentacao?: string
+  baixa_aprovacao?: string
+  incluir_tomada?: boolean
+  parecer_comissao?: string
+}
+
+export function useCriarConvenio() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: NovoConvenioPayload) => apiPostJson<LinhaConvenio>('/painel/convenios', payload),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['convenios'] })
+      await queryClient.invalidateQueries({ queryKey: ['municipios'] })
+      await queryClient.invalidateQueries({ queryKey: ['ranking-recorte'] })
+      await queryClient.invalidateQueries({ queryKey: ['municipios-recorte'] })
+      await queryClient.invalidateQueries({ queryKey: ['resumo'] })
+      await queryClient.invalidateQueries({ queryKey: ['resumo-geral'] })
+      await queryClient.invalidateQueries({ queryKey: ['prestacao-contas'] })
+      await queryClient.invalidateQueries({ queryKey: ['tomada-contas'] })
+    },
+  })
+}
+
+export function useRemoverConvenio() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ numero, municipio }: { numero: string; municipio: string }) =>
+      apiDelete<{ ok: boolean }>('/painel/convenios', { numero, municipio }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['convenios'] })
+      await queryClient.invalidateQueries({ queryKey: ['municipios'] })
+      await queryClient.invalidateQueries({ queryKey: ['ranking-recorte'] })
+      await queryClient.invalidateQueries({ queryKey: ['municipios-recorte'] })
+      await queryClient.invalidateQueries({ queryKey: ['resumo'] })
+      await queryClient.invalidateQueries({ queryKey: ['resumo-geral'] })
     },
   })
 }

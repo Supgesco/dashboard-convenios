@@ -161,6 +161,7 @@ function Historico() {
       unidade={['carga', 'cargas']}
       vazio="Nenhuma carga SIAFE registrada."
       atualizando={consulta.isPlaceholderData}
+      editavel={false}
     />
   )
 }
