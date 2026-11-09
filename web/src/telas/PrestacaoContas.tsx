@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useEditarPrestacaoContas, usePrestacaoContas } from '../api/hooks'
+import { useEditarPrestacaoContas, usePrestacaoContas, useRemoverConvenio } from '../api/hooks'
 import type { LinhaPrestacaoContas } from '../api/tipos'
 import { Aviso, CaixaErro, Carregando } from '../componentes/Estados'
 import { TabelaPaginada, type Coluna } from '../componentes/TabelaPaginada'
@@ -125,6 +125,7 @@ export function TelaPrestacaoContas() {
   const { filtros, mudar, limpar } = useFiltros()
   const consulta = usePrestacaoContas(filtros.municipios, filtros)
   const editar = useEditarPrestacaoContas()
+  const remover = useRemoverConvenio()
   const d = consulta.data
 
   const { totalRepasse, totalExecutado } = useMemo(() => {
@@ -193,6 +194,13 @@ export function TelaPrestacaoContas() {
           onPagina={(pagina) => mudar({ pagina })}
           unidade={['registro', 'registros']}
           onSalvarEdicao={(item, alt) => editar.mutateAsync({ ...alt, id: item.id })}
+          onRemoverItem={(item) =>
+            remover.mutateAsync({
+              numero: item.numero_convenio,
+              municipio: item.municipio,
+              prestacao_id: item.id,
+            })
+          }
         />
       )}
     </div>

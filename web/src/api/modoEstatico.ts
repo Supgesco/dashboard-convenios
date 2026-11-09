@@ -234,16 +234,34 @@ export async function atenderEstatico<T>(
   if (metodo === 'DELETE' && caminho === '/painel/convenios') {
     const num = String(parametros.numero ?? '')
     const mun = String(parametros.municipio ?? '')
-    for (const r of ['31', '89', '342']) {
-      const antes = (db.convenios[r] ?? []).length
-      db.convenios[r] = (db.convenios[r] ?? []).filter(
-        (c) => !(String(c.numero_convenio) === num && String(c.municipio) === mun),
-      )
-      const depois = db.convenios[r].length
-      if (depois < antes && db.resumos[r]) {
-        db.resumos[r].convenios = Math.max(0, Number(db.resumos[r].convenios ?? 0) - (antes - depois))
+    const prestId = parametros.prestacao_id ? Number(parametros.prestacao_id) : null
+    const tomId = parametros.tomada_id ? Number(parametros.tomada_id) : null
+    if (num) {
+      for (const r of ['31', '89', '342']) {
+        const antes = (db.convenios[r] ?? []).length
+        db.convenios[r] = (db.convenios[r] ?? []).filter(
+          (c) => !(String(c.numero_convenio) === num && (!mun || String(c.municipio) === mun)),
+        )
+        const depois = db.convenios[r].length
+        if (depois < antes && db.resumos[r]) {
+          db.resumos[r].convenios = Math.max(0, Number(db.resumos[r].convenios ?? 0) - (antes - depois))
+        }
       }
     }
+    db.prestacao_contas = db.prestacao_contas.filter(
+      (p) =>
+        !(
+          (prestId !== null && Number(p.id) === prestId) ||
+          (Boolean(num) && String(p.numero_convenio) === num && (!mun || String(p.municipio) === mun))
+        ),
+    )
+    db.tomada_contas = db.tomada_contas.filter(
+      (t) =>
+        !(
+          (tomId !== null && Number(t.id) === tomId) ||
+          (Boolean(num) && String(t.numero_convenio) === num && (!mun || String(t.municipio) === mun))
+        ),
+    )
     return { ok: true } as T
   }
 

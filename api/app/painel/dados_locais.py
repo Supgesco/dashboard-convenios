@@ -1272,7 +1272,13 @@ def criar_convenio(payload: dict[str, Any]):
     return LinhaConvenio.model_validate(novo_item_base)
 
 
-def remover_convenio(numero_convenio: str, municipio: str) -> dict[str, Any]:
+def remover_convenio(
+    numero_convenio: str,
+    municipio: str,
+    *,
+    prestacao_id: int | None = None,
+    tomada_id: int | None = None,
+) -> dict[str, Any]:
     from fastapi import HTTPException
 
     dados = carregar_tudo()
@@ -1280,25 +1286,61 @@ def remover_convenio(numero_convenio: str, municipio: str) -> dict[str, Any]:
     removido_de: list[str] = []
     item_ref: dict[str, Any] | None = None
 
-    for mes_k, por_rec in dados["snap"].get("convenios_por_mes", {}).items():
-        for rec, lista in por_rec.items():
-            antes = len(lista)
-            for x in lista:
-                if x.get("numero_convenio") == numero_convenio and x.get("municipio") == municipio:
-                    if item_ref is None or x.get("valor_total") is not None:
-                        item_ref = dict(x)
-            lista[:] = [
-                x
-                for x in lista
-                if not (
-                    x.get("numero_convenio") == numero_convenio
-                    and x.get("municipio") == municipio
-                )
-            ]
-            if len(lista) < antes and rec not in removido_de:
-                removido_de.append(rec)
+    if numero_convenio:
+        for mes_k, por_rec in dados["snap"].get("convenios_por_mes", {}).items():
+            for rec, lista in por_rec.items():
+                antes = len(lista)
+                for x in lista:
+                    if x.get("numero_convenio") == numero_convenio and (
+                        not municipio or x.get("municipio") == municipio
+                    ):
+                        if item_ref is None or x.get("valor_total") is not None:
+                            item_ref = dict(x)
+                lista[:] = [
+                    x
+                    for x in lista
+                    if not (
+                        x.get("numero_convenio") == numero_convenio
+                        and (not municipio or x.get("municipio") == municipio)
+                    )
+                ]
+                if len(lista) < antes and rec not in removido_de:
+                    removido_de.append(rec)
 
-    if not removido_de and chave not in dados["meta_342"]:
+    # Remove também todas as entradas vinculadas em Prestação de Contas e Tomada de Contas
+    prestacoes = dados.get("prestacoes", [])
+    antes_prest = len(prestacoes)
+    prestacoes[:] = [
+        p
+        for p in prestacoes
+        if not (
+            (prestacao_id is not None and p.get("id") == prestacao_id)
+            or (
+                bool(numero_convenio)
+                and str(p.get("numero_convenio") or "") == numero_convenio
+                and (not municipio or str(p.get("municipio") or "") == municipio)
+            )
+        )
+    ]
+    removido_prest = len(prestacoes) < antes_prest
+
+    tomadas = dados.get("tomadas", [])
+    antes_tom = len(tomadas)
+    tomadas[:] = [
+        t
+        for t in tomadas
+        if not (
+            (tomada_id is not None and t.get("id") == tomada_id)
+            or (
+                bool(numero_convenio)
+                and str(t.get("numero_convenio") or "") == numero_convenio
+                and (not municipio or str(t.get("municipio") or "") == municipio)
+            )
+        )
+    ]
+    removido_tom = len(tomadas) < antes_tom
+
+    if not removido_de and not removido_prest and not removido_tom and chave not in dados["meta_342"]:
         raise HTTPException(status_code=404, detail="Convênio não encontrado")
 
     a_pagar = float((item_ref or {}).get("a_pagar") or 0.0)

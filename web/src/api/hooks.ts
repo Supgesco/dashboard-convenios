@@ -394,8 +394,17 @@ export function useCriarConvenio() {
 export function useRemoverConvenio() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ numero, municipio }: { numero: string; municipio: string }) =>
-      apiDelete<{ ok: boolean }>('/painel/convenios', { numero, municipio }),
+    mutationFn: ({
+      numero,
+      municipio,
+      prestacao_id,
+      tomada_id,
+    }: {
+      numero?: string | null
+      municipio?: string | null
+      prestacao_id?: number
+      tomada_id?: number
+    }) => apiDelete<{ ok: boolean }>('/painel/convenios', { numero, municipio, prestacao_id, tomada_id }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['convenios'] })
       await queryClient.invalidateQueries({ queryKey: ['municipios'] })
@@ -403,6 +412,9 @@ export function useRemoverConvenio() {
       await queryClient.invalidateQueries({ queryKey: ['municipios-recorte'] })
       await queryClient.invalidateQueries({ queryKey: ['resumo'] })
       await queryClient.invalidateQueries({ queryKey: ['resumo-geral'] })
+      await queryClient.invalidateQueries({ queryKey: ['prestacao-contas'] })
+      await queryClient.invalidateQueries({ queryKey: ['tomada-contas'] })
+      await queryClient.invalidateQueries({ queryKey: ['convenio'] })
     },
   })
 }

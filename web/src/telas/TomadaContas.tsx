@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useEditarTomadaContas, useTomadaContas } from '../api/hooks'
+import { useEditarTomadaContas, useRemoverConvenio, useTomadaContas } from '../api/hooks'
 import type { LinhaTomadaContas } from '../api/tipos'
 import { Aviso, CaixaErro, Carregando } from '../componentes/Estados'
 import { TabelaPaginada, type Coluna } from '../componentes/TabelaPaginada'
@@ -90,6 +90,7 @@ export function TelaTomadaContas() {
   const { filtros, mudar, limpar } = useFiltros()
   const consulta = useTomadaContas(filtros.municipios, filtros)
   const editar = useEditarTomadaContas()
+  const remover = useRemoverConvenio()
   const d = consulta.data
 
   const { totalValorSiafe, totalComParecer } = useMemo(() => {
@@ -158,6 +159,13 @@ export function TelaTomadaContas() {
           onPagina={(pagina) => mudar({ pagina })}
           unidade={['processo', 'processos']}
           onSalvarEdicao={(item, alt) => editar.mutateAsync({ ...alt, id: item.id })}
+          onRemoverItem={(item) =>
+            remover.mutateAsync({
+              numero: item.numero_convenio,
+              municipio: item.municipio,
+              tomada_id: item.id,
+            })
+          }
         />
       )}
     </div>

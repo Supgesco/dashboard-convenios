@@ -651,8 +651,15 @@ def cadastrar_convenio(payload: NovoConvenioPayload):
 
 @router.delete("/convenios")
 def excluir_convenio(
-    numero: Annotated[str, Query(min_length=1, description="Número do convênio.")],
-    municipio: Annotated[str, Query(min_length=1, description="Município do convênio.")],
+    numero: Annotated[str | None, Query(description="Número do convênio.")] = None,
+    municipio: Annotated[str | None, Query(description="Município do convênio.")] = None,
+    prestacao_id: Annotated[int | None, Query(description="ID da linha de prestação de contas.")] = None,
+    tomada_id: Annotated[int | None, Query(description="ID da linha de tomada de contas.")] = None,
 ):
-    """Remove um convênio da base e atualiza os totais dos recortes."""
-    return dados_locais.remover_convenio(numero.strip(), municipio.strip())
+    """Remove um convênio da base (e de todas as abas vinculadas) e atualiza os totais dos recortes."""
+    return dados_locais.remover_convenio(
+        (numero or "").strip(),
+        (municipio or "").strip(),
+        prestacao_id=prestacao_id,
+        tomada_id=tomada_id,
+    )
