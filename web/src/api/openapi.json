@@ -317,6 +317,24 @@
         "title": "Convenios",
         "type": "object"
       },
+      "Credenciais": {
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "senha": {
+            "title": "Senha",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "senha"
+        ],
+        "title": "Credenciais",
+        "type": "object"
+      },
       "DetalheConvenio": {
         "properties": {
           "codigo_compartilhado": {
@@ -392,6 +410,14 @@
             ],
             "title": "Objeto"
           },
+          "prestacao_contas": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/LinhaPrestacaoContas"
+            },
+            "title": "Prestacao Contas",
+            "type": "array"
+          },
           "recortes": {
             "items": {
               "enum": [
@@ -446,6 +472,16 @@
             ],
             "title": "Status"
           },
+          "tomada_contas": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LinhaTomadaContas"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "vigencia_final": {
             "anyOf": [
               {
@@ -479,6 +515,533 @@
           "serie"
         ],
         "title": "DetalheConvenio",
+        "type": "object"
+      },
+      "EdicaoConvenioPayload": {
+        "properties": {
+          "a_aprovar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Aprovar"
+          },
+          "a_comprovar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Comprovar"
+          },
+          "a_pagar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Pagar"
+          },
+          "a_repassar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Repassar"
+          },
+          "aprovados": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aprovados"
+          },
+          "codigo_seiop": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Seiop"
+          },
+          "codigo_seobras": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Seobras"
+          },
+          "contrapartida": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contrapartida"
+          },
+          "fase": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fase"
+          },
+          "investido_estado": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Investido Estado"
+          },
+          "municipio": {
+            "title": "Municipio",
+            "type": "string"
+          },
+          "numero_convenio": {
+            "title": "Numero Convenio",
+            "type": "string"
+          },
+          "repasse_estado": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repasse Estado"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "valor_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor Total"
+          }
+        },
+        "required": [
+          "numero_convenio",
+          "municipio"
+        ],
+        "title": "EdicaoConvenioPayload",
+        "type": "object"
+      },
+      "EdicaoMunicipioPayload": {
+        "properties": {
+          "a_aprovar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Aprovar"
+          },
+          "a_comprovar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Comprovar"
+          },
+          "a_pagar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Pagar"
+          },
+          "a_repassar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Repassar"
+          },
+          "aprovados": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aprovados"
+          },
+          "contrapartida": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contrapartida"
+          },
+          "convenios": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Convenios"
+          },
+          "investido_estado": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Investido Estado"
+          },
+          "municipio": {
+            "title": "Municipio",
+            "type": "string"
+          },
+          "repasse_estado": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repasse Estado"
+          },
+          "valor_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor Total"
+          }
+        },
+        "required": [
+          "municipio"
+        ],
+        "title": "EdicaoMunicipioPayload",
+        "type": "object"
+      },
+      "EdicaoPrestacaoContasPayload": {
+        "properties": {
+          "baixa_apresentacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baixa Apresentacao"
+          },
+          "baixa_aprovacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baixa Aprovacao"
+          },
+          "cnpj": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cnpj"
+          },
+          "codigo_seiop": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Seiop"
+          },
+          "codigo_seobras": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Seobras"
+          },
+          "municipio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Municipio"
+          },
+          "numero_convenio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero Convenio"
+          },
+          "observacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observacao"
+          },
+          "parcela": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parcela"
+          },
+          "processo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processo"
+          },
+          "situacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Situacao"
+          },
+          "valor_executado": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor Executado"
+          },
+          "valor_repasse": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor Repasse"
+          }
+        },
+        "title": "EdicaoPrestacaoContasPayload",
+        "type": "object"
+      },
+      "EdicaoTomadaContasPayload": {
+        "properties": {
+          "codigo_seobras": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Seobras"
+          },
+          "municipio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Municipio"
+          },
+          "numero_convenio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero Convenio"
+          },
+          "objeto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Objeto"
+          },
+          "parecer_comissao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parecer Comissao"
+          },
+          "processo_sei": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processo Sei"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "valor_siafe": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor Siafe"
+          }
+        },
+        "title": "EdicaoTomadaContasPayload",
         "type": "object"
       },
       "ExecucaoIniciada": {
@@ -960,6 +1523,268 @@
         "title": "LinhaMunicipio",
         "type": "object"
       },
+      "LinhaPrestacaoContas": {
+        "properties": {
+          "baixa_apresentacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baixa Apresentacao"
+          },
+          "baixa_aprovacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baixa Aprovacao"
+          },
+          "cnpj": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cnpj"
+          },
+          "codigo_seiop": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Seiop"
+          },
+          "codigo_seobras": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Seobras"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "item": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item"
+          },
+          "municipio": {
+            "title": "Municipio",
+            "type": "string"
+          },
+          "numero_convenio": {
+            "title": "Numero Convenio",
+            "type": "string"
+          },
+          "observacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observacao"
+          },
+          "parcela": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parcela"
+          },
+          "processo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processo"
+          },
+          "situacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Situacao"
+          },
+          "valor_executado": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor Executado"
+          },
+          "valor_repasse": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor Repasse"
+          }
+        },
+        "required": [
+          "id",
+          "item",
+          "municipio",
+          "cnpj",
+          "numero_convenio",
+          "codigo_seobras",
+          "codigo_seiop",
+          "parcela",
+          "valor_repasse",
+          "processo",
+          "valor_executado",
+          "baixa_apresentacao",
+          "baixa_aprovacao",
+          "observacao",
+          "situacao"
+        ],
+        "title": "LinhaPrestacaoContas",
+        "type": "object"
+      },
+      "LinhaTomadaContas": {
+        "properties": {
+          "codigo_seobras": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Seobras"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "municipio": {
+            "title": "Municipio",
+            "type": "string"
+          },
+          "numero_convenio": {
+            "title": "Numero Convenio",
+            "type": "string"
+          },
+          "objeto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Objeto"
+          },
+          "parecer_comissao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parecer Comissao"
+          },
+          "processo_sei": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processo Sei"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "valor_siafe": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor Siafe"
+          }
+        },
+        "required": [
+          "id",
+          "municipio",
+          "numero_convenio",
+          "codigo_seobras",
+          "valor_siafe",
+          "objeto",
+          "parecer_comissao",
+          "processo_sei",
+          "status"
+        ],
+        "title": "LinhaTomadaContas",
+        "type": "object"
+      },
       "Mes": {
         "properties": {
           "ano": {
@@ -1037,6 +1862,321 @@
         "title": "Municipios",
         "type": "object"
       },
+      "NovoConvenioPayload": {
+        "properties": {
+          "a_aprovar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": 0.0,
+            "title": "A Aprovar"
+          },
+          "a_comprovar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": 0.0,
+            "title": "A Comprovar"
+          },
+          "a_pagar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": 0.0,
+            "title": "A Pagar"
+          },
+          "a_repassar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A Repassar"
+          },
+          "aprovados": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": 0.0,
+            "title": "Aprovados"
+          },
+          "baixa_apresentacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baixa Apresentacao"
+          },
+          "baixa_aprovacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baixa Aprovacao"
+          },
+          "cnpj": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cnpj"
+          },
+          "codigo_seiop": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Seiop"
+          },
+          "codigo_seobras": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Seobras"
+          },
+          "contrapartida": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": 0.0,
+            "title": "Contrapartida"
+          },
+          "fase": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fase"
+          },
+          "incluir_prestacao": {
+            "default": false,
+            "title": "Incluir Prestacao",
+            "type": "boolean"
+          },
+          "incluir_tomada": {
+            "default": false,
+            "title": "Incluir Tomada",
+            "type": "boolean"
+          },
+          "investido_estado": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": 0.0,
+            "title": "Investido Estado"
+          },
+          "municipio": {
+            "title": "Municipio",
+            "type": "string"
+          },
+          "numero_convenio": {
+            "title": "Numero Convenio",
+            "type": "string"
+          },
+          "objeto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Objeto"
+          },
+          "parcela": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": 1,
+            "title": "Parcela"
+          },
+          "parecer_comissao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parecer Comissao"
+          },
+          "processo_sei": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processo Sei"
+          },
+          "recortes": {
+            "default": [
+              "31",
+              "89",
+              "342"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Recortes",
+            "type": "array"
+          },
+          "repasse_estado": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": 0.0,
+            "title": "Repasse Estado"
+          },
+          "situacao_vigencia": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": "Vigente",
+            "title": "Situacao Vigencia"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": "Em execução",
+            "title": "Status"
+          },
+          "termo_realinhamento": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Termo Realinhamento"
+          },
+          "valor_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": 0.0,
+            "title": "Valor Total"
+          },
+          "vigencia_final": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vigencia Final"
+          },
+          "vigencia_inicio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vigencia Inicio"
+          }
+        },
+        "required": [
+          "numero_convenio",
+          "municipio"
+        ],
+        "title": "NovoConvenioPayload",
+        "type": "object"
+      },
       "PontoSerie": {
         "properties": {
           "a_aprovar": {
@@ -1101,6 +2241,45 @@
           "mes"
         ],
         "title": "PontoSerie",
+        "type": "object"
+      },
+      "PrestacaoContasResposta": {
+        "properties": {
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/LinhaPrestacaoContas"
+            },
+            "title": "Itens",
+            "type": "array"
+          },
+          "municipios": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Municipios",
+            "type": "array"
+          },
+          "pagina": {
+            "title": "Pagina",
+            "type": "integer"
+          },
+          "tamanho": {
+            "title": "Tamanho",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "municipios",
+          "pagina",
+          "tamanho",
+          "total",
+          "itens"
+        ],
+        "title": "PrestacaoContasResposta",
         "type": "object"
       },
       "Referencia": {
@@ -1430,6 +2609,97 @@
         "title": "Situacao",
         "type": "object"
       },
+      "TomadaContasResposta": {
+        "properties": {
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/LinhaTomadaContas"
+            },
+            "title": "Itens",
+            "type": "array"
+          },
+          "municipios": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Municipios",
+            "type": "array"
+          },
+          "pagina": {
+            "title": "Pagina",
+            "type": "integer"
+          },
+          "tamanho": {
+            "title": "Tamanho",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "municipios",
+          "pagina",
+          "tamanho",
+          "total",
+          "itens"
+        ],
+        "title": "TomadaContasResposta",
+        "type": "object"
+      },
+      "UsuarioPublico": {
+        "properties": {
+          "cargo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cargo"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "nome": {
+            "title": "Nome",
+            "type": "string"
+          },
+          "orgao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Orgao"
+          },
+          "perfil": {
+            "title": "Perfil",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "nome",
+          "cargo",
+          "orgao",
+          "perfil"
+        ],
+        "title": "UsuarioPublico",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -1478,6 +2748,91 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/auth/login": {
+      "post": {
+        "operationId": "login_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Credenciais"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioPublico"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "E-mail ou senha inválidos."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Conta bloqueada"
+          }
+        },
+        "summary": "Login",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "operationId": "logout_auth_logout_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Logout",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "operationId": "me_auth_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioPublico"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Sem sessão válida"
+          }
+        },
+        "summary": "Me",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/etl/siafe": {
       "post": {
         "operationId": "disparar_carga_siafe_etl_siafe_post",
@@ -1680,6 +3035,60 @@
       }
     },
     "/painel/convenios": {
+      "delete": {
+        "description": "Remove um convênio da base e atualiza os totais dos recortes.",
+        "operationId": "excluir_convenio_painel_convenios_delete",
+        "parameters": [
+          {
+            "description": "Número do convênio.",
+            "in": "query",
+            "name": "numero",
+            "required": true,
+            "schema": {
+              "description": "Número do convênio.",
+              "minLength": 1,
+              "title": "Numero",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Município do convênio.",
+            "in": "query",
+            "name": "municipio",
+            "required": true,
+            "schema": {
+              "description": "Município do convênio.",
+              "minLength": 1,
+              "title": "Municipio",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Excluir Convenio",
+        "tags": [
+          "painel"
+        ]
+      },
       "get": {
         "operationId": "convenios_painel_convenios_get",
         "parameters": [
@@ -1826,6 +3235,86 @@
           }
         },
         "summary": "Convenios",
+        "tags": [
+          "painel"
+        ]
+      },
+      "post": {
+        "description": "Cadastra um novo convênio (com normalização SIAFE SEOBRAS/SEIOP) nos recortes selecionados.",
+        "operationId": "cadastrar_convenio_painel_convenios_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NovoConvenioPayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinhaConvenio"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cadastrar Convenio",
+        "tags": [
+          "painel"
+        ]
+      },
+      "put": {
+        "description": "Atualiza os campos editáveis de um convênio da tabela.",
+        "operationId": "editar_convenio_painel_convenios_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EdicaoConvenioPayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinhaConvenio"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Editar Convenio",
         "tags": [
           "painel"
         ]
@@ -1978,6 +3467,235 @@
           }
         },
         "summary": "Municipios",
+        "tags": [
+          "painel"
+        ]
+      },
+      "put": {
+        "description": "Atualiza os valores de um município da tabela.",
+        "operationId": "editar_municipio_painel_municipios_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EdicaoMunicipioPayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinhaMunicipio"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Editar Municipio",
+        "tags": [
+          "painel"
+        ]
+      }
+    },
+    "/painel/prestacao-contas": {
+      "get": {
+        "description": "Consulta as parcelas e notas da aba Prestação de Contas da planilha.",
+        "operationId": "prestacao_contas_painel_prestacao_contas_get",
+        "parameters": [
+          {
+            "description": "Filtrar por número do convênio",
+            "in": "query",
+            "name": "numero",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtrar por número do convênio",
+              "title": "Numero"
+            }
+          },
+          {
+            "description": "Busca textual",
+            "in": "query",
+            "name": "busca",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Busca textual",
+              "title": "Busca"
+            }
+          },
+          {
+            "description": "Repetível; sem ele, todos",
+            "in": "query",
+            "name": "municipio",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Repetível; sem ele, todos",
+              "title": "Municipio"
+            }
+          },
+          {
+            "description": "A partir de 1",
+            "in": "query",
+            "name": "pagina",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "description": "A partir de 1",
+              "minimum": 1,
+              "title": "Pagina",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Itens por página",
+            "in": "query",
+            "name": "tamanho",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "description": "Itens por página",
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Tamanho",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Campo, com `-` para decrescente. Aceitos: municipio, numero_convenio, parcela, valor_repasse, valor_executado, situacao",
+            "in": "query",
+            "name": "ordem",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Campo, com `-` para decrescente. Aceitos: municipio, numero_convenio, parcela, valor_repasse, valor_executado, situacao",
+              "title": "Ordem"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrestacaoContasResposta"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Prestacao Contas",
+        "tags": [
+          "painel"
+        ]
+      }
+    },
+    "/painel/prestacao-contas/{item_id}": {
+      "put": {
+        "description": "Atualiza uma parcela da aba Prestação de Contas.",
+        "operationId": "editar_prestacao_contas_painel_prestacao_contas__item_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "title": "Item Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EdicaoPrestacaoContasPayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinhaPrestacaoContas"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Editar Prestacao Contas",
         "tags": [
           "painel"
         ]
@@ -2156,6 +3874,177 @@
           }
         },
         "summary": "Serie",
+        "tags": [
+          "painel"
+        ]
+      }
+    },
+    "/painel/tomada-contas": {
+      "get": {
+        "description": "Consulta os registros da aba Tomada de Contas da planilha.",
+        "operationId": "tomada_contas_painel_tomada_contas_get",
+        "parameters": [
+          {
+            "description": "Busca textual",
+            "in": "query",
+            "name": "busca",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Busca textual",
+              "title": "Busca"
+            }
+          },
+          {
+            "description": "Repetível; sem ele, todos",
+            "in": "query",
+            "name": "municipio",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Repetível; sem ele, todos",
+              "title": "Municipio"
+            }
+          },
+          {
+            "description": "A partir de 1",
+            "in": "query",
+            "name": "pagina",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "description": "A partir de 1",
+              "minimum": 1,
+              "title": "Pagina",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Itens por página",
+            "in": "query",
+            "name": "tamanho",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "description": "Itens por página",
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Tamanho",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Campo, com `-` para decrescente. Aceitos: municipio, numero_convenio, codigo_seobras, valor_siafe, status",
+            "in": "query",
+            "name": "ordem",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Campo, com `-` para decrescente. Aceitos: municipio, numero_convenio, codigo_seobras, valor_siafe, status",
+              "title": "Ordem"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TomadaContasResposta"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Tomada Contas",
+        "tags": [
+          "painel"
+        ]
+      }
+    },
+    "/painel/tomada-contas/{item_id}": {
+      "put": {
+        "description": "Atualiza um registro da aba Tomada de Contas.",
+        "operationId": "editar_tomada_contas_painel_tomada_contas__item_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "title": "Item Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EdicaoTomadaContasPayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinhaTomadaContas"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Editar Tomada Contas",
         "tags": [
           "painel"
         ]

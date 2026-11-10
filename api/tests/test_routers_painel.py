@@ -10,11 +10,13 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import insert, text
 
+from app.auth.dependencias import usuario_atual
 from app.main import app
 from app.models import TABELAS_PLANILHA, EtlExecucao, PlanilhaImportacao
 from app.planilha.dominios import MUNICIPIOS_RJ
 from app.routers.etl import get_engine
 from app.routers.painel import get_hoje
+from tests.conftest import USUARIO_TESTE
 from tests.test_cruzamento import A31, A89, A342, Carga
 
 HOJE = date(2026, 11, 4)
@@ -28,6 +30,7 @@ def carga(db) -> Carga:
 @pytest.fixture
 def api(db):
     app.dependency_overrides[get_engine] = lambda: db
+    app.dependency_overrides[usuario_atual] = lambda: USUARIO_TESTE
     app.dependency_overrides[get_hoje] = lambda: HOJE
     with TestClient(app) as client:
         yield client

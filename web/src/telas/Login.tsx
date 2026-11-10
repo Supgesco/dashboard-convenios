@@ -46,7 +46,7 @@ export function TelaLogin() {
       if (res.sucesso) {
         navegar(destino, { replace: true })
       } else {
-        setErro(res.erro || 'Falha na autenticação. Verifique suas credenciais.')
+        setErro(res.erro)
       }
     } catch {
       setErro('Ocorreu um erro inesperado ao conectar ao serviço de autenticação.')

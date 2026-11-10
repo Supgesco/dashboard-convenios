@@ -10,8 +10,20 @@ export interface Pedido {
 export type Resposta = { status?: number; corpo?: unknown } | Promise<{ status?: number; corpo?: unknown }>
 export type Rotas = Record<string, (pedido: Pedido) => Resposta>
 
+/** Usuário sintético da sessão padrão dos testes. */
+export const USUARIO_SESSAO = {
+  id: 1,
+  email: 'teste@obras.rj.gov.br',
+  nome: 'Usuária de Teste',
+  cargo: null,
+  orgao: null,
+  perfil: 'analista',
+} as const
+
 /** `rotas` é indexado por "GET /painel/resumo". Rota sem handler responde 500 (e falha o teste que depender dela). */
-export function stubApi(rotas: Rotas) {
+export function stubApi(rotasDoTeste: Rotas) {
+  // Toda tela fica atrás do login: há sessão por padrão, e o teste sobrescreve "GET /auth/me" se precisar.
+  const rotas: Rotas = { 'GET /auth/me': () => ok(USUARIO_SESSAO), ...rotasDoTeste }
   const pedidos: Pedido[] = []
   const fetch = vi.fn(async (entrada: RequestInfo | URL, init?: RequestInit) => {
     const url = new URL(String(entrada), 'http://teste')
@@ -25,6 +37,7 @@ export function stubApi(rotas: Rotas) {
     const { status = 200, corpo = null } = handler
       ? await handler(pedido)
       : { status: 500, corpo: { detail: `rota sem stub: ${pedido.metodo} ${pedido.caminho}` } }
+    if (status === 204) return new Response(null, { status })
     return new Response(JSON.stringify(corpo), { status, headers: { 'Content-Type': 'application/json' } })
   })
   vi.stubGlobal('fetch', fetch)

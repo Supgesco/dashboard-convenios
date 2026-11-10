@@ -7,10 +7,12 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, insert, select
 
 from app.etl import siafe as etl
+from app.auth.dependencias import usuario_atual
 from app.main import app
 from app.models import EtlExecucao
 from app.routers.etl import get_engine, get_executor
 from app.siafe.client import SiafeAuthError
+from tests.conftest import USUARIO_TESTE
 from tests.test_etl_siafe import FakeSiafe, _linha
 
 SEGREDOS = ["senha-super-secreta", "token-secreto"]
@@ -35,6 +37,8 @@ def api(db):
         return etl.executar(engine, reserva, settings=settings, cliente=fake, hoje=date(2023, 2, 1))
 
     app.dependency_overrides[get_engine] = lambda: db
+
+    app.dependency_overrides[usuario_atual] = lambda: USUARIO_TESTE
     app.dependency_overrides[get_executor] = lambda: executor
     with TestClient(app) as client:
         yield client
@@ -80,6 +84,8 @@ def test_status_de_carga_com_falha_nao_vaza_segredos(db):
         return etl.executar(engine, reserva, cliente=fake, hoje=date(2023, 1, 1))
 
     app.dependency_overrides[get_engine] = lambda: db
+
+    app.dependency_overrides[usuario_atual] = lambda: USUARIO_TESTE
     app.dependency_overrides[get_executor] = lambda: executor
     try:
         with TestClient(app) as client:
@@ -142,6 +148,7 @@ def test_historico_limites_invalidos(api, params):
 def test_historico_nao_dispara_carga(db):
     chamadas = []
     app.dependency_overrides[get_engine] = lambda: db
+    app.dependency_overrides[usuario_atual] = lambda: USUARIO_TESTE
     app.dependency_overrides[get_executor] = lambda: lambda engine, reserva: chamadas.append(reserva)
     try:
         with TestClient(app) as client:
@@ -189,3 +196,19 @@ def test_historico_com_falha_de_autenticacao_sem_segredos(api, db):
     assert item["fim"] is not None
     assert "401" in item["erro"]
     assert not any(s in resp.text for s in [*SEGREDOS, "usuario-teste"])
+
+
+def test_disparo_sem_sessao_responde_401_e_nao_inicia_carga(db):
+    chamadas = []
+    app.dependency_overrides[get_engine] = lambda: db
+    app.dependency_overrides[get_executor] = lambda: lambda engine, reserva: chamadas.append(reserva)
+    try:
+        with TestClient(app) as client:
+            resp = client.post("/etl/siafe")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert resp.status_code == 401
+    assert chamadas == []
+    with db.connect() as conn:
+        assert conn.scalar(select(func.count()).select_from(EtlExecucao)) == 0
