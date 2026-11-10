@@ -14,6 +14,8 @@ Crie `api/.env` (já ignorado pelo git) com:
 | `SIAFE_UG` | Unidade Gestora consultada |
 | `SIAFE_CONSULTA` | ID da consulta FlexVision |
 | `DATABASE_URL` | URL SQLAlchemy do Postgres (`postgresql+psycopg2://...`) |
+| `SESSAO_HORAS` | *(opcional)* validade da sessão de login, em horas (padrão `12`) |
+| `SESSAO_COOKIE_SEGURO` | *(opcional)* `true` (padrão) marca o cookie de sessão como `Secure`. Use `false` só se a API for servida por HTTP fora do `localhost` |
 | `TEST_DATABASE_URL` | *(opcional, testes)* Postgres usado pelos testes de integração. Pode ser variável de ambiente. |
 
 ## Uso
@@ -32,9 +34,30 @@ Endpoints:
 - `GET /etl/siafe/status`: retorna a execução mais recente (`status`: `em_andamento` | `sucesso` | `falha`), ou `404` se nenhuma carga foi feita.
 - `GET /etl/siafe/execucoes`: histórico das cargas, da mais recente para a mais antiga, com os mesmos campos do status. Paginado com `pagina` (a partir de 1, padrão 1) e `tamanho` (1 a 100, padrão 20); fora disso → 422. Envelope `{pagina, tamanho, total, itens}`; sem cargas, `itens` vazio e `total` 0.
 
-> **A API não tem autenticação.** Qualquer cliente que alcance a porta consegue disparar `POST /etl/siafe`, e cada carga faz login no SIAFE. Logins repetidos já bloquearam temporariamente o IP desta máquina. A trava de uma carga por vez (409) impede cargas simultâneas, mas não cargas seguidas. Rode a API só em rede interna, sem exposição pública, até que haja autenticação.
+Todas as rotas `/painel/*` e `/etl/*` exigem login (ver [Autenticação](#autenticação)) e respondem `401` sem sessão. Mesmo assim, cada carga faz login no SIAFE, e logins repetidos já bloquearam temporariamente o IP desta máquina. A trava de uma carga por vez (409) impede cargas simultâneas, mas não cargas seguidas.
 
 Cada carga substitui todos os registros de `siafe_flexvision` numa única transação. Se a carga falhar, os dados anteriores continuam intactos e a falha fica registrada em `etl_execucao`.
+
+## Autenticação
+
+Os usuários ficam na tabela `usuario` (migração `0005`). A senha é guardada só como hash scrypt. O login abre uma sessão na tabela `sessao`, que guarda o SHA-256 do token, e o token vai num cookie `convenios_sessao` (`HttpOnly`, `SameSite=Lax`, `Secure` conforme `SESSAO_COOKIE_SEGURO`) com validade de `SESSAO_HORAS`.
+
+- `POST /auth/login` com corpo `{"email", "senha"}`: responde `200` com `{id, email, nome, cargo, orgao, perfil}` e define o cookie. E-mail inexistente, senha errada e usuário inativo recebem o mesmo `401 "E-mail ou senha inválidos."`. Depois de 5 senhas erradas seguidas, a conta fica bloqueada por 15 minutos e o login responde `429`.
+- `GET /auth/me`: usuário da sessão, ou `401`.
+- `POST /auth/logout`: encerra a sessão no servidor e apaga o cookie (`204`, mesmo sem sessão).
+- As demais rotas (`/painel/*`, `/etl/*`) respondem `401` sem sessão válida e `503` se o banco não responder.
+
+Os usuários são administrados pela linha de comando, no servidor:
+
+```bash
+uv run python -m app.auth.usuarios criar fulano@obras.rj.gov.br --nome "Fulano de Tal" --perfil analista [--cargo "..."] [--orgao "..."]
+uv run python -m app.auth.usuarios senha fulano@obras.rj.gov.br      # troca a senha, desbloqueia e encerra as sessões
+uv run python -m app.auth.usuarios desativar fulano@obras.rj.gov.br  # impede o login e encerra as sessões
+uv run python -m app.auth.usuarios ativar fulano@obras.rj.gov.br
+uv run python -m app.auth.usuarios listar
+```
+
+A senha (mínimo de 8 caracteres) é digitada duas vezes, sem eco. Para automação, `--senha-stdin` lê uma linha da entrada padrão. A senha nunca é aceita como argumento. O perfil (`administrador`, `analista`, `auditor`) por enquanto é só informativo: todo usuário logado tem o mesmo acesso. Código de saída: `0` sucesso, `1` erro.
 
 ## ETL da planilha
 

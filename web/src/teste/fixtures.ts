@@ -140,6 +140,7 @@ export function detalhe(parcial: Partial<DetalheConvenio> = {}): DetalheConvenio
       { recorte: '89', ...contratual, valor_total: 6000 },
     ],
     serie: serie(3).pontos,
+    prestacao_contas: [],
     ...parcial,
   }
 }

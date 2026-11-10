@@ -126,8 +126,8 @@ export function Layout() {
       : buscaGlobal(busca)
 
   const handleLogout = () => {
-    logout()
     navegar('/login')
+    void logout()
   }
 
   // A gaveta (tela estreita) fecha ao escolher uma tela, com Esc e com clique no fundo.
