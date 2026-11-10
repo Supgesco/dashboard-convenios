@@ -42,6 +42,19 @@ export function montarUrl(caminho: string, parametros: Parametros = {}): string 
   return `${API_BASE}${caminho}${query ? `?${query}` : ''}`
 }
 
+let ouvinteNaoAutenticado: (() => void) | null = null
+
+/**
+ * Registra quem é avisado quando a API responde 401 fora de `/auth/*` (sessão ausente ou expirada).
+ * Só há um ouvinte (o provedor de autenticação). Devolve a função que o remove.
+ */
+export function aoNaoAutenticado(ouvinte: () => void): () => void {
+  ouvinteNaoAutenticado = ouvinte
+  return () => {
+    if (ouvinteNaoAutenticado === ouvinte) ouvinteNaoAutenticado = null
+  }
+}
+
 async function requisitar<T>(
   metodo: 'GET' | 'POST' | 'PUT' | 'DELETE',
   caminho: string,
@@ -58,14 +71,18 @@ async function requisitar<T>(
     resposta = await fetch(montarUrl(caminho, parametros), {
       method: metodo,
       headers,
+      // O cookie de sessão (HttpOnly) vai junto; front e API estão na mesma origem.
+      credentials: 'same-origin',
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     })
   } catch {
     throw new ApiErro(0, null)
   }
+  if (resposta.status === 204) return undefined as T
   const tipo = resposta.headers.get('Content-Type') ?? ''
   if (!tipo.includes('application/json')) throw new ApiErro(resposta.status, null, true)
   const corpo: unknown = await resposta.json().catch(() => null)
+  if (resposta.status === 401 && !caminho.startsWith('/auth/')) ouvinteNaoAutenticado?.()
   if (!resposta.ok) {
     const detail = corpo && typeof corpo === 'object' && 'detail' in corpo ? corpo.detail : corpo
     throw new ApiErro(resposta.status, detail)

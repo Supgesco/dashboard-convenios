@@ -24,6 +24,11 @@ class Settings(BaseSettings):
 
     siafe_timeout_seconds: float = 60.0
 
+    # Sessão de login do painel: validade absoluta e flag Secure do cookie
+    # (desligar só para servir a API por HTTP fora do localhost).
+    sessao_horas: float = 12.0
+    sessao_cookie_seguro: bool = True
+
 
 @lru_cache
 def get_settings() -> Settings:
