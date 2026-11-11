@@ -467,6 +467,8 @@ describe('Detalhe do convênio', () => {
     const id = screen.getByRole('region', { name: 'Identificação' })
     expect(id).toHaveTextContent('Obra sintética de teste')
     expect(id).toHaveTextContent('30/06/2027')
+    expect(id).toHaveTextContent('Processo celebração')
+    expect(id).toHaveTextContent('E-17/001/1114/2014')
     const recortes = within(within(id).getByRole('list', { name: 'Recortes' })).getAllByRole('listitem')
     expect(recortes.map((r) => r.textContent)).toEqual(['Histórico inicial', 'Primeiro realinhamento', 'Vigentes'])
     expect(screen.getByRole('region', { name: 'Valores contratuais · Vigentes' })).toHaveTextContent('R$ 5.000,00')

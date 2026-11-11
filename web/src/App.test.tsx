@@ -57,6 +57,21 @@ describe('navegação', () => {
     const link = within(screen.getByRole('navigation', { name: 'Telas' })).getByRole('link', { name: 'Convênios' })
     expect(link).toHaveAttribute('href', '/convenios')
   })
+
+  it('mantém o filtro de municípios na aba de convênios após entrar nos detalhes e voltar', async () => {
+    stubApi(await rotasPadrao())
+    renderizar(<App />, '/convenios?recorte=89&municipio=Paraty')
+    const linha = await screen.findByRole('row', { name: /901\/2020 de Paraty/ })
+    await userEvent.click(linha)
+    expect(await screen.findByRole('heading', { name: /Convênio 901\/2020/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Municípios/ })).toHaveTextContent('1 selecionado')
+    const linkMenu = within(screen.getByRole('navigation', { name: 'Telas' })).getByRole('link', { name: 'Convênios' })
+    expect(linkMenu).toHaveAttribute('href', '/convenios?recorte=89&municipio=Paraty')
+    await userEvent.click(within(screen.getByRole('region', { name: 'Identificação' })).getByRole('link', { name: 'Convênios' }))
+    expect(urlAtual().pathname).toBe('/convenios')
+    expect(urlAtual().searchParams.get('recorte')).toBe('89')
+    expect(urlAtual().searchParams.getAll('municipio')).toEqual(['Paraty'])
+  })
 })
 
 describe('barra de filtros', () => {
