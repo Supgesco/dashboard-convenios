@@ -1,9 +1,15 @@
 // Estado dos filtros: vive só na URL. Este módulo lê e escreve os parâmetros; nada é copiado para estado local.
-import { useCallback, useMemo } from 'react'
+import { createContext, useCallback, useContext, useMemo } from 'react'
 import { useSearchParams } from 'react-router'
 
 import { useResumoGeral, type FiltroApi, type MesConsulta } from './api/hooks'
 import { RECORTES, type Recorte } from './api/tipos'
+
+export const ContextoBuscaSalva = createContext<string>('')
+
+export function useBuscaSalva(): string {
+  return useContext(ContextoBuscaSalva)
+}
 
 export const RECORTE_PADRAO: Recorte = '31'
 

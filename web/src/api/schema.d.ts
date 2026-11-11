@@ -404,6 +404,8 @@ export interface components {
             numero_convenio: string;
             /** Objeto */
             objeto: string | null;
+            /** Processo Celebracao */
+            processo_celebracao?: string | null;
             /**
              * Prestacao Contas
              * @default []

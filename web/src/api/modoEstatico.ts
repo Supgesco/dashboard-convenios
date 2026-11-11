@@ -123,6 +123,7 @@ export async function atenderEstatico<T>(
     const conv = todos.find((c) => String(c.numero_convenio) === num && String(c.municipio) === mun) ?? todos[0]
     return {
       ...conv,
+      processo_celebracao: conv?.processo_celebracao ?? null,
       compartilhado_com: [],
       referencia: { ano: 2026, mes: 3 },
       saldos: {

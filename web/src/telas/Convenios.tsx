@@ -7,6 +7,7 @@ import { Aviso, CaixaErro, Carregando } from '../componentes/Estados'
 import { TabelaPaginada, type Coluna } from '../componentes/TabelaPaginada'
 import { useFiltros, useMesReferencia, type Filtros, type MesReferencia } from '../filtros'
 import { AUSENTE, mesAno, moeda, percentual } from '../formato'
+import { exportarPdfPorChave } from '../relatorioPdf'
 import { CAMPOS_CONTRATUAL, CAMPOS_SALDO, CartoesSaldo, LegendaCompartilhado, MarcaCompartilhado, linkDetalhe } from './comum'
 import { FormularioNovoConvenio, useConvenioRecemAdicionado, useExibirNovoConvenio } from './NovoConvenio'
 
@@ -193,9 +194,17 @@ export function TelaConvenios() {
                 unidade={['convênio', 'convênios']}
                 vazio="Nenhum convênio neste filtro."
                 atualizando={consulta.isPlaceholderData}
+                destacarLinha={(i) =>
+                  Boolean(
+                    recemAdicionado &&
+                      i.numero_convenio === recemAdicionado.numero_convenio &&
+                      i.municipio === recemAdicionado.municipio,
+                  )
+                }
                 onSalvarEdicao={(item, alt) =>
                   editar.mutateAsync({ ...alt, numero_convenio: item.numero_convenio, municipio: item.municipio })
                 }
+                onExportarPdf={(item) => exportarPdfPorChave(item.numero_convenio, item.municipio, ref.mes)}
                 onRemoverItem={async (item) => {
                   await remover.mutateAsync({ numero: item.numero_convenio, municipio: item.municipio })
                   setCriadosLocal((ant) =>

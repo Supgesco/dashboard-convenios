@@ -3,7 +3,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 
 import { useAuth } from '../autenticacao'
-import { buscaGlobal, useFiltros } from '../filtros'
+import { ContextoBuscaSalva, buscaGlobal, useFiltros } from '../filtros'
 import { BarraFiltros } from './BarraFiltros'
 
 // Ícones em linha (traço 1.75, 20px), sem biblioteca.
@@ -118,12 +118,21 @@ export function Layout() {
   const { usuario, logout } = useAuth()
   const navegar = useNavigate()
   const [aberto, setAberto] = useState(false)
+  const [buscaSalva, setBuscaSalva] = useState('')
   const comFiltros = TELAS_COM_FILTROS.includes(pathname)
-  // No detalhe, `municipio` é parte da chave do convênio, não filtro: o menu leva só o mês.
+  const exibirBarraFiltros = comFiltros || pathname === '/convenio'
+  const buscaAtual = buscaGlobal(busca)
+
+  if (comFiltros && buscaSalva !== buscaAtual) {
+    setBuscaSalva(buscaAtual)
+  }
+
+  // No detalhe, preserva os filtros (incluindo município e recorte) que estavam ativos na aba de convênios;
+  // se o detalhe foi aberto diretamente sem filtros prévios, leva apenas o mês.
   const buscaMenu =
     pathname === '/convenio'
-      ? buscaGlobal(new URLSearchParams([...busca].filter(([k]) => k === 'ano' || k === 'mes')))
-      : buscaGlobal(busca)
+      ? buscaSalva || buscaGlobal(new URLSearchParams([...busca].filter(([k]) => k === 'ano' || k === 'mes')))
+      : buscaAtual
 
   const handleLogout = () => {
     navegar('/login')
@@ -300,28 +309,30 @@ export function Layout() {
         </aside>
 
         <main className="min-w-0 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
-          <div className="mx-auto max-w-7xl space-y-6">
-            {comFiltros && <BarraFiltros />}
-            {comFiltros && filtros.erro ? (
-              <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-900">
-                <p className="font-medium">Filtro inválido na URL</p>
-                <p className="mt-1">{filtros.erro}</p>
-                <button type="button" className="botao-secundario mt-3" onClick={limpar}>
-                  Limpar filtros
-                </button>
-              </div>
-            ) : (
-              // Cada troca de tela entra com um fade curto e uma leve subida.
-              <motion.div
-                key={pathname}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <Outlet />
-              </motion.div>
-            )}
-          </div>
+          <ContextoBuscaSalva.Provider value={buscaSalva}>
+            <div className="mx-auto max-w-7xl space-y-6">
+              {exibirBarraFiltros && <BarraFiltros />}
+              {comFiltros && filtros.erro ? (
+                <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-900">
+                  <p className="font-medium">Filtro inválido na URL</p>
+                  <p className="mt-1">{filtros.erro}</p>
+                  <button type="button" className="botao-secundario mt-3" onClick={limpar}>
+                    Limpar filtros
+                  </button>
+                </div>
+              ) : (
+                // Cada troca de tela entra com um fade curto e uma leve subida.
+                <motion.div
+                  key={pathname}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <Outlet />
+                </motion.div>
+              )}
+            </div>
+          </ContextoBuscaSalva.Provider>
         </main>
       </div>
     </>

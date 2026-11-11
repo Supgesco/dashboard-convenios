@@ -6,9 +6,10 @@ import { useConvenio } from '../api/hooks'
 import type { DetalheConvenio } from '../api/tipos'
 import { CaixaErro, Carregando } from '../componentes/Estados'
 import { GraficoSerie } from '../componentes/GraficoSerie'
-import { lerFiltros, useMesReferencia } from '../filtros'
+import { lerFiltros, useBuscaSalva, useMesReferencia } from '../filtros'
 import { AUSENTE, data, mesAno, moeda } from '../formato'
 import { NOME_RECORTE, ORDEM_EXIBICAO } from '../recortes'
+import { baixarRelatorioPdfConvenio } from '../relatorioPdf'
 import { BlocoContratual, CartoesSaldo, linkDetalhe } from './comum'
 
 // Ícones em linha (traço 1.9), sem biblioteca.
@@ -44,6 +45,12 @@ const ICONES = {
     </>
   ),
   fase: <path d="M4 12h4l3-8 4 16 3-8h2" />,
+  processo: (
+    <>
+      <path d="M7 3h7l5 5v13H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" />
+      <path d="M14 3v5h5M9 13h6M9 17h6" />
+    </>
+  ),
   codigo: <path d="M9 7l-5 5 5 5M15 7l5 5-5 5" />,
   camadas: <path d="m12 3 9 5-9 5-9-5 9-5ZM3 13l9 5 9-5" />,
   alerta: (
@@ -104,7 +111,7 @@ function SeloStatus({ status }: { status: string }) {
 }
 
 /** Topo da tela: título, status, objeto e os dados de identificação num card de destaque. */
-function Identificacao({ d }: { d: DetalheConvenio }) {
+function Identificacao({ d, buscaVoltar }: { d: DetalheConvenio; buscaVoltar: string }) {
   const recortes = ORDEM_EXIBICAO.filter((r) => d.recortes.includes(r))
   return (
     <section
@@ -122,13 +129,28 @@ function Identificacao({ d }: { d: DetalheConvenio }) {
       />
 
       <div className="relative">
-        <Link
-          to="/convenios"
-          className="group inline-flex items-center gap-1 rounded-lg text-sm font-medium text-marca-100 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-        >
-          <Icone className="size-4 transition-transform group-hover:-translate-x-0.5">{ICONES.voltar}</Icone>
-          Convênios
-        </Link>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Link
+            to={`/convenios${buscaVoltar}`}
+            className="group inline-flex items-center gap-1 rounded-lg text-sm font-medium text-marca-100 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          >
+            <Icone className="size-4 transition-transform group-hover:-translate-x-0.5">{ICONES.voltar}</Icone>
+            Convênios
+          </Link>
+          <button
+            type="button"
+            onClick={() => baixarRelatorioPdfConvenio(d)}
+            className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-white shadow-2xs backdrop-blur-xs transition-colors hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          >
+            <Icone className="size-4">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <path d="M12 18v-6" />
+              <path d="m9 15 3 3 3-3" />
+            </Icone>
+            Exportar PDF
+          </button>
+        </div>
 
         <div className="mt-4 flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -155,12 +177,15 @@ function Identificacao({ d }: { d: DetalheConvenio }) {
           <p className="mt-1 text-base leading-relaxed text-marca-50">{d.objeto ?? AUSENTE}</p>
         </div>
 
-        <dl className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 border-t border-white/10 pt-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <dl className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 border-t border-white/10 pt-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7">
           <Fato icone={ICONES.calendario} rotulo="Fim da vigência">
             <span className="tabular-nums">{data(d.vigencia_final)}</span>
           </Fato>
           <Fato icone={ICONES.fase} rotulo="Fase">
             {NOME_FASE[d.fase] ?? d.fase}
+          </Fato>
+          <Fato icone={ICONES.processo} rotulo="Processo celebração">
+            <span className="tabular-nums">{d.processo_celebracao ?? AUSENTE}</span>
           </Fato>
           <Fato icone={ICONES.codigo} rotulo="Código SEOBRAS">
             <span className="tabular-nums">{d.codigo_seobras ?? AUSENTE}</span>
@@ -250,6 +275,7 @@ function Aviso({ children }: { children: ReactNode }) {
 
 export function TelaDetalhe() {
   const [busca] = useSearchParams()
+  const buscaSalva = useBuscaSalva()
   const numero = busca.get('numero') ?? ''
   const municipio = busca.get('municipio') ?? ''
   const ref = useMesReferencia(lerFiltros(busca).mes)
@@ -268,7 +294,7 @@ export function TelaDetalhe() {
           <p className="text-sm text-slate-600">
             Não há convênio {numero} em {municipio}.
           </p>
-          <Link to="/convenios" className="botao-secundario mt-3 inline-block">
+          <Link to={`/convenios${buscaSalva}`} className="botao-secundario mt-3 inline-block">
             Ir para a lista de convênios
           </Link>
         </section>
@@ -277,7 +303,7 @@ export function TelaDetalhe() {
     return (
       <div className="space-y-3">
         <CaixaErro erro={erro} onTentar={() => void consulta.refetch()} titulo="Não foi possível abrir o convênio" />
-        <Link to="/convenios" className="botao-link">
+        <Link to={`/convenios${buscaSalva}`} className="botao-link">
           Ir para a lista de convênios
         </Link>
       </div>
@@ -290,7 +316,7 @@ export function TelaDetalhe() {
 
   return (
     <div className="space-y-8">
-      <Identificacao d={d} />
+      <Identificacao d={d} buscaVoltar={buscaSalva} />
 
       {d.codigo_compartilhado && <Compartilhado d={d} busca={busca} />}
 

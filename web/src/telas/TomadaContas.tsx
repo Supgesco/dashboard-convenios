@@ -5,6 +5,7 @@ import { Aviso, CaixaErro, Carregando } from '../componentes/Estados'
 import { TabelaPaginada, type Coluna } from '../componentes/TabelaPaginada'
 import { useFiltros } from '../filtros'
 import { AUSENTE, moeda } from '../formato'
+import { useConvenioRecemAdicionado } from './NovoConvenio'
 
 function badgeStatus(status: string | null) {
   if (!status) return <span className="text-slate-400">{AUSENTE}</span>
@@ -91,6 +92,7 @@ export function TelaTomadaContas() {
   const consulta = useTomadaContas(filtros.municipios, filtros)
   const editar = useEditarTomadaContas()
   const remover = useRemoverConvenio()
+  const [recemAdicionado] = useConvenioRecemAdicionado()
   const d = consulta.data
 
   const { totalValorSiafe, totalComParecer } = useMemo(() => {
@@ -158,6 +160,13 @@ export function TelaTomadaContas() {
           onOrdem={(ordem) => mudar({ ordem, pagina: 1 })}
           onPagina={(pagina) => mudar({ pagina })}
           unidade={['processo', 'processos']}
+          destacarLinha={(i) =>
+            Boolean(
+              recemAdicionado &&
+                i.numero_convenio === recemAdicionado.numero_convenio &&
+                i.municipio === recemAdicionado.municipio,
+            )
+          }
           onSalvarEdicao={(item, alt) => editar.mutateAsync({ ...alt, id: item.id })}
           onRemoverItem={(item) =>
             remover.mutateAsync({
