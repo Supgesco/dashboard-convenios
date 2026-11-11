@@ -137,11 +137,15 @@ def carregar_tudo() -> dict[str, Any]:
                 if not num or not mun:
                     continue
                 chave = f"{num}||{mun}"
-                entry = codigos_por_chave.setdefault(chave, {"codigo_seobras": None, "codigo_seiop": None})
+                entry = codigos_por_chave.setdefault(
+                    chave, {"codigo_seobras": None, "codigo_seiop": None, "processo_celebracao": None}
+                )
                 if not entry["codigo_seobras"] and r.get("codigo_seobras"):
                     entry["codigo_seobras"] = r["codigo_seobras"]
                 if not entry["codigo_seiop"] and r.get("codigo_seiop"):
                     entry["codigo_seiop"] = r["codigo_seiop"]
+                if not entry.get("processo_celebracao") and r.get("processo_celebracao"):
+                    entry["processo_celebracao"] = r["processo_celebracao"]
 
         contratual_31 = _calcular_contratual_aba(
             transformadas["31 Convênios Vigentes 2025"], "total_investido"
@@ -181,6 +185,7 @@ def carregar_tudo() -> dict[str, Any]:
                 "objeto": r.get("objeto"),
                 "fase": fase,
                 "recortes": recortes,
+                "processo_celebracao": cods.get("processo_celebracao") or r.get("processo_celebracao"),
                 "codigo_seobras": cods.get("codigo_seobras") or r.get("codigo_seobras"),
                 "codigo_seiop": cods.get("codigo_seiop") or r.get("codigo_seiop"),
             }
@@ -699,6 +704,7 @@ def obter_detalhe(numero: str, municipio: str, referencia: tuple[int, int]):
         vigencia_final=meta["vigencia_final"],
         objeto=meta["objeto"],
         recortes=meta["recortes"],
+        processo_celebracao=meta.get("processo_celebracao"),
         codigo_seobras=meta["codigo_seobras"],
         codigo_seiop=meta["codigo_seiop"],
         codigo_compartilhado=bool(compartilhado_com),
@@ -1104,6 +1110,7 @@ def criar_convenio(payload: dict[str, Any]):
         "vigencia_final": vigencia_final,
         "objeto": objeto,
         "recortes": recortes,
+        "processo_celebracao": (payload.get("processo_celebracao") or payload.get("processo_sei") or "").strip() or None,
         "codigo_seobras": codigo_seobras,
         "codigo_seiop": codigo_seiop,
         "recem_criado": True,

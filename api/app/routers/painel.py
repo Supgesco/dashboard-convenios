@@ -204,6 +204,7 @@ class DetalheConvenio(BaseModel):
     vigencia_final: date | None
     objeto: str | None
     recortes: list[Recorte]
+    processo_celebracao: str | None = None
     codigo_seobras: str | None
     codigo_seiop: str | None
     codigo_compartilhado: bool
