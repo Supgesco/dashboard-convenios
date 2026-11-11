@@ -12,16 +12,22 @@ from alembic import command
 from alembic.config import Config
 from sqlalchemy import Engine, text
 
+from app.auth.servico import UsuarioPublico
 from app.config import API_DIR
 from app.db import make_engine
 from app.planilha.layout import ABAS
 
 TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL")
 
+# Usuário fictício para os testes de router que sobrescrevem a dependência de sessão.
+USUARIO_TESTE = UsuarioPublico(1, "teste@obras.rj.gov.br", "Usuário de Teste", None, None, "analista")
+
 # Tabelas que os testes apagam. Se alguma já tiver dados, o banco não é de teste.
-TABELAS_COM_DADOS = ["siafe_flexvision", "planilha_importacao", *(aba.tabela for aba in ABAS)]
+# `usuario` entra aqui também: um banco com contas de login não é de teste.
+TABELAS_COM_DADOS = ["siafe_flexvision", "planilha_importacao", *(aba.tabela for aba in ABAS), "usuario"]
 TRUNCATE = (
-    f"TRUNCATE siafe_flexvision, etl_execucao, {', '.join(TABELAS_COM_DADOS[1:])} RESTART IDENTITY CASCADE"
+    f"TRUNCATE siafe_flexvision, etl_execucao, sessao, {', '.join(TABELAS_COM_DADOS[1:])} "
+    "RESTART IDENTITY CASCADE"
 )
 
 

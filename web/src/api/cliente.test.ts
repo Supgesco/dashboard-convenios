@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { ApiErro, apiGet, mensagemDoDetail, montarUrl } from './cliente'
+import { ApiErro, aoNaoAutenticado, apiGet, apiPost, mensagemDoDetail, montarUrl } from './cliente'
 
 afterEach(() => {
   vi.unstubAllGlobals()
@@ -95,5 +95,46 @@ describe('mensagemDoDetail', () => {
 
   it('sem detail usa o status', () => {
     expect(mensagemDoDetail(500, null)).toBe('A API respondeu com erro 500.')
+  })
+})
+
+describe('sessão', () => {
+  it('envia o cookie de sessão (credentials same-origin)', async () => {
+    const fetch = vi.fn().mockResolvedValue(respostaJson(200, {}))
+    vi.stubGlobal('fetch', fetch)
+    await apiGet('/painel/resumo')
+    expect(fetch).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ credentials: 'same-origin' }))
+  })
+
+  it('401 fora de /auth avisa o ouvinte e ainda lança ApiErro', async () => {
+    const ouvinte = vi.fn()
+    const remover = aoNaoAutenticado(ouvinte)
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(respostaJson(401, { detail: 'Sessão inválida' })))
+    try {
+      const erro = await apiGet('/painel/resumo').catch((e: unknown) => e)
+      expect(erro).toBeInstanceOf(ApiErro)
+      expect((erro as ApiErro).status).toBe(401)
+      expect(ouvinte).toHaveBeenCalledTimes(1)
+
+      await apiPost('/auth/login').catch(() => null)
+      await apiGet('/auth/me').catch(() => null)
+      expect(ouvinte).toHaveBeenCalledTimes(1)
+    } finally {
+      remover()
+    }
+  })
+
+  it('outros erros não avisam o ouvinte', async () => {
+    const ouvinte = vi.fn()
+    const remover = aoNaoAutenticado(ouvinte)
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(respostaJson(403, { detail: 'x' })))
+    await apiGet('/painel/resumo').catch(() => null)
+    remover()
+    expect(ouvinte).not.toHaveBeenCalled()
+  })
+
+  it('204 sem corpo resolve sem erro', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 204 })))
+    await expect(apiPost('/auth/logout')).resolves.toBeUndefined()
   })
 })

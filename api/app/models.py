@@ -19,6 +19,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.sql import text
 
 from app.db import Base
 from app.planilha.layout import ABAS, Aba, Papel
@@ -61,6 +62,37 @@ class SiafeFlexvision(Base):
     convenios_a_comprovar: Mapped[Decimal] = mapped_column(Dinheiro)
     convenios_a_aprovar: Mapped[Decimal] = mapped_column(Dinheiro)
     convenios_aprovados: Mapped[Decimal] = mapped_column(Dinheiro)
+
+
+class Usuario(Base):
+    """Usuário do painel. A senha fica só como hash (ver app/auth/senha.py)."""
+
+    __tablename__ = "usuario"
+    __table_args__ = (Index("ux_usuario_email", text("lower(email)"), unique=True),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    email: Mapped[str] = mapped_column(Text)  # gravado já normalizado (strip + lower)
+    nome: Mapped[str] = mapped_column(Text)
+    cargo: Mapped[str | None] = mapped_column(Text)
+    orgao: Mapped[str | None] = mapped_column(Text)
+    perfil: Mapped[str] = mapped_column(String(20))  # "administrador" | "analista" | "auditor"
+    senha_hash: Mapped[str] = mapped_column(Text)
+    ativo: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
+    falhas_consecutivas: Mapped[int] = mapped_column(Integer, server_default=text("0"))
+    bloqueado_ate: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Sessao(Base):
+    """Sessão de login. Guarda só o SHA-256 do token entregue no cookie."""
+
+    __tablename__ = "sessao"
+    __table_args__ = (Index("ix_sessao_usuario_id", "usuario_id"),)
+
+    token_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    usuario_id: Mapped[int] = mapped_column(ForeignKey("usuario.id", ondelete="CASCADE"))
+    criada_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    expira_em: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 
 class PlanilhaImportacao(Base):

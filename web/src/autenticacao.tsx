@@ -1,109 +1,116 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+// Sessão do usuário, verificada pela API (/auth/*). O token fica num cookie HttpOnly que o JS não lê:
+// nada de usuário, senha ou sessão fica no código nem no armazenamento do navegador.
+import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
+import { createContext, useCallback, useContext, useEffect, type ReactNode } from 'react'
+
+import { ApiErro, aoNaoAutenticado, apiGet, apiPost, apiPostJson } from './api/cliente'
+import { emModoEstatico } from './api/modoEstatico'
 
 export interface Usuario {
-  id: string
+  id: number
   email: string
   nome: string
-  cargo: string
-  orgao: string
+  cargo: string | null
+  orgao: string | null
   perfil: 'administrador' | 'analista' | 'auditor'
 }
+
+export type ResultadoLogin = { sucesso: true } | { sucesso: false; erro: string }
 
 interface AuthContextoTipo {
   usuario: Usuario | null
   carregando: boolean
-  login: (email: string, senha: string) => Promise<{ sucesso: boolean; erro?: string }>
-  loginDemo: (perfil?: 'administrador' | 'analista') => void
-  logout: () => void
+  login: (email: string, senha: string) => Promise<ResultadoLogin>
+  logout: () => Promise<void>
 }
 
-const CHAVE_STORAGE = 'dashboard_convenios_usuario'
-
-const SENHA_PADRAO = 'Seiop@1234'
-
-const USUARIOS_PADRAO: Record<string, { senha: string; dados: Usuario }> = {
-  'admin@obras.rj.gov.br': {
-    senha: SENHA_PADRAO,
-    dados: {
-      id: 'usr_admin',
-      email: 'admin@obras.rj.gov.br',
-      nome: 'Coordenação SUBTSI',
-      cargo: 'Subsecretaria de Tecnologia da Informação',
-      orgao: 'SEIOP - Governo do Estado do Rio de Janeiro',
-      perfil: 'administrador',
-    },
-  },
-  'analista@obras.rj.gov.br': {
-    senha: SENHA_PADRAO,
-    dados: {
-      id: 'usr_analista',
-      email: 'analista@obras.rj.gov.br',
-      nome: 'Analista de Convênios',
-      cargo: 'Gestão de Convênios e Tomada de Contas',
-      orgao: 'SEIOP - Governo do Estado do Rio de Janeiro',
-      perfil: 'analista',
-    },
-  },
+// A publicação estática não tem API nem dados protegidos por servidor: entra direto como visitante.
+const VISITANTE: Usuario = {
+  id: 0,
+  email: 'visitante@demonstracao',
+  nome: 'Visitante (demonstração)',
+  cargo: null,
+  orgao: null,
+  perfil: 'analista',
 }
 
-const EM_TESTE = import.meta.env.MODE === 'test'
+function mensagemDeErroLogin(e: unknown): string {
+  if (e instanceof ApiErro) {
+    if (e.status === 401) return 'E-mail ou senha inválidos.'
+    if (e.status === 429) {
+      return typeof e.detail === 'string' && e.detail
+        ? e.detail
+        : 'Conta bloqueada temporariamente por excesso de tentativas. Tente novamente em alguns minutos.'
+    }
+    if (e.status === 0 || e.foraDaApi || e.status >= 500) {
+      return 'Não foi possível falar com o serviço de autenticação. Tente novamente em instantes.'
+    }
+    return e.message
+  }
+  return 'Ocorreu um erro inesperado ao conectar ao serviço de autenticação.'
+}
+
+/** Chave da sessão no cache do TanStack Query (os testes a semeiam em `renderizar`). */
+export const CHAVE_SESSAO = ['auth', 'me'] as const
+
+/** Apaga do cache tudo que não é a sessão e grava a sessão nova (null = sem login). */
+function trocarSessao(queryClient: QueryClient, usuario: Usuario | null) {
+  queryClient.removeQueries({ predicate: (q) => q.queryKey[0] !== CHAVE_SESSAO[0] })
+  queryClient.setQueryData(CHAVE_SESSAO, usuario)
+}
+
+async function buscarSessao(): Promise<Usuario | null> {
+  try {
+    return await apiGet<Usuario>('/auth/me')
+  } catch {
+    // 401 = sem sessão. API fora do ar também cai no login, que mostra o erro ao tentar entrar.
+    return null
+  }
+}
 
 const AuthContexto = createContext<AuthContextoTipo | undefined>(undefined)
 
 export function ProvedorAutenticacao({ children }: { children: ReactNode }) {
-  const [usuario, setUsuario] = useState<Usuario | null>(() =>
-    EM_TESTE ? USUARIOS_PADRAO['admin@obras.rj.gov.br'].dados : null,
-  )
-  const [carregando, setCarregando] = useState(!EM_TESTE)
+  const estatico = emModoEstatico()
+  const queryClient = useQueryClient()
+  const sessao = useQuery({
+    queryKey: CHAVE_SESSAO,
+    queryFn: buscarSessao,
+    enabled: !estatico,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    retry: false,
+  })
+  const usuario = estatico ? VISITANTE : (sessao.data ?? null)
+  const carregando = !estatico && sessao.isPending
 
-  useEffect(() => {
-    if (EM_TESTE) return
-    try {
-      const salvo = localStorage.getItem(CHAVE_STORAGE)
-      if (salvo) {
-        setUsuario(JSON.parse(salvo))
-      }
-    } catch (e) {
-      console.error('Falha ao carregar sessão salva', e)
-    } finally {
-      setCarregando(false)
-    }
-  }, [])
+  // Sem sessão, nenhum dado em cache pode continuar visível (o próximo login pode ser de outra pessoa).
+  const encerrarLocalmente = useCallback(() => trocarSessao(queryClient, null), [queryClient])
 
-  const login = async (email: string, senha: string): Promise<{ sucesso: boolean; erro?: string }> => {
+  // Qualquer 401 da API (sessão expirada ou encerrada) leva de volta ao login.
+  useEffect(() => (estatico ? undefined : aoNaoAutenticado(encerrarLocalmente)), [estatico, encerrarLocalmente])
+
+  const login = async (email: string, senha: string): Promise<ResultadoLogin> => {
     const e = email.trim().toLowerCase()
-    if (!e || !senha) {
-      return { sucesso: false, erro: 'Informe o e-mail e a senha de acesso.' }
+    if (!e || !senha) return { sucesso: false, erro: 'Informe o e-mail e a senha de acesso.' }
+    if (estatico) return { sucesso: true }
+    try {
+      const u = await apiPostJson<Usuario>('/auth/login', { email: e, senha })
+      trocarSessao(queryClient, u)
+      return { sucesso: true }
+    } catch (erro) {
+      return { sucesso: false, erro: mensagemDeErroLogin(erro) }
     }
-
-    const conta = USUARIOS_PADRAO[e]
-    if (!conta || conta.senha !== senha) {
-      return { sucesso: false, erro: 'E-mail ou senha inválidos. Verifique suas credenciais.' }
-    }
-
-    setUsuario(conta.dados)
-    localStorage.setItem(CHAVE_STORAGE, JSON.stringify(conta.dados))
-    return { sucesso: true }
   }
 
-  const loginDemo = (perfil: 'administrador' | 'analista' = 'administrador') => {
-    const usr =
-      perfil === 'administrador'
-        ? USUARIOS_PADRAO['admin@obras.rj.gov.br'].dados
-        : USUARIOS_PADRAO['analista@obras.rj.gov.br'].dados
-    setUsuario(usr)
-    localStorage.setItem(CHAVE_STORAGE, JSON.stringify(usr))
-  }
-
-  const logout = () => {
-    setUsuario(null)
-    localStorage.removeItem(CHAVE_STORAGE)
+  const logout = async () => {
+    if (estatico) return
+    encerrarLocalmente()
+    await apiPost('/auth/logout').catch(() => undefined)
   }
 
   return (
-    <AuthContexto.Provider value={{ usuario, carregando, login, loginDemo, logout }}>
-      {children}
-    </AuthContexto.Provider>
+    <AuthContexto.Provider value={{ usuario, carregando, login, logout }}>{children}</AuthContexto.Provider>
   )
 }
 
