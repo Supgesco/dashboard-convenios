@@ -141,11 +141,6 @@ export function FormularioNovoConvenio({
   const [cnpj, setCnpj] = useState('')
   const [objeto, setObjeto] = useState('')
 
-  const [aPagar, setAPagar] = useState('0')
-  const [aComprovar, setAComprovar] = useState('0')
-  const [aAprovar, setAAprovar] = useState('0')
-  const [aprovados, setAprovados] = useState('0')
-
   const [valorTotal, setValorTotal] = useState('0')
   const [repasseEstado, setRepasseEstado] = useState('0')
   const [contrapartida, setContrapartida] = useState('0')
@@ -213,10 +208,10 @@ export function FormularioNovoConvenio({
         codigo_seiop: codigoSeiop || null,
         cnpj: cnpj || null,
         processo_sei: processoSei || null,
-        a_pagar: Number(aPagar) || 0,
-        a_comprovar: Number(aComprovar) || 0,
-        a_aprovar: Number(aAprovar) || 0,
-        aprovados: Number(aprovados) || 0,
+        a_pagar: 0,
+        a_comprovar: 0,
+        a_aprovar: 0,
+        aprovados: 0,
         valor_total: vtNum,
         repasse_estado: repNum,
         contrapartida: Number(contrapartida) || 0,
@@ -530,163 +525,98 @@ export function FormularioNovoConvenio({
           </div>
         </section>
 
-        {/* Bloco 2: Saldos SIAFE e Valores Contratuais */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <section className="cartao space-y-4">
-            <div className="border-b border-slate-100 pb-3">
-              <h2 className="titulo-secao">2. Saldos Contábeis SIAFE (R$)</h2>
-              <p className="mt-0.5 text-xs text-slate-500">
-                Saldos das quatro contas do SIAFE para este convênio no mês de referência.
-              </p>
+        {/* Bloco 2: Valores Contratuais e Execução */}
+        <section className="cartao space-y-4">
+          <div className="border-b border-slate-100 pb-3">
+            <h2 className="titulo-secao">2. Valores Contratuais e Execução (R$)</h2>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Valores pactuados na planilha (exibidos nos recortes 31 e 89) com cálculo automático de execução.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="flex flex-col gap-1">
+              <label htmlFor="nc-valor-total" className="text-xs font-semibold text-slate-700">
+                Valor Total (R$)
+              </label>
+              <input
+                id="nc-valor-total"
+                type="number"
+                step="any"
+                value={valorTotal}
+                onChange={(e) => setValorTotal(e.target.value)}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm tabular-nums text-slate-900 shadow-2xs focus:border-marca-600 focus:outline-hidden focus:ring-2 focus:ring-marca-600/20"
+              />
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="flex flex-col gap-1">
-                <label htmlFor="nc-a-pagar" className="text-xs font-semibold text-slate-700">
-                  A pagar (R$)
-                </label>
-                <input
-                  id="nc-a-pagar"
-                  type="number"
-                  step="any"
-                  value={aPagar}
-                  onChange={(e) => setAPagar(e.target.value)}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm tabular-nums text-slate-900 shadow-2xs focus:border-marca-600 focus:outline-hidden focus:ring-2 focus:ring-marca-600/20"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label htmlFor="nc-a-comprovar" className="text-xs font-semibold text-slate-700">
-                  A comprovar (R$)
-                </label>
-                <input
-                  id="nc-a-comprovar"
-                  type="number"
-                  step="any"
-                  value={aComprovar}
-                  onChange={(e) => setAComprovar(e.target.value)}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm tabular-nums text-slate-900 shadow-2xs focus:border-marca-600 focus:outline-hidden focus:ring-2 focus:ring-marca-600/20"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label htmlFor="nc-a-aprovar" className="text-xs font-semibold text-slate-700">
-                  A aprovar (R$)
-                </label>
-                <input
-                  id="nc-a-aprovar"
-                  type="number"
-                  step="any"
-                  value={aAprovar}
-                  onChange={(e) => setAAprovar(e.target.value)}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm tabular-nums text-slate-900 shadow-2xs focus:border-marca-600 focus:outline-hidden focus:ring-2 focus:ring-marca-600/20"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label htmlFor="nc-aprovados" className="text-xs font-semibold text-slate-700">
-                  Aprovados (R$)
-                </label>
-                <input
-                  id="nc-aprovados"
-                  type="number"
-                  step="any"
-                  value={aprovados}
-                  onChange={(e) => setAprovados(e.target.value)}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm tabular-nums text-slate-900 shadow-2xs focus:border-marca-600 focus:outline-hidden focus:ring-2 focus:ring-marca-600/20"
-                />
-              </div>
+            <div className="flex flex-col gap-1">
+              <label htmlFor="nc-repasse" className="text-xs font-semibold text-slate-700">
+                Repasse do Estado (R$)
+              </label>
+              <input
+                id="nc-repasse"
+                type="number"
+                step="any"
+                value={repasseEstado}
+                onChange={(e) => setRepasseEstado(e.target.value)}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm tabular-nums text-slate-900 shadow-2xs focus:border-marca-600 focus:outline-hidden focus:ring-2 focus:ring-marca-600/20"
+              />
             </div>
-          </section>
-
-          <section className="cartao space-y-4">
-            <div className="border-b border-slate-100 pb-3">
-              <h2 className="titulo-secao">3. Valores Contratuais e Execução (R$)</h2>
-              <p className="mt-0.5 text-xs text-slate-500">
-                Valores pactuados na planilha (exibidos nos recortes 31 e 89) com cálculo automático de execução.
-              </p>
+            <div className="flex flex-col gap-1">
+              <label htmlFor="nc-contrapartida" className="text-xs font-semibold text-slate-700">
+                Contrapartida (R$)
+              </label>
+              <input
+                id="nc-contrapartida"
+                type="number"
+                step="any"
+                value={contrapartida}
+                onChange={(e) => setContrapartida(e.target.value)}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm tabular-nums text-slate-900 shadow-2xs focus:border-marca-600 focus:outline-hidden focus:ring-2 focus:ring-marca-600/20"
+              />
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="flex flex-col gap-1">
-                <label htmlFor="nc-valor-total" className="text-xs font-semibold text-slate-700">
-                  Valor Total (R$)
-                </label>
-                <input
-                  id="nc-valor-total"
-                  type="number"
-                  step="any"
-                  value={valorTotal}
-                  onChange={(e) => setValorTotal(e.target.value)}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm tabular-nums text-slate-900 shadow-2xs focus:border-marca-600 focus:outline-hidden focus:ring-2 focus:ring-marca-600/20"
-                />
+            <div className="flex flex-col gap-1">
+              <label htmlFor="nc-investido" className="text-xs font-semibold text-slate-700">
+                Investido pelo Estado (R$)
+              </label>
+              <input
+                id="nc-investido"
+                type="number"
+                step="any"
+                value={investidoEstado}
+                onChange={(e) => setInvestidoEstado(e.target.value)}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm tabular-nums text-slate-900 shadow-2xs focus:border-marca-600 focus:outline-hidden focus:ring-2 focus:ring-marca-600/20"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label htmlFor="nc-a-repassar" className="text-xs font-semibold text-slate-700">
+                A repassar (R$)
+              </label>
+              <input
+                id="nc-a-repassar"
+                type="number"
+                step="any"
+                placeholder={String(aRepassarCalculado)}
+                value={aRepassarManual}
+                onChange={(e) => setARepassarManual(e.target.value)}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm tabular-nums text-slate-900 shadow-2xs focus:border-marca-600 focus:outline-hidden focus:ring-2 focus:ring-marca-600/20"
+              />
+            </div>
+            <div className="flex flex-col justify-center rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
+              <div>
+                % Execução (Investido / Repasse):{' '}
+                <strong className="tabular-nums text-slate-900">{percentual(execucaoPct)}</strong>
               </div>
-              <div className="flex flex-col gap-1">
-                <label htmlFor="nc-repasse" className="text-xs font-semibold text-slate-700">
-                  Repasse do Estado (R$)
-                </label>
-                <input
-                  id="nc-repasse"
-                  type="number"
-                  step="any"
-                  value={repasseEstado}
-                  onChange={(e) => setRepasseEstado(e.target.value)}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm tabular-nums text-slate-900 shadow-2xs focus:border-marca-600 focus:outline-hidden focus:ring-2 focus:ring-marca-600/20"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label htmlFor="nc-contrapartida" className="text-xs font-semibold text-slate-700">
-                  Contrapartida (R$)
-                </label>
-                <input
-                  id="nc-contrapartida"
-                  type="number"
-                  step="any"
-                  value={contrapartida}
-                  onChange={(e) => setContrapartida(e.target.value)}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm tabular-nums text-slate-900 shadow-2xs focus:border-marca-600 focus:outline-hidden focus:ring-2 focus:ring-marca-600/20"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label htmlFor="nc-investido" className="text-xs font-semibold text-slate-700">
-                  Investido pelo Estado (R$)
-                </label>
-                <input
-                  id="nc-investido"
-                  type="number"
-                  step="any"
-                  value={investidoEstado}
-                  onChange={(e) => setInvestidoEstado(e.target.value)}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm tabular-nums text-slate-900 shadow-2xs focus:border-marca-600 focus:outline-hidden focus:ring-2 focus:ring-marca-600/20"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label htmlFor="nc-a-repassar" className="text-xs font-semibold text-slate-700">
-                  A repassar (R$)
-                </label>
-                <input
-                  id="nc-a-repassar"
-                  type="number"
-                  step="any"
-                  placeholder={String(aRepassarCalculado)}
-                  value={aRepassarManual}
-                  onChange={(e) => setARepassarManual(e.target.value)}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm tabular-nums text-slate-900 shadow-2xs focus:border-marca-600 focus:outline-hidden focus:ring-2 focus:ring-marca-600/20"
-                />
-              </div>
-              <div className="flex flex-col justify-center rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                <div>
-                  % Execução (Investido / Repasse):{' '}
-                  <strong className="tabular-nums text-slate-900">{percentual(execucaoPct)}</strong>
-                </div>
-                <div className="mt-1">
-                  % Investido / Valor Total:{' '}
-                  <strong className="tabular-nums text-slate-900">{percentual(investidoSobreTotalPct)}</strong>
-                </div>
+              <div className="mt-1">
+                % Investido / Valor Total:{' '}
+                <strong className="tabular-nums text-slate-900">{percentual(investidoSobreTotalPct)}</strong>
               </div>
             </div>
-          </section>
-        </div>
+          </div>
+        </section>
 
         {/* Bloco 3: Vínculos opcionais com Prestação de Contas e Tomada de Contas */}
         <section className="cartao space-y-4">
           <div className="border-b border-slate-100 pb-3">
-            <h2 className="titulo-secao">4. Vínculo com Prestação de Contas e Tomada de Contas (Opcional)</h2>
+            <h2 className="titulo-secao">3. Vínculo com Prestação de Contas e Tomada de Contas (Opcional)</h2>
             <p className="mt-0.5 text-xs text-slate-500">
               Marque abaixo se desejar que este convênio já crie automaticamente um registro nas abas Prestação de Contas ou Tomada de Contas.
             </p>
@@ -798,7 +728,7 @@ export function TelaNovoConvenio() {
       <header>
         <h1 className="titulo-tela">Novo Convênio</h1>
         <p className="subtitulo-tela">
-          Cadastre um novo convênio com normalização automática de códigos SIAFE (SEOBRAS e SEIOP), saldos contábeis,
+          Cadastre um novo convênio com normalização automática de códigos SIAFE (SEOBRAS e SEIOP),
           valores contratuais e vínculo opcional com Prestação e Tomada de Contas.
         </p>
       </header>
