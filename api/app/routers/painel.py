@@ -12,7 +12,7 @@ from sqlalchemy import Connection, Engine
 
 from app.etl.siafe import hoje_sp
 from app.painel import consultas as Q
-from app.painel import dados_locais
+from app.painel import dados_locais, persistencia
 from app.painel.municipios import normalizar_municipios
 from app.planilha.transformacao import numero_convenio as normalizar_numero
 from app.routers.etl import get_engine
@@ -585,10 +585,17 @@ class EdicaoPrestacaoContasPayload(BaseModel):
 
 
 @router.put("/convenios", response_model=LinhaConvenio)
-def editar_convenio(payload: EdicaoConvenioPayload):
-    """Atualiza os campos editáveis de um convênio da tabela."""
+def editar_convenio(payload: EdicaoConvenioPayload, engine: EngineDep):
+    """Atualiza os campos editáveis de um convênio no banco de dados (ou cache local em SQLite)."""
     alteracoes = payload.model_dump(exclude_unset=True)
-    return dados_locais.atualizar_convenio(payload.numero_convenio, payload.municipio, alteracoes)
+    if engine.dialect.name == "sqlite":
+        return dados_locais.atualizar_convenio(payload.numero_convenio, payload.municipio, alteracoes)
+    try:
+        return persistencia.atualizar_convenio_db(engine, payload.numero_convenio, payload.municipio, alteracoes)
+    except HTTPException:
+        raise
+    except Exception:
+        return dados_locais.atualizar_convenio(payload.numero_convenio, payload.municipio, alteracoes)
 
 
 @router.put("/municipios", response_model=LinhaMunicipio)
@@ -599,17 +606,31 @@ def editar_municipio(payload: EdicaoMunicipioPayload):
 
 
 @router.put("/tomada-contas/{item_id}", response_model=LinhaTomadaContas)
-def editar_tomada_contas(item_id: int, payload: EdicaoTomadaContasPayload):
-    """Atualiza um registro da aba Tomada de Contas."""
+def editar_tomada_contas(item_id: int, payload: EdicaoTomadaContasPayload, engine: EngineDep):
+    """Atualiza um registro da aba Tomada de Contas no banco de dados (ou cache local em SQLite)."""
     alteracoes = payload.model_dump(exclude_unset=True)
-    return dados_locais.atualizar_tomada_contas(item_id, alteracoes)
+    if engine.dialect.name == "sqlite":
+        return dados_locais.atualizar_tomada_contas(item_id, alteracoes)
+    try:
+        return persistencia.atualizar_tomada_contas_db(engine, item_id, alteracoes)
+    except HTTPException:
+        raise
+    except Exception:
+        return dados_locais.atualizar_tomada_contas(item_id, alteracoes)
 
 
 @router.put("/prestacao-contas/{item_id}", response_model=LinhaPrestacaoContas)
-def editar_prestacao_contas(item_id: int, payload: EdicaoPrestacaoContasPayload):
-    """Atualiza uma parcela da aba Prestação de Contas."""
+def editar_prestacao_contas(item_id: int, payload: EdicaoPrestacaoContasPayload, engine: EngineDep):
+    """Atualiza uma parcela da aba Prestação de Contas no banco de dados (ou cache local em SQLite)."""
     alteracoes = payload.model_dump(exclude_unset=True)
-    return dados_locais.atualizar_prestacao_contas(item_id, alteracoes)
+    if engine.dialect.name == "sqlite":
+        return dados_locais.atualizar_prestacao_contas(item_id, alteracoes)
+    try:
+        return persistencia.atualizar_prestacao_contas_db(engine, item_id, alteracoes)
+    except HTTPException:
+        raise
+    except Exception:
+        return dados_locais.atualizar_prestacao_contas(item_id, alteracoes)
 
 
 class NovoConvenioPayload(BaseModel):
@@ -645,22 +666,51 @@ class NovoConvenioPayload(BaseModel):
 
 
 @router.post("/convenios", response_model=LinhaConvenio, status_code=201)
-def cadastrar_convenio(payload: NovoConvenioPayload):
-    """Cadastra um novo convênio (com normalização SIAFE SEOBRAS/SEIOP) nos recortes selecionados."""
-    return dados_locais.criar_convenio(payload.model_dump())
+def cadastrar_convenio(payload: NovoConvenioPayload, engine: EngineDep):
+    """Cadastra um novo convênio no banco de dados (ou cache local em SQLite) nos recortes selecionados."""
+    dados_payload = payload.model_dump()
+    if engine.dialect.name == "sqlite":
+        return dados_locais.criar_convenio(dados_payload)
+    try:
+        return persistencia.criar_convenio_db(engine, dados_payload)
+    except HTTPException:
+        raise
+    except Exception:
+        return dados_locais.criar_convenio(dados_payload)
 
 
 @router.delete("/convenios")
 def excluir_convenio(
+    engine: EngineDep,
     numero: Annotated[str | None, Query(description="Número do convênio.")] = None,
     municipio: Annotated[str | None, Query(description="Município do convênio.")] = None,
     prestacao_id: Annotated[int | None, Query(description="ID da linha de prestação de contas.")] = None,
     tomada_id: Annotated[int | None, Query(description="ID da linha de tomada de contas.")] = None,
 ):
-    """Remove um convênio da base (e de todas as abas vinculadas) e atualiza os totais dos recortes."""
-    return dados_locais.remover_convenio(
-        (numero or "").strip(),
-        (municipio or "").strip(),
-        prestacao_id=prestacao_id,
-        tomada_id=tomada_id,
-    )
+    """Remove um convênio do banco de dados (ou cache local em SQLite) e de todas as abas vinculadas."""
+    num = (numero or "").strip()
+    mun = (municipio or "").strip()
+    if engine.dialect.name == "sqlite":
+        return dados_locais.remover_convenio(
+            num,
+            mun,
+            prestacao_id=prestacao_id,
+            tomada_id=tomada_id,
+        )
+    try:
+        return persistencia.remover_convenio_db(
+            engine,
+            num,
+            mun,
+            prestacao_id=prestacao_id,
+            tomada_id=tomada_id,
+        )
+    except HTTPException:
+        raise
+    except Exception:
+        return dados_locais.remover_convenio(
+            num,
+            mun,
+            prestacao_id=prestacao_id,
+            tomada_id=tomada_id,
+        )

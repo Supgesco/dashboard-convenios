@@ -1,18 +1,47 @@
 import { useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router'
+
+import govLogo from '../assets/govlogo.png'
+import logoGio from '../assets/LogoGio.png'
+import logoGioBranca from '../assets/LogoGioBranca.png'
 import { useAuth } from '../autenticacao'
+import { FundoGio } from '../componentes/FundoGio'
 
 const DOMINIO_INSTITUCIONAL = '@obras.rj.gov.br'
 
+/** Remove o domínio digitado para padronizar a identificação institucional. */
 function extrairUsuarioEmail(valor: string): string {
   return valor.trim().replace(/@.*$/, '')
 }
 
+/** Monta o e-mail completo com o domínio oficial da SEIOP. */
 function montarEmailInstitucional(valor: string): string {
   const usuario = extrairUsuarioEmail(valor)
   return usuario ? `${usuario}${DOMINIO_INSTITUCIONAL}` : ''
 }
 
+const RECURSOS_GIO = [
+  {
+    titulo: 'Gestão Integrada de Convênios',
+    descricao: 'Acompanhe saldos SIAFE, vigências e movimentações financeiras em tempo real.',
+  },
+  {
+    titulo: 'Mapeamento Territorial',
+    descricao: 'Visualize investimentos estaduais por município e filtre rapidamente por região.',
+  },
+  {
+    titulo: 'Prestação e Tomada de Contas',
+    descricao: 'Controle prazos, ocorrências e pendências com emissão direta de relatórios em PDF.',
+  },
+]
+
+const INDICADORES_GIO = [
+  { rotulo: 'Integração SIAFE', valor: 'Dados Oficiais' },
+  { rotulo: 'Cobertura', valor: '92 Municípios' },
+  { rotulo: 'Relatórios', valor: 'Exportação PDF' },
+]
+
+/** Tela institucional de autenticação no padrão visual GIO (SEIOP). */
 export function TelaLogin() {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
@@ -35,6 +64,7 @@ export function TelaLogin() {
     ? `${(location.state as { from: { pathname: string; search: string } }).from.pathname}${(location.state as { from: { pathname: string; search: string } }).from.search}`
     : '/'
 
+  /** Autentica o usuário usando o e-mail institucional padronizado. */
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setErro(null)
@@ -55,11 +85,13 @@ export function TelaLogin() {
     }
   }
 
+  /** Registra o pedido de acesso no modo de solicitação. */
   const handleSolicitarAcesso = (e: FormEvent) => {
     e.preventDefault()
     setSolicitacaoEnviada(true)
   }
 
+  /** Retorna do fluxo de solicitação de acesso para o formulário principal. */
   const voltarParaLogin = () => {
     setModoSolicitar(false)
     setSolicitacaoEnviada(false)
@@ -67,351 +99,370 @@ export function TelaLogin() {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-slate-950 p-4 sm:p-6 lg:p-8">
-      {/* Luz ambiente de fundo */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 overflow-hidden"
-      >
-        <div className="absolute -left-1/4 -top-1/4 size-[600px] rounded-full bg-blue-600/15 blur-[120px]" />
-        <div className="absolute -bottom-1/4 -right-1/4 size-[600px] rounded-full bg-cyan-600/10 blur-[140px]" />
-      </div>
+    <div className="relative flex min-h-screen w-full flex-col overflow-hidden">
+      <FundoGio />
 
-      <div className="relative w-full max-w-lg">
-        {/* Cabeçalho com nova identidade visual dinâmica GIO · GIOFIN */}
-        <div className="mb-8 text-center">
-          <div className="group relative mx-auto mb-5 inline-flex items-center justify-center">
-            {/* Halo luminoso dinâmico */}
-            <div
-              aria-hidden="true"
-              className="absolute -inset-2 rounded-3xl bg-gradient-to-r from-blue-600 via-cyan-400 to-emerald-400 opacity-35 blur-xl transition duration-500 group-hover:opacity-60"
+      {/* Cabeçalho institucional padrão GIO */}
+      <header className="relative z-10 w-full px-6 py-4 md:px-12">
+        <div className="mx-auto flex max-w-6xl items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img
+              src={govLogo}
+              alt="Logo Governo do Estado"
+              className="h-12 w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
             />
-            {/* Emblema principal GIO / GIOFIN */}
-            <div className="relative flex size-20 items-center justify-center rounded-3xl border border-white/15 bg-gradient-to-br from-slate-900 via-slate-900/95 to-blue-950 p-3.5 shadow-2xl ring-1 ring-cyan-400/30 transition duration-300 group-hover:scale-[1.03]">
-              <svg
-                viewBox="0 0 64 64"
-                className="size-full overflow-visible"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <defs>
-                  <linearGradient id="gio-pillar-1" x1="12" y1="18" x2="22" y2="52" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stopColor="#38BDF8" />
-                    <stop offset="100%" stopColor="#1D4ED8" />
-                  </linearGradient>
-                  <linearGradient id="gio-pillar-2" x1="27" y1="12" x2="37" y2="52" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stopColor="#22D3EE" />
-                    <stop offset="100%" stopColor="#2563EB" />
-                  </linearGradient>
-                  <linearGradient id="gio-pillar-3" x1="42" y1="22" x2="52" y2="52" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stopColor="#34D399" />
-                    <stop offset="100%" stopColor="#0891B2" />
-                  </linearGradient>
-                  <linearGradient id="giofin-arc" x1="8" y1="44" x2="56" y2="14" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.25" />
-                    <stop offset="45%" stopColor="#22D3EE" />
-                    <stop offset="100%" stopColor="#34D399" />
-                  </linearGradient>
-                </defs>
+          </div>
+          <div className="hidden items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 backdrop-blur-md sm:flex">
+            <span className="h-2 w-2 rounded-full bg-green-400" />
+            <span className="text-xs font-medium text-white/90">
+              Sistema Oficial • GIO Convênios
+            </span>
+          </div>
+        </div>
+      </header>
 
-                {/* Arco orbital de fundo (ecossistema integrado GIO + GIOFIN) */}
-                <circle
-                  cx="32"
-                  cy="32"
-                  r="27"
-                  stroke="url(#giofin-arc)"
-                  strokeWidth="1.5"
-                  strokeDasharray="5 4"
-                  className=" opacity-50"
-                />
+      {/* Conteúdo principal em duas colunas */}
+      <main className="relative z-10 flex flex-1 items-center justify-center px-6 py-6 md:px-12">
+        <div className="mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-12">
+          {/* Coluna esquerda: informações institucionais */}
+          <div className="hidden space-y-8 text-white lg:col-span-6 lg:block">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 backdrop-blur-md">
+                <span className="text-xs font-semibold uppercase tracking-wider text-orange-300">
+                  Portal Corporativo GIO
+                </span>
+              </div>
 
-                {/* Pilares estruturais (GIO - Gestão Integrada de Obras) */}
-                <rect x="13" y="30" width="8" height="20" rx="2.5" fill="url(#gio-pillar-1)" opacity="0.9" />
-                <rect x="28" y="20" width="8" height="30" rx="2.5" fill="url(#gio-pillar-2)" />
-                <rect x="43" y="13" width="8" height="37" rx="2.5" fill="url(#gio-pillar-3)" />
+              <h1 className="text-4xl font-bold leading-tight tracking-tight xl:text-5xl">
+                GIO <span className="text-orange-400">Convênios</span>
+              </h1>
 
-                {/* Base estrutural contínua */}
-                <path
-                  d="M10 50H54"
-                  stroke="#38BDF8"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeOpacity="0.65"
-                />
+              <p className="max-w-lg text-lg leading-relaxed text-white/80">
+                Plataforma integrada para acompanhamento financeiro, execução de convênios,
+                prestação e tomada de contas da Secretaria de Infraestrutura de Obras Públicas.
+              </p>
+            </div>
 
-                {/* Curva ascendente dinâmica de fluxo financeiro (GIOFIN) */}
-                <path
-                  d="M10 42C20 41 26 34 33 27C39 21 45 16 54 11"
-                  stroke="url(#giofin-arc)"
-                  strokeWidth="3.5"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M46 10.5H54.5V19"
-                  stroke="#34D399"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+            <div className="space-y-4">
+              {RECURSOS_GIO.map((item) => (
+                <div
+                  key={item.titulo}
+                  className="flex items-start gap-4 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-500/20 text-orange-400">
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 24 24"
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="font-semibold text-white">{item.titulo}</h2>
+                    <p className="text-sm text-white/70">{item.descricao}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
 
-                {/* Nós luminosos de conexão */}
-                <circle cx="17" cy="39.5" r="2.5" fill="#E0F2FE" />
-                <circle cx="32" cy="27.5" r="3" fill="#ECFEFF" stroke="#06B6D4" strokeWidth="1.5" />
-                <circle cx="54" cy="11" r="3" fill="#A7F3D0" />
-              </svg>
+            <div className="flex flex-wrap items-center gap-6 border-t border-white/10 pt-6 text-sm text-white/70">
+              {INDICADORES_GIO.map((indicador) => (
+                <div key={indicador.rotulo}>
+                  <span className="block text-xs uppercase tracking-wider text-white/50">
+                    {indicador.rotulo}
+                  </span>
+                  <span className="font-semibold text-white">{indicador.valor}</span>
+                </div>
+              ))}
             </div>
           </div>
 
-          <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Painel de Convênios</h1>
-          <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-cyan-400">
-            Governo do Estado do Rio de Janeiro
-          </p>
-          <p className="mt-0.5 text-xs text-slate-400">
-            SEIOP · Subsecretaria de Tecnologia da Informação (SUBTSI)
-          </p>
-        </div>
+          {/* Coluna direita: card de login / solicitação de acesso */}
+          <div className="lg:col-span-6">
+            <div className="mx-auto w-full max-w-md">
+              <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
+                {/* Faixa laranja característica do GIO */}
+                <div className="h-1.5 w-full bg-orange-500/90" />
 
-        {/* Cartão de Login / Solicitação de Acesso */}
-        <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-7 shadow-2xl backdrop-blur-xl sm:p-10">
-          {!modoSolicitar ? (
-            <>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {erro && (
-                  <div
-                    role="alert"
-                    className="flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3.5 text-xs text-rose-300"
-                  >
-                    <svg viewBox="0 0 20 20" fill="currentColor" className="size-4 shrink-0">
-                      <path
-                        fillRule="evenodd"
-                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z"
-                        clipRule="evenodd"
+                <div className="p-8 sm:p-10">
+                  <div className="mb-8 text-center">
+                    <div className="mb-5 flex justify-center">
+                      <img
+                        src={logoGio}
+                        alt="GIO - Gestão Integrada de Obras"
+                        className="block h-14 w-auto object-contain dark:hidden"
                       />
-                    </svg>
-                    <span>{erro}</span>
+                      <img
+                        src={logoGioBranca}
+                        alt="GIO - Gestão Integrada de Obras"
+                        className="hidden h-14 w-auto object-contain dark:block"
+                      />
+                    </div>
+                    <p className="text-2xl font-bold text-gray-900 lg:hidden dark:text-white">
+                      GIO Convênios
+                    </p>
+                    <h2 className="hidden text-2xl font-bold text-gray-900 lg:block dark:text-white">
+                      {modoSolicitar ? 'Solicitar acesso' : 'Bem-vindo de volta'}
+                    </h2>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                      {modoSolicitar
+                        ? 'Preencha seus dados para liberação do acesso institucional'
+                        : 'Faça login para acessar o GIO Convênios'}
+                    </p>
                   </div>
-                )}
 
-                <div>
-                  <label htmlFor="campo-email" className="block text-xs font-medium uppercase tracking-wider text-slate-300">
-                    E-mail institucional
-                  </label>
-                  <div
-                    onClick={() => document.getElementById('campo-email')?.focus()}
-                    className="mt-1.5 flex cursor-text items-center justify-between gap-2 rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-3.5 text-base shadow-inner focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20"
-                  >
-                    <input
-                      id="campo-email"
-                      type="text"
-                      required
-                      autoComplete="username"
-                      value={email}
-                      onChange={(e) => setEmail(extrairUsuarioEmail(e.target.value))}
-                      placeholder="admin"
-                      className="min-w-0 flex-1 bg-transparent p-0 text-base font-medium text-white placeholder-slate-500 focus:outline-none"
-                    />
-                    <span
-                      aria-hidden="true"
-                      className="shrink-0 select-none text-base font-semibold tracking-wide text-cyan-400"
-                    >
-                      {DOMINIO_INSTITUCIONAL}
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between">
-                    <label htmlFor="campo-senha" className="block text-xs font-medium uppercase tracking-wider text-slate-300">
-                      Senha de acesso
-                    </label>
-                  </div>
-                  <div className="relative mt-1.5">
-                    <input
-                      id="campo-senha"
-                      type={mostrarSenha ? 'text' : 'password'}
-                      required
-                      autoComplete="current-password"
-                      value={senha}
-                      onChange={(e) => setSenha(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-3.5 pr-10 text-base text-white placeholder-slate-500 shadow-inner focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 [&::-ms-clear]:hidden [&::-ms-reveal]:hidden"
-                    />
-                    <button
-                      type="button"
-                      tabIndex={-1}
-                      aria-label={mostrarSenha ? 'Ocultar senha' : 'Exibir senha'}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-200"
-                      onClick={() => setMostrarSenha((s) => !s)}
-                    >
-                      {mostrarSenha ? (
-                        <svg viewBox="0 0 20 20" fill="currentColor" className="size-4">
-                          <path
-                            fillRule="evenodd"
-                            d="M3.28 2.22a.75.75 0 00-1.06 1.06l14.5 14.5a.75.75 0 101.06-1.06l-1.745-1.745a10.029 10.029 0 003.3-4.38 1.651 1.651 0 000-1.185A10.004 10.004 0 009.999 3a9.956 9.956 0 00-4.744 1.194L3.28 2.22zM7.752 6.69l1.092 1.092a2.5 2.5 0 013.374 3.373l1.091 1.092a4 4 0 00-5.557-5.557z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      ) : (
-                        <svg viewBox="0 0 20 20" fill="currentColor" className="size-4">
-                          <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" />
-                          <path
-                            fillRule="evenodd"
-                            d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
+                  {!modoSolicitar ? (
+                    <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+                      {erro && (
+                        <div
+                          role="alert"
+                          className="flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700 dark:border-red-800/60 dark:bg-red-950/50 dark:text-red-300"
+                        >
+                          <svg
+                            aria-hidden="true"
+                            viewBox="0 0 24 24"
+                            className="mt-0.5 h-4 w-4 shrink-0"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M12 8v4M12 16h.01" />
+                          </svg>
+                          <span>{erro}</span>
+                        </div>
                       )}
-                    </button>
-                  </div>
-                </div>
 
-                <button
-                  type="submit"
-                  disabled={processando}
-                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-white/10 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50"
-                >
-                  {processando ? (
-                    <>
-                      <svg className="size-4 animate-spin text-slate-900" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
-                      </svg>
-                      <span>Autenticando…</span>
-                    </>
+                      <div>
+                        <label
+                          htmlFor="campo-email"
+                          className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >
+                          E-mail institucional
+                        </label>
+                        <div className="flex items-stretch overflow-hidden rounded-lg border border-gray-300 bg-white transition-all focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-500/20 dark:border-gray-600 dark:bg-gray-800">
+                          <input
+                            id="campo-email"
+                            type="text"
+                            inputMode="email"
+                            autoComplete="username"
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(extrairUsuarioEmail(e.target.value))}
+                            placeholder="nome.sobrenome"
+                            className="min-w-0 flex-1 bg-transparent px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none dark:text-white dark:placeholder:text-gray-500"
+                          />
+                          <span
+                            aria-hidden="true"
+                            className="flex shrink-0 select-none items-center border-l border-gray-200 bg-gray-50 px-3 text-xs font-medium text-gray-500 dark:border-gray-700 dark:bg-gray-800/80 dark:text-gray-400"
+                          >
+                            {DOMINIO_INSTITUCIONAL}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="campo-senha"
+                          className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >
+                          Senha de acesso
+                        </label>
+                        <div className="relative">
+                          <input
+                            id="campo-senha"
+                            type={mostrarSenha ? 'text' : 'password'}
+                            autoComplete="current-password"
+                            required
+                            value={senha}
+                            onChange={(e) => setSenha(e.target.value)}
+                            placeholder="••••••••"
+                            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-3.5 pr-11 text-sm text-gray-900 placeholder:text-gray-400 transition-all focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setMostrarSenha((prev) => !prev)}
+                            aria-label={mostrarSenha ? 'Ocultar senha' : 'Exibir senha'}
+                            className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                          >
+                            {mostrarSenha ? (
+                              <svg
+                                aria-hidden="true"
+                                viewBox="0 0 24 24"
+                                className="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                                <line x1="1" y1="1" x2="23" y2="23" />
+                              </svg>
+                            ) : (
+                              <svg
+                                aria-hidden="true"
+                                viewBox="0 0 24 24"
+                                className="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={processando}
+                        className="flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:focus:ring-offset-gray-900"
+                      >
+                        {processando ? 'Autenticando...' : 'Acessar Painel'}
+                      </button>
+
+                      <div className="border-t border-gray-200 pt-4 text-center dark:border-gray-700">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setModoSolicitar(true)
+                            setErro(null)
+                          }}
+                          className="text-xs font-medium text-gray-600 transition-colors hover:text-orange-600 dark:text-gray-400 dark:hover:text-orange-400"
+                        >
+                          Não tem acesso? <span className="underline">Solicitar acesso</span>
+                        </button>
+                      </div>
+                    </form>
+                  ) : solicitacaoEnviada ? (
+                    <div className="space-y-4 text-center">
+                      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400">
+                        <svg
+                          aria-hidden="true"
+                          viewBox="0 0 24 24"
+                          className="h-6 w-6"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <div className="space-y-1">
+                        <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                          Solicitação registrada
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Sua solicitação foi encaminhada para a equipe responsável pela gestão de
+                          acessos da SEIOP.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={voltarParaLogin}
+                        className="w-full rounded-lg bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
+                      >
+                        Voltar para o login
+                      </button>
+                    </div>
                   ) : (
-                    <span>Acessar Painel</span>
+                    <form onSubmit={handleSolicitarAcesso} className="space-y-4">
+                      <div>
+                        <label
+                          htmlFor="campo-nome-solicitante"
+                          className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >
+                          Nome completo
+                        </label>
+                        <input
+                          id="campo-nome-solicitante"
+                          type="text"
+                          required
+                          value={nomeSolicitante}
+                          onChange={(e) => setNomeSolicitante(e.target.value)}
+                          placeholder="Seu nome completo"
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="campo-email-solicitante"
+                          className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >
+                          E-mail institucional
+                        </label>
+                        <input
+                          id="campo-email-solicitante"
+                          type="email"
+                          required
+                          value={emailSolicitante}
+                          onChange={(e) => setEmailSolicitante(e.target.value)}
+                          placeholder="nome.sobrenome@obras.rj.gov.br"
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="campo-setor-solicitante"
+                          className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >
+                          Setor / Diretoria
+                        </label>
+                        <input
+                          id="campo-setor-solicitante"
+                          type="text"
+                          required
+                          value={setorSolicitante}
+                          onChange={(e) => setSetorSolicitante(e.target.value)}
+                          placeholder="Ex.: Superintendência de Convênios"
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                        />
+                      </div>
+
+                      <div className="flex gap-3 pt-2">
+                        <button
+                          type="button"
+                          onClick={voltarParaLogin}
+                          className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+                        >
+                          Voltar para o login
+                        </button>
+                        <button
+                          type="submit"
+                          className="flex-1 rounded-lg bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
+                        >
+                          Enviar solicitação
+                        </button>
+                      </div>
+                    </form>
                   )}
-                </button>
-              </form>
-
-              <div className="mt-6 border-t border-slate-800 pt-5 text-center">
-                <p className="mb-3 text-xs text-slate-400">Ainda não possui credenciais de acesso?</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setModoSolicitar(true)
-                    setSolicitacaoEnviada(false)
-                  }}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700/80 bg-slate-800/50 px-4 py-2.5 text-xs font-semibold text-cyan-300 transition hover:border-cyan-500/50 hover:bg-slate-800 hover:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/30"
-                >
-                  Solicitar acesso
-                </button>
-              </div>
-            </>
-          ) : solicitacaoEnviada ? (
-            <div className="space-y-4 text-center">
-              <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30">
-                <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h2 className="text-lg font-semibold text-white">Solicitação enviada</h2>
-              <p className="text-xs leading-relaxed text-slate-300">
-                Seu pedido de credencial para{' '}
-                <strong className="text-white">{montarEmailInstitucional(emailSolicitante)}</strong> foi encaminhado à
-                equipe da SUBTSI / SEIOP.
-              </p>
-              <button
-                type="button"
-                onClick={voltarParaLogin}
-                className="mt-2 inline-flex w-full items-center justify-center rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-slate-700"
-              >
-                Voltar para o login
-              </button>
-            </div>
-          ) : (
-            <form onSubmit={handleSolicitarAcesso} className="space-y-4">
-              <div className="mb-2">
-                <h2 className="text-base font-semibold text-white">Solicitar acesso</h2>
-                <p className="mt-0.5 text-xs text-slate-400">
-                  Preencha seus dados institucionais para liberação pela SUBTSI.
-                </p>
-              </div>
-
-              <div>
-                <label htmlFor="solicitar-nome" className="block text-xs font-medium uppercase tracking-wider text-slate-300">
-                  Nome completo
-                </label>
-                <input
-                  id="solicitar-nome"
-                  type="text"
-                  required
-                  value={nomeSolicitante}
-                  onChange={(e) => setNomeSolicitante(e.target.value)}
-                  placeholder="Nome do servidor"
-                  className="mt-1.5 w-full rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-2.5 text-sm text-white placeholder-slate-500 shadow-inner focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="solicitar-email" className="block text-xs font-medium uppercase tracking-wider text-slate-300">
-                  E-mail institucional
-                </label>
-                <div
-                  onClick={() => document.getElementById('solicitar-email')?.focus()}
-                  className="mt-1.5 flex cursor-text items-center justify-between gap-2 rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-3.5 text-base shadow-inner focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20"
-                >
-                  <input
-                    id="solicitar-email"
-                    type="text"
-                    required
-                    value={emailSolicitante}
-                    onChange={(e) => setEmailSolicitante(extrairUsuarioEmail(e.target.value))}
-                    placeholder="nome.sobrenome"
-                    className="min-w-0 flex-1 bg-transparent p-0 text-base font-medium text-white placeholder-slate-500 focus:outline-none"
-                  />
-                  <span
-                    aria-hidden="true"
-                    className="shrink-0 select-none text-base font-semibold tracking-wide text-cyan-400"
-                  >
-                    {DOMINIO_INSTITUCIONAL}
-                  </span>
                 </div>
               </div>
-
-              <div>
-                <label htmlFor="solicitar-setor" className="block text-xs font-medium uppercase tracking-wider text-slate-300">
-                  Setor / Subsecretaria
-                </label>
-                <input
-                  id="solicitar-setor"
-                  type="text"
-                  required
-                  value={setorSolicitante}
-                  onChange={(e) => setSetorSolicitante(e.target.value)}
-                  placeholder="Ex.: SEIOP / Fiscalização de Convênios"
-                  className="mt-1.5 w-full rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-2.5 text-sm text-white placeholder-slate-500 shadow-inner focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                />
-              </div>
-
-              <div className="flex items-center gap-2.5 pt-2">
-                <button
-                  type="button"
-                  onClick={voltarParaLogin}
-                  className="w-1/2 rounded-xl border border-slate-700 bg-slate-800/70 px-4 py-2.5 text-xs font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-white"
-                >
-                  Voltar
-                </button>
-                <button
-                  type="submit"
-                  className="w-1/2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-blue-600/30 transition hover:brightness-110"
-                >
-                  Enviar solicitação
-                </button>
-              </div>
-            </form>
-          )}
+            </div>
+          </div>
         </div>
+      </main>
 
-        {/* Rodapé de Governança */}
-        <p className="mt-6 text-center text-xs text-slate-500">
-          Acesso restrito e monitorado · Subtsi / SEIOP - RJ
+      {/* Rodapé institucional padrão GIO */}
+      <footer className="relative z-10 w-full px-6 py-4 text-center">
+        <p className="text-xs text-white/60">
+          Secretaria de Infraestrutura de Obras Públicas (SEIOP) • Todos os direitos reservados •
+          Ambiente seguro
         </p>
-      </div>
+      </footer>
     </div>
   )
 }

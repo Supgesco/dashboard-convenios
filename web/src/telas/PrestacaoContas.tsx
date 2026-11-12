@@ -9,6 +9,7 @@ import { AUSENTE, moeda } from '../formato'
 import { linkDetalhe } from './comum'
 import { useConvenioRecemAdicionado } from './NovoConvenio'
 
+/** Retorna o selo colorido correspondente à situação da parcela de prestação de contas. */
 function badgeSituacao(sit: string | null) {
   if (!sit) return <span className="text-slate-400">{AUSENTE}</span>
   const s = sit.toLowerCase()
@@ -124,6 +125,7 @@ const COLUNAS: Coluna<LinhaPrestacaoContas>[] = [
   },
 ]
 
+/** Tela de Prestação de Contas: lista parcelas, repasses, execuções e abre detalhes do convênio ao clicar na linha. */
 export function TelaPrestacaoContas() {
   const { filtros, busca, mudar, limpar } = useFiltros()
   const consulta = usePrestacaoContas(filtros.municipios, filtros)

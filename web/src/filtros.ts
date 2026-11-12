@@ -7,6 +7,7 @@ import { RECORTES, type Recorte } from './api/tipos'
 
 export const ContextoBuscaSalva = createContext<string>('')
 
+/** Retorna a string de busca salva na sessão da barra de filtros antes de abrir o detalhe. */
 export function useBuscaSalva(): string {
   return useContext(ContextoBuscaSalva)
 }
@@ -27,6 +28,7 @@ function inteiro(texto: string | null): number | null {
   return Number(texto)
 }
 
+/** Lê e valida os filtros globais (`recorte`, `municipio`, `ano`, `mes`, `pagina`, `ordem`) da URL. */
 export function lerFiltros(busca: URLSearchParams): Filtros {
   const erros: string[] = []
 
@@ -116,6 +118,7 @@ export function buscaGlobal(busca: URLSearchParams, extra: Record<string, string
   return texto ? `?${texto}` : ''
 }
 
+/** Hook principal para ler, alterar e limpar os filtros sincronizados na URL. */
 export function useFiltros() {
   const [busca, setBusca] = useSearchParams()
   const filtros = useMemo(() => lerFiltros(busca), [busca])

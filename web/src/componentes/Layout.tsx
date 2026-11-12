@@ -2,9 +2,15 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 
+import logoGio from '../assets/LogoGio.png'
+import logoGioBranca from '../assets/LogoGioBranca.png'
+import oGio from '../assets/O-GIO.png'
+import oGioBranca from '../assets/O-GIOBranca.png'
 import { useAuth } from '../autenticacao'
 import { ContextoBuscaSalva, buscaGlobal, useFiltros } from '../filtros'
 import { BarraFiltros } from './BarraFiltros'
+
+const CHAVE_TEMA = 'sidebar-dark-mode'
 
 // Ícones em linha (traço 1.75, 20px), sem biblioteca.
 function Icone({ children }: { children: ReactNode }) {
@@ -112,17 +118,27 @@ const TELAS_COM_FILTROS = ['/municipios', '/convenios', '/prestacao-de-contas', 
 
 const ID_MENU = 'menu-telas'
 
+/** Moldura principal do painel no padrão visual GIO: sidebar clara/escura, fundo blueprint e área da tela ativa. */
 export function Layout() {
   const { pathname } = useLocation()
   const { filtros, busca, limpar } = useFiltros()
   const { usuario, logout } = useAuth()
   const navegar = useNavigate()
   const [aberto, setAberto] = useState(false)
+  const [recolhida, setRecolhida] = useState(false)
+  const [modoEscuro, setModoEscuro] = useState(() => {
+    try {
+      return localStorage.getItem(CHAVE_TEMA) === 'true'
+    } catch {
+      return false
+    }
+  })
   const [buscaSalva, setBuscaSalva] = useState('')
   const comFiltros = TELAS_COM_FILTROS.includes(pathname)
   const exibirBarraFiltros = comFiltros || pathname === '/convenio'
   const buscaAtual = buscaGlobal(busca)
 
+  // Preserva os filtros globais tanto nas telas de listagem quanto ao selecionar um município direto pelo mapa.
   const selecionadoPeloMapaOuFiltro = pathname === '/convenio' && !busca.has('numero')
   if ((comFiltros || selecionadoPeloMapaOuFiltro) && buscaSalva !== buscaAtual) {
     setBuscaSalva(buscaAtual)
@@ -135,6 +151,25 @@ export function Layout() {
       ? buscaSalva || buscaGlobal(new URLSearchParams([...busca].filter(([k]) => k === 'ano' || k === 'mes')))
       : buscaAtual
 
+  /** Sincroniza a classe .dark no documento com o estado atual do tema. */
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', modoEscuro)
+  }, [modoEscuro])
+
+  /** Alterna entre tema claro e escuro e persiste a escolha apenas sob ação explícita. */
+  const alternarModoEscuro = () => {
+    setModoEscuro((prev) => {
+      const proximo = !prev
+      try {
+        localStorage.setItem(CHAVE_TEMA, String(proximo))
+      } catch {
+        // Ignora ambientes sem localStorage disponível
+      }
+      return proximo
+    })
+  }
+
+  /** Encerra a sessão do usuário e redireciona para a tela de login. */
   const handleLogout = () => {
     navegar('/login')
     void logout()
@@ -153,41 +188,19 @@ export function Layout() {
   return (
     <>
       <FaixaDesenvolvimento />
-      <div className="min-h-screen lg:grid lg:grid-cols-[15rem_1fr]">
-        {/* Barra superior só em tela estreita */}
-        <header className="sticky top-0 z-30 flex items-center justify-between bg-marca-900 px-4 py-2.5 text-white shadow-md lg:hidden">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-3 py-1.5 text-sm text-white hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-              aria-expanded={aberto}
-              aria-controls={ID_MENU}
-              onClick={() => setAberto((a) => !a)}
-            >
-              <Icone>
-                <path d="M4 7h16M4 12h16M4 17h16" />
-              </Icone>
-              Menu
-            </button>
-            <span className="font-semibold text-sm">Painel de convênios</span>
-          </div>
-          {usuario && (
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-lg border border-white/20 px-2.5 py-1 text-xs text-white/90 hover:bg-white/10"
-              title="Encerrar sessão"
-            >
-              Sair
-            </button>
-          )}
-        </header>
+      <div className="relative flex min-h-screen bg-gelo transition-colors duration-200 dark:bg-gray-950">
+        {/* Fundo técnico blueprint padrão GIO */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none fixed inset-0 z-0 bg-cover bg-center opacity-20 mix-blend-multiply transition-all duration-200 dark:opacity-10 dark:invert dark:mix-blend-screen"
+          style={{ backgroundImage: 'url("/white_blueprint_sheets_bg.jpg")' }}
+        />
 
         <AnimatePresence>
           {aberto && (
             <motion.div
               key="fundo"
-              className="fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-[2px] lg:hidden"
+              className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-[2px] lg:hidden"
               aria-hidden="true"
               onClick={() => setAberto(false)}
               initial={{ opacity: 0 }}
@@ -198,48 +211,65 @@ export function Layout() {
           )}
         </AnimatePresence>
 
+        {/* Sidebar padrão GIO (clara/escura, colapsável e com destaque laranja) */}
         <aside
           id={ID_MENU}
-          className={`fixed inset-y-0 left-0 z-50 w-60 flex-col bg-gradient-to-b from-marca-900 to-marca-950 text-marca-100 lg:sticky lg:top-0 lg:z-auto lg:flex lg:h-screen ${
-            aberto ? 'flex animate-gaveta shadow-2xl lg:animate-none' : 'hidden'
-          }`}
+          className={`fixed inset-y-0 left-0 z-50 flex-col border-r border-gray-200 bg-white text-gray-700 transition-all duration-200 lg:sticky lg:top-0 lg:z-20 lg:flex lg:h-screen dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 ${
+            recolhida ? 'lg:w-16' : 'lg:w-64'
+          } w-64 ${aberto ? 'flex animate-gaveta shadow-2xl lg:animate-none' : 'hidden'}`}
         >
-          <div className="flex items-center gap-3 px-5 pb-6 pt-6">
-            <span
-              aria-hidden="true"
-              className="grid size-10 shrink-0 place-items-center rounded-xl border border-cyan-400/25 bg-gradient-to-br from-slate-900 via-marca-900 to-cyan-950 p-1.5 text-white shadow-md ring-1 ring-white/10 transition-transform duration-300 hover:scale-105"
-            >
-              <svg viewBox="0 0 64 64" className="size-full" fill="none">
-                <rect x="12" y="30" width="9" height="20" rx="2.5" fill="#38BDF8" opacity="0.85" />
-                <rect x="27.5" y="20" width="9" height="30" rx="2.5" fill="#22D3EE" />
-                <rect x="43" y="13" width="9" height="37" rx="2.5" fill="#34D399" />
-                <path
-                  d="M10 42C20 41 26 34 33 27C39 21 45 16 54 11"
-                  stroke="#A7F3D0"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M45 10.5H54.5V20"
-                  stroke="#34D399"
-                  strokeWidth="3.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
-            <div>
-              <p className="text-sm font-semibold leading-tight tracking-tight text-white">Painel de convênios</p>
-              <p className="text-xs text-marca-200">Fazenda RJ · SIAFE</p>
-            </div>
+          {/* Cabeçalho da sidebar com logotipo GIO */}
+          <div className="flex h-16 items-center justify-between border-b border-gray-200 px-3 dark:border-gray-700">
+            {recolhida ? (
+              <button
+                type="button"
+                onClick={() => setRecolhida(false)}
+                className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+                title="Expandir menu"
+                aria-label="Expandir menu"
+              >
+                <img src={oGio} alt="GIO" className="block h-7 w-auto object-contain dark:hidden" />
+                <img src={oGioBranca} alt="GIO" className="hidden h-7 w-auto object-contain dark:block" />
+              </button>
+            ) : (
+              <>
+                <div className="flex min-w-0 items-center gap-2.5 pl-1">
+                  <img
+                    src={logoGio}
+                    alt="GIO - Gestão Integrada de Obras"
+                    className="block h-9 w-auto object-contain dark:hidden"
+                  />
+                  <img
+                    src={logoGioBranca}
+                    alt="GIO - Gestão Integrada de Obras"
+                    className="hidden h-9 w-auto object-contain dark:block"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setRecolhida(true)}
+                  className="hidden rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800 lg:inline-flex dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+                  title="Recolher menu"
+                  aria-label="Recolher menu"
+                >
+                  <Icone>
+                    <path d="M15 18l-6-6 6-6" />
+                  </Icone>
+                </button>
+              </>
+            )}
           </div>
-          <p
-            className="px-6 pb-2 text-[0.7rem] font-semibold uppercase tracking-wider text-marca-300"
-            aria-hidden="true"
-          >
-            Navegação
-          </p>
-          <nav aria-label="Telas" className="flex-1 px-3">
+
+          {!recolhida && (
+            <div className="px-4 pb-1 pt-4">
+              <p className="text-[0.68rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                GIO Convênios · SEIOP
+              </p>
+            </div>
+          )}
+
+          {/* Navegação principal */}
+          <nav aria-label="Telas" className="flex-1 overflow-y-auto px-2.5 py-3">
             <ul className="space-y-1">
               {MENU.map((item) => (
                 <li key={item.para}>
@@ -247,54 +277,74 @@ export function Layout() {
                     to={{ pathname: item.para, search: buscaMenu }}
                     end={item.para === '/'}
                     onClick={() => setAberto(false)}
+                    title={recolhida ? item.rotulo : undefined}
                     className={({ isActive }) =>
-                      `group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-white ${
-                        isActive ? 'font-medium text-white' : 'text-marca-200 hover:bg-white/10 hover:text-white'
+                      `group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-orange-500 ${
+                        recolhida ? 'lg:justify-center lg:px-2' : ''
+                      } ${
+                        isActive
+                          ? 'bg-orange-500/80 font-medium text-white shadow-sm'
+                          : 'text-gray-600 hover:bg-orange-500/80 hover:text-white dark:text-gray-300 dark:hover:text-white'
                       }`
                     }
                   >
-                    {({ isActive }) => (
-                      <>
-                        {/* Fundo e marca da tela ativa deslizam de um item para o outro. */}
-                        {isActive && (
-                          <motion.span
-                            layoutId="menu-ativo"
-                            aria-hidden="true"
-                            className="absolute inset-0 rounded-lg bg-white/15 before:absolute before:inset-y-2 before:left-0 before:w-1 before:rounded-full before:bg-marca-300"
-                            transition={{
-                              type: 'spring',
-                              stiffness: 420,
-                              damping: 34,
-                            }}
-                          />
-                        )}
-                        <span className="relative transition-transform duration-200 group-hover:scale-110">
-                          {item.icone}
-                        </span>
-                        <span className="relative">{item.rotulo}</span>
-                      </>
-                    )}
+                    <span className="shrink-0 transition-transform duration-200 group-hover:scale-105">
+                      {item.icone}
+                    </span>
+                    <span className={recolhida ? 'lg:hidden' : ''}>{item.rotulo}</span>
                   </NavLink>
                 </li>
               ))}
             </ul>
           </nav>
 
-          {/* Usuário logado e ação de sair */}
-          {usuario && (
-            <div className="mt-auto border-t border-white/10 p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-semibold text-white">{usuario.nome}</p>
-                  <p className="truncate text-[10px] text-marca-200">{usuario.email}</p>
-                  <span className="mt-1 inline-block rounded bg-white/10 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-cyan-300">
+          {/* Rodapé da sidebar: alternância de tema e usuário autenticado */}
+          <div className="mt-auto border-t border-gray-200 p-3 dark:border-gray-700">
+            <button
+              type="button"
+              onClick={alternarModoEscuro}
+              className={`mb-2 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white ${
+                recolhida ? 'lg:justify-center lg:px-2' : ''
+              }`}
+              title={modoEscuro ? 'Ativar tema claro' : 'Ativar tema escuro'}
+              aria-label={modoEscuro ? 'Ativar tema claro' : 'Ativar tema escuro'}
+            >
+              {modoEscuro ? (
+                <Icone>
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+                </Icone>
+              ) : (
+                <Icone>
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </Icone>
+              )}
+              <span className={recolhida ? 'lg:hidden' : ''}>
+                {modoEscuro ? 'Tema claro' : 'Tema escuro'}
+              </span>
+            </button>
+
+            {usuario && (
+              <div
+                className={`flex items-center justify-between gap-2 rounded-lg bg-gray-50 p-2.5 dark:bg-gray-800/70 ${
+                  recolhida ? 'lg:justify-center lg:p-1.5' : ''
+                }`}
+              >
+                <div className={`min-w-0 flex-1 ${recolhida ? 'lg:hidden' : ''}`}>
+                  <p className="truncate text-xs font-semibold text-gray-900 dark:text-white">
+                    {usuario.nome}
+                  </p>
+                  <p className="truncate text-[10px] text-gray-500 dark:text-gray-400">
+                    {usuario.email}
+                  </p>
+                  <span className="mt-1 inline-block rounded bg-orange-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-orange-700 dark:bg-orange-500/20 dark:text-orange-300">
                     {usuario.perfil}
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="rounded-lg border border-white/10 p-2 text-marca-200 hover:bg-white/10 hover:text-white"
+                  className="rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-red-50 hover:text-red-600 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-red-950/40 dark:hover:text-red-400"
                   title="Sair do sistema"
                   aria-label="Sair do sistema"
                 >
@@ -305,36 +355,76 @@ export function Layout() {
                   </Icone>
                 </button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </aside>
 
-        <main className="min-w-0 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
-          <ContextoBuscaSalva.Provider value={buscaSalva}>
-            <div className="mx-auto max-w-7xl space-y-6">
-              {exibirBarraFiltros && <BarraFiltros />}
-              {comFiltros && filtros.erro ? (
-                <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-900">
-                  <p className="font-medium">Filtro inválido na URL</p>
-                  <p className="mt-1">{filtros.erro}</p>
-                  <button type="button" className="botao-secundario mt-3" onClick={limpar}>
-                    Limpar filtros
-                  </button>
-                </div>
-              ) : (
-                // Cada troca de tela entra com um fade curto e uma leve subida.
-                <motion.div
-                  key={pathname}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  <Outlet />
-                </motion.div>
-              )}
+        {/* Área principal (header mobile + conteúdo + rodapé GIO) */}
+        <div className="relative z-10 flex min-w-0 flex-1 flex-col">
+          {/* Barra superior só em tela estreita */}
+          <header className="sticky top-0 z-30 flex items-center justify-between border-b border-gray-200 bg-white/95 px-4 py-2.5 text-gray-800 shadow-sm backdrop-blur lg:hidden dark:border-gray-700 dark:bg-gray-900/95 dark:text-gray-100">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                aria-expanded={aberto}
+                aria-controls={ID_MENU}
+                onClick={() => setAberto((a) => !a)}
+              >
+                <Icone>
+                  <path d="M4 7h16M4 12h16M4 17h16" />
+                </Icone>
+                Menu
+              </button>
+              <span className="text-sm font-semibold">GIO Convênios</span>
             </div>
-          </ContextoBuscaSalva.Provider>
-        </main>
+            {usuario && (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="rounded-lg border border-gray-200 px-2.5 py-1 text-xs text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                title="Encerrar sessão"
+              >
+                Sair
+              </button>
+            )}
+          </header>
+
+          <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+            <ContextoBuscaSalva.Provider value={buscaSalva}>
+              <div className="mx-auto max-w-7xl space-y-6">
+                {exibirBarraFiltros && <BarraFiltros />}
+                {comFiltros && filtros.erro ? (
+                  <div
+                    role="alert"
+                    className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-900 dark:border-red-800/60 dark:bg-red-950/50 dark:text-red-200"
+                  >
+                    <p className="font-medium">Filtro inválido na URL</p>
+                    <p className="mt-1">{filtros.erro}</p>
+                    <button type="button" className="botao-secundario mt-3" onClick={limpar}>
+                      Limpar filtros
+                    </button>
+                  </div>
+                ) : (
+                  // Cada troca de tela entra com um fade curto e uma leve subida.
+                  <motion.div
+                    key={pathname}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    <Outlet />
+                  </motion.div>
+                )}
+              </div>
+            </ContextoBuscaSalva.Provider>
+          </main>
+
+          {/* Rodapé institucional padrão GIO */}
+          <footer className="border-t border-gray-200/80 bg-white/70 px-6 py-3 text-center text-xs text-gray-500 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-900/70 dark:text-gray-400">
+            Copyright © 2026, Todos os direitos reservados · SEIOP · GIO Convênios
+          </footer>
+        </div>
       </div>
     </>
   )

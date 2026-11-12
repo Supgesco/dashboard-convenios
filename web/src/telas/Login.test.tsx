@@ -27,7 +27,7 @@ describe('TelaLogin', () => {
     await semSessao()
     renderizar(<App />, '/', { sessao: null })
 
-    expect(await screen.findByRole('heading', { name: /Painel de Convênios/i })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /GIO Convênios/i })).toBeInTheDocument()
     expect(screen.getByLabelText(/E-mail institucional/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Senha de acesso/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Acessar Painel/i })).toBeInTheDocument()

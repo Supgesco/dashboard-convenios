@@ -95,21 +95,27 @@ export function gerarPdfConvenio(d: DetalheConvenio, extras: DadosMunicipioPdf =
   const paginas: string[][] = [[]]
   let y = ALTURA - MARGEM
 
+  // --- Funções auxiliares de paginação e desenho vetorial no canvas do PDF ---
+
+  /** Adiciona uma instrução gráfica ou de texto ao stream da página atual. */
   const cmd = (instrucao: string) => {
     paginas[paginas.length - 1].push(instrucao)
   }
 
+  /** Inicia uma nova página A4 e reinicia o cursor vertical `y`. */
   const novaPagina = () => {
     paginas.push([])
     y = ALTURA - MARGEM - 20
   }
 
+  /** Verifica se há espaço vertical suficiente na página; caso contrário, quebra para a próxima. */
   const garantirEspaco = (alturaNecessaria: number) => {
     if (y - alturaNecessaria < 56) {
       novaPagina()
     }
   }
 
+  /** Desenha um retângulo com preenchimento e/ou borda nas coordenadas informadas. */
   const retangulo = (
     x: number,
     yTopo: number,
@@ -130,6 +136,7 @@ export function gerarPdfConvenio(d: DetalheConvenio, extras: DadosMunicipioPdf =
     cmd('Q')
   }
 
+  /** Escreve uma linha de texto com fonte regular (/F1) ou negrito (/F2) e cor RGB. */
   const escrever = (
     texto: string,
     x: number,
@@ -148,6 +155,7 @@ export function gerarPdfConvenio(d: DetalheConvenio, extras: DadosMunicipioPdf =
   }
 
   let numeroSecao = 1
+  /** Renderiza o cabeçalho numerado de uma seção do relatório com barra lateral de destaque. */
   const tituloSecao = (titulo: string, subtitulo?: string) => {
     garantirEspaco(subtitulo ? 40 : 28)
     y -= 6
@@ -168,7 +176,7 @@ export function gerarPdfConvenio(d: DetalheConvenio, extras: DadosMunicipioPdf =
   retangulo(MARGEM, y - alturaCabecalho + 3.5, LARGURA_UTIL, 3.5, [0.2, 0.83, 0.6])
 
   escrever(
-    'PAINEL DE CONVÊNIOS · FAZENDA RJ / SEIOP · SIAFE',
+    'GIO CONVÊNIOS · FAZENDA RJ / SEIOP · SIAFE',
     MARGEM + 16,
     y - 20,
     8.5,
@@ -585,7 +593,7 @@ export function gerarPdfConvenio(d: DetalheConvenio, extras: DadosMunicipioPdf =
     pushR(`${MARGEM.toFixed(2)} 40.00 m ${(LARGURA - MARGEM).toFixed(2)} 40.00 l S Q`)
     pushR('BT /F1 7.5 Tf 0.45 0.50 0.58 rg')
     pushR(`1 0 0 1 ${MARGEM.toFixed(2)} 27.00 Tm`)
-    pushR(`(${textoPdf(`Painel de Convênios · Emitido em ${emitidoEm}`)}) Tj ET`)
+    pushR(`(${textoPdf(`GIO Convênios · Emitido em ${emitidoEm}`)}) Tj ET`)
     pushR('BT /F2 7.5 Tf 0.35 0.42 0.52 rg')
     pushR(`1 0 0 1 ${(LARGURA - MARGEM - 62).toFixed(2)} 27.00 Tm`)
     pushR(`(${textoPdf(`Página ${idx + 1} de ${totalPaginas}`)}) Tj ET`)
@@ -635,6 +643,7 @@ export function gerarPdfConvenio(d: DetalheConvenio, extras: DadosMunicipioPdf =
   return bytes
 }
 
+/** Gera o nome padronizado do arquivo PDF a partir do número do convênio e do município. */
 export function nomeArquivoPdfConvenio(numero: string, municipio: string): string {
   const slug = (s: string) =>
     s
@@ -646,6 +655,7 @@ export function nomeArquivoPdfConvenio(numero: string, municipio: string): strin
   return `relatorio-convenio-${slug(numero)}-${slug(municipio)}.pdf`
 }
 
+/** Dispara o download do relatório PDF no navegador a partir dos dados já carregados. */
 export function baixarRelatorioPdfConvenio(d: DetalheConvenio, extras: DadosMunicipioPdf = {}): void {
   const bytes = gerarPdfConvenio(d, extras)
   const blob = new Blob([bytes.buffer as ArrayBuffer], { type: 'application/pdf' })
@@ -659,6 +669,7 @@ export function baixarRelatorioPdfConvenio(d: DetalheConvenio, extras: DadosMuni
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
+/** Busca na API os totais, convênios, prestações e tomadas de contas associados ao município para compor o PDF. */
 export async function carregarDadosMunicipioPdf(
   municipio: string,
   mes?: MesConsulta,
@@ -700,11 +711,13 @@ export async function carregarDadosMunicipioPdf(
   }
 }
 
+/** Carrega os vínculos do município e baixa o PDF completo a partir da tela de detalhes. */
 export async function exportarPdfCompletoConvenio(d: DetalheConvenio): Promise<void> {
   const extras = await carregarDadosMunicipioPdf(d.municipio, d.referencia)
   baixarRelatorioPdfConvenio(d, extras)
 }
 
+/** Busca o detalhe do convênio e os dados do município pela chave para exportação direta da tabela. */
 export async function exportarPdfPorChave(
   numero: string,
   municipio: string,

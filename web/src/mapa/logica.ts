@@ -61,6 +61,7 @@ export function faixas(quantidades: readonly number[], max = 5): Faixa[] {
   return cortes.map((ate, i) => ({ de: i === 0 ? positivas[0] : cortes[i - 1] + 1, ate }))
 }
 
+/** Formata o rótulo textual de uma faixa da legenda do mapa. */
 export function rotuloFaixa(f: Faixa): string {
   return f.de === f.ate ? inteiro(f.de) : `${inteiro(f.de)} a ${inteiro(f.ate)}`
 }
@@ -79,6 +80,7 @@ export function coresFaixas(f: readonly Faixa[]): string[] {
   return RAMPA.slice(RAMPA.length - f.length)
 }
 
+/** Retorna a cor correspondente à quantidade de convênios dentro das faixas calculadas. */
 export function corDe(quantidade: number, f: readonly Faixa[]): string {
   if (quantidade <= 0) return COR_SEM
   const cores = coresFaixas(f)
@@ -86,6 +88,7 @@ export function corDe(quantidade: number, f: readonly Faixa[]): string {
   return i < 0 ? cores[cores.length - 1] : cores[i]
 }
 
+/** Monta o texto do tooltip exibido ao passar o mouse sobre um município no mapa. */
 export function textoDica(nome: string, quantidade: number): string {
   return `${nome} · ${inteiro(quantidade)} ${quantidade === 1 ? 'convênio' : 'convênios'}`
 }

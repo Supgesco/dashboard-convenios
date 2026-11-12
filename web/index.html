@@ -2,9 +2,19 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script>
+      // Aplica o tema antes do primeiro paint para evitar o flash do modo claro (padrão GIO).
+      try {
+        const modoEscuro = localStorage.getItem('sidebar-dark-mode') === 'true'
+        document.documentElement.classList.toggle('dark', modoEscuro)
+        document.documentElement.style.colorScheme = modoEscuro ? 'dark' : 'light'
+      } catch {
+        // O armazenamento pode estar indisponível em contextos restritos.
+      }
+    </script>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Convênios</title>
+    <title>GIO Convênios — Gestão Integrada de Convênios</title>
   </head>
   <body>
     <div id="root"></div>

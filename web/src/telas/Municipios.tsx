@@ -41,6 +41,7 @@ const CONTRATUAIS: Coluna<LinhaMunicipio>[] = CAMPOS_CONTRATUAL.map(({ campo, ro
   valor: (i: LinhaMunicipio) => (pct ? percentual(i[campo]) : moeda(i[campo])),
 }))
 
+/** Tela de Municípios: exibe o mapa interativo do RJ e a tabela consolidada por município. */
 export function TelaMunicipios() {
   const { filtros, busca, mudar, limpar } = useFiltros()
   const ref = useMesReferencia(filtros.mes)

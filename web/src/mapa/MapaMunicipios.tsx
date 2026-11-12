@@ -48,6 +48,7 @@ function Enquadrar() {
   return null
 }
 
+/** Renderiza o mapa interativo dos municípios do RJ, destacando seleção, contagens e clique para detalhes. */
 export default function MapaMunicipios({ linhas, faixas, selecionados, onMunicipio }: PropsMapa) {
   const camada = useRef<CamadaGeoJSON | null>(null)
   const todosRecorte = useMunicipiosRecorte('342')
@@ -66,12 +67,14 @@ export default function MapaMunicipios({ linhas, faixas, selecionados, onMunicip
     atual.current = { contagens, contagensGerais, onMunicipio }
   })
 
+  /** Retorna a contagem de convênios do município no recorte atual ou na carteira geral (342). */
   const qtd = (nome: string) => {
     const k = chave(nome)
     const noRecorte = atual.current.contagens.get(k) ?? 0
     return noRecorte > 0 ? noRecorte : (atual.current.contagensGerais.get(k) ?? 0)
   }
 
+  /** Define cor de preenchimento e opacidade de cada polígono conforme faixa de convênios e filtro ativo. */
   const estilo = (f?: GeoJSON.Feature): PathOptions => {
     const nome = (f?.properties as { nome: string } | undefined)?.nome ?? ''
     const k = chave(nome)
@@ -97,6 +100,7 @@ export default function MapaMunicipios({ linhas, faixas, selecionados, onMunicip
     camada.current?.setStyle(estilo)
   })
 
+  /** Configura tooltip e eventos de hover/clique em cada feição GeoJSON de município. */
   const porFeicao = (f: GeoJSON.Feature, layer: Layer) => {
     const nome = (f.properties as { nome: string }).nome
     layer.bindTooltip(() => textoDica(nome, qtd(nome)), { sticky: true, direction: 'top', className: 'dica-mapa' })

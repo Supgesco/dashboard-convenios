@@ -9,6 +9,7 @@ import { AUSENTE, moeda } from '../formato'
 import { linkDetalhe } from './comum'
 import { useConvenioRecemAdicionado } from './NovoConvenio'
 
+/** Retorna o selo colorido correspondente ao status do processo de Tomada de Contas Especial. */
 function badgeStatus(status: string | null) {
   if (!status) return <span className="text-slate-400">{AUSENTE}</span>
   const s = status.toLowerCase()
@@ -89,6 +90,7 @@ const COLUNAS: Coluna<LinhaTomadaContas>[] = [
   },
 ]
 
+/** Tela de Tomada de Contas Especial: lista processos TCE-RJ/CGE e abre detalhes do convênio ao clicar na linha. */
 export function TelaTomadaContas() {
   const { filtros, busca, mudar, limpar } = useFiltros()
   const consulta = useTomadaContas(filtros.municipios, filtros)

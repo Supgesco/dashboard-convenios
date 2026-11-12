@@ -281,6 +281,7 @@ function Identificacao({
   )
 }
 
+/** Exibe aviso de código compartilhado com links clicáveis para os demais convênios relacionados. */
 function Compartilhado({ d, busca }: { d: DetalheConvenio; busca: URLSearchParams }) {
   return (
     <section
@@ -326,6 +327,7 @@ function CabecalhoSecao({ titulo, subtitulo, selo }: { titulo: string; subtitulo
   )
 }
 
+/** Caixa informativa para estados vazios ou sem registros numa seção da tela de detalhes. */
 function Aviso({ children }: { children: ReactNode }) {
   return (
     <p className="flex items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-white/60 px-5 py-4 text-sm text-slate-600">
@@ -335,7 +337,9 @@ function Aviso({ children }: { children: ReactNode }) {
   )
 }
 
+/** Tela principal de detalhes de um convênio, com identificação, saldos, contratuais, série mensal, TCE e prestação. */
 export function TelaDetalhe() {
+  // --- Leitura dos parâmetros da URL e estado de origem (mapa vs. listagens) ---
   const [busca] = useSearchParams()
   const { state } = useLocation()
   const veioDoMapa = Boolean((state as { veioDoMapa?: boolean } | null)?.veioDoMapa)
@@ -344,6 +348,8 @@ export function TelaDetalhe() {
   const municipio = busca.get('municipio') ?? ''
   const filtros = lerFiltros(busca)
   const ref = useMesReferencia(filtros.mes)
+
+  // --- Carregamento dos convênios do município e do detalhe do convênio selecionado ---
   const conveniosMun = useConveniosMunicipio(municipio, filtros.recorte, ref.mes, { enabled: ref.resolvido })
   const numero = numeroUrl || conveniosMun.data?.[0]?.numero_convenio || ''
   const consulta = useConvenio(numero, municipio, ref.mes, { enabled: ref.resolvido && Boolean(numero) })
