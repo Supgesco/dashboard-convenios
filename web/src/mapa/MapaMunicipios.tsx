@@ -5,8 +5,9 @@ import L, { type GeoJSON as CamadaGeoJSON, type Layer, type Path, type PathOptio
 import { useEffect, useMemo, useRef } from 'react'
 import { GeoJSON, MapContainer, TileLayer, useMap } from 'react-leaflet'
 
+import { useMunicipiosRecorte } from '../api/hooks'
 import type { Contagem, Faixa } from './logica'
-import { chave, corDe, juntar, textoDica } from './logica'
+import { chave, corDe, faixas as calcularFaixas, juntar, textoDica } from './logica'
 import malha from './municipios-rj.json'
 
 type Malha = GeoJSON.FeatureCollection<GeoJSON.Geometry, { nome: string; codigo_ibge: string }>
@@ -49,24 +50,45 @@ function Enquadrar() {
 
 export default function MapaMunicipios({ linhas, faixas, selecionados, onMunicipio }: PropsMapa) {
   const camada = useRef<CamadaGeoJSON | null>(null)
+  const todosRecorte = useMunicipiosRecorte('342')
   const contagens = useMemo(() => juntar(MALHA.features, linhas), [linhas])
+  const contagensGerais = useMemo(
+    () => juntar(MALHA.features, todosRecorte.data ?? linhas),
+    [todosRecorte.data, linhas],
+  )
+  const faixasGerais = useMemo(
+    () => calcularFaixas((todosRecorte.data ?? linhas).map((l) => l.convenios)),
+    [todosRecorte.data, linhas],
+  )
   // Os eventos são ligados uma vez por feição; leem sempre os dados atuais por esta ref.
-  const atual = useRef({ contagens, onMunicipio })
+  const atual = useRef({ contagens, contagensGerais, onMunicipio })
   useEffect(() => {
-    atual.current = { contagens, onMunicipio }
+    atual.current = { contagens, contagensGerais, onMunicipio }
   })
 
-  const qtd = (nome: string) => atual.current.contagens.get(chave(nome)) ?? 0
+  const qtd = (nome: string) => {
+    const k = chave(nome)
+    const noRecorte = atual.current.contagens.get(k) ?? 0
+    return noRecorte > 0 ? noRecorte : (atual.current.contagensGerais.get(k) ?? 0)
+  }
 
   const estilo = (f?: GeoJSON.Feature): PathOptions => {
     const nome = (f?.properties as { nome: string } | undefined)?.nome ?? ''
     const k = chave(nome)
     const apagado = selecionados.size > 0 && !selecionados.has(k)
+    const noRecorte = contagens.get(k) ?? 0
+    const noGeral = contagensGerais.get(k) ?? 0
+    const cor =
+      noRecorte > 0
+        ? corDe(noRecorte, faixas)
+        : noGeral > 0
+          ? corDe(noGeral, faixasGerais.length > 0 ? faixasGerais : faixas)
+          : corDe(0, faixas)
     return {
       color: '#ffffff',
       weight: 1,
-      fillColor: corDe(contagens.get(k) ?? 0, faixas),
-      fillOpacity: apagado ? OPACIDADE_APAGADO : OPACIDADE,
+      fillColor: cor,
+      fillOpacity: apagado ? OPACIDADE_APAGADO : noRecorte > 0 ? OPACIDADE : noGeral > 0 ? 0.65 : OPACIDADE,
     }
   }
 

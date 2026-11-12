@@ -75,6 +75,7 @@ export function aplicarMudanca(busca: URLSearchParams, mudanca: Mudanca): URLSea
   }
   if (mudanca.municipios !== undefined) {
     nova.delete('municipio')
+    nova.delete('numero')
     for (const m of mudanca.municipios) nova.append('municipio', m)
     resetarPagina = true
   }

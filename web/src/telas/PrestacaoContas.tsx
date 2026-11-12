@@ -1,10 +1,12 @@
 import { useMemo } from 'react'
+import { useNavigate } from 'react-router'
 import { useEditarPrestacaoContas, usePrestacaoContas, useRemoverConvenio } from '../api/hooks'
 import type { LinhaPrestacaoContas } from '../api/tipos'
 import { Aviso, CaixaErro, Carregando } from '../componentes/Estados'
 import { TabelaPaginada, type Coluna } from '../componentes/TabelaPaginada'
 import { useFiltros } from '../filtros'
 import { AUSENTE, moeda } from '../formato'
+import { linkDetalhe } from './comum'
 import { useConvenioRecemAdicionado } from './NovoConvenio'
 
 function badgeSituacao(sit: string | null) {
@@ -123,10 +125,11 @@ const COLUNAS: Coluna<LinhaPrestacaoContas>[] = [
 ]
 
 export function TelaPrestacaoContas() {
-  const { filtros, mudar, limpar } = useFiltros()
+  const { filtros, busca, mudar, limpar } = useFiltros()
   const consulta = usePrestacaoContas(filtros.municipios, filtros)
   const editar = useEditarPrestacaoContas()
   const remover = useRemoverConvenio()
+  const navegar = useNavigate()
   const [recemAdicionado] = useConvenioRecemAdicionado()
   const d = consulta.data
 
@@ -194,6 +197,8 @@ export function TelaPrestacaoContas() {
           ordem={filtros.ordem}
           onOrdem={(ordem) => mudar({ ordem, pagina: 1 })}
           onPagina={(pagina) => mudar({ pagina })}
+          onLinha={(i) => navegar(linkDetalhe(i.numero_convenio, i.municipio, busca))}
+          rotuloLinha={(i) => `Ver detalhe do convênio ${i.numero_convenio} de ${i.municipio}`}
           unidade={['registro', 'registros']}
           destacarLinha={(i) =>
             Boolean(

@@ -1,15 +1,15 @@
 import type { ReactNode } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { Link, useLocation, useSearchParams } from 'react-router'
 
 import { ApiErro } from '../api/cliente'
-import { useConvenio } from '../api/hooks'
-import type { DetalheConvenio } from '../api/tipos'
+import { useConvenio, useConveniosMunicipio } from '../api/hooks'
+import type { DetalheConvenio, LinhaConvenio } from '../api/tipos'
 import { CaixaErro, Carregando } from '../componentes/Estados'
 import { GraficoSerie } from '../componentes/GraficoSerie'
 import { lerFiltros, useBuscaSalva, useMesReferencia } from '../filtros'
 import { AUSENTE, data, mesAno, moeda } from '../formato'
 import { NOME_RECORTE, ORDEM_EXIBICAO } from '../recortes'
-import { baixarRelatorioPdfConvenio } from '../relatorioPdf'
+import { exportarPdfCompletoConvenio } from '../relatorioPdf'
 import { BlocoContratual, CartoesSaldo, linkDetalhe } from './comum'
 
 // Ícones em linha (traço 1.9), sem biblioteca.
@@ -111,7 +111,19 @@ function SeloStatus({ status }: { status: string }) {
 }
 
 /** Topo da tela: título, status, objeto e os dados de identificação num card de destaque. */
-function Identificacao({ d, buscaVoltar }: { d: DetalheConvenio; buscaVoltar: string }) {
+function Identificacao({
+  d,
+  buscaVoltar,
+  busca,
+  conveniosMunicipio,
+  veioDoMapa,
+}: {
+  d: DetalheConvenio
+  buscaVoltar: string
+  busca: URLSearchParams
+  conveniosMunicipio: readonly LinhaConvenio[]
+  veioDoMapa: boolean
+}) {
   const recortes = ORDEM_EXIBICAO.filter((r) => d.recortes.includes(r))
   return (
     <section
@@ -130,16 +142,33 @@ function Identificacao({ d, buscaVoltar }: { d: DetalheConvenio; buscaVoltar: st
 
       <div className="relative">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Link
-            to={`/convenios${buscaVoltar}`}
-            className="group inline-flex items-center gap-1 rounded-lg text-sm font-medium text-marca-100 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-          >
-            <Icone className="size-4 transition-transform group-hover:-translate-x-0.5">{ICONES.voltar}</Icone>
-            Convênios
-          </Link>
+          <div className="flex flex-wrap items-center gap-4">
+            <Link
+              to={`/convenios${buscaVoltar}`}
+              className="group inline-flex items-center gap-1 rounded-lg text-sm font-medium text-marca-100 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            >
+              <Icone className="size-4 transition-transform group-hover:-translate-x-0.5">{ICONES.voltar}</Icone>
+              Convênios
+            </Link>
+            {veioDoMapa && (
+              <>
+                <span aria-hidden="true" className="text-white/25">
+                  |
+                </span>
+                <Link
+                  to={`/municipios${buscaVoltar}`}
+                  className="group inline-flex items-center gap-1.5 rounded-lg text-sm font-medium text-marca-100 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                >
+                  <Icone className="size-4 transition-transform group-hover:-translate-x-0.5">{ICONES.voltar}</Icone>
+                  <Icone className="size-4 text-marca-200">{ICONES.local}</Icone>
+                  Voltar ao mapa
+                </Link>
+              </>
+            )}
+          </div>
           <button
             type="button"
-            onClick={() => baixarRelatorioPdfConvenio(d)}
+            onClick={() => void exportarPdfCompletoConvenio(d)}
             className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-white shadow-2xs backdrop-blur-xs transition-colors hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
             <Icone className="size-4">
@@ -151,6 +180,39 @@ function Identificacao({ d, buscaVoltar }: { d: DetalheConvenio; buscaVoltar: st
             Exportar PDF
           </button>
         </div>
+
+        {conveniosMunicipio.length > 1 && (
+          <div className="mt-4 rounded-xl border border-white/15 bg-white/5 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-marca-200">
+              Convênios de {d.municipio} ({conveniosMunicipio.length})
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {conveniosMunicipio.map((c) => {
+                const ativo = c.numero_convenio === d.numero_convenio
+                return (
+                  <Link
+                    key={c.numero_convenio}
+                    to={linkDetalhe(c.numero_convenio, d.municipio, busca)}
+                    state={veioDoMapa ? { veioDoMapa: true } : undefined}
+                    aria-current={ativo ? 'page' : undefined}
+                    className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-semibold transition-colors ${
+                      ativo
+                        ? 'bg-white text-marca-900 shadow-2xs'
+                        : 'border border-white/20 bg-white/10 text-white hover:bg-white/20'
+                    }`}
+                  >
+                    <span className="tabular-nums">{c.numero_convenio}</span>
+                    {c.status && (
+                      <span className={`text-[10px] font-normal ${ativo ? 'text-marca-700' : 'text-marca-200'}`}>
+                        · {c.status}
+                      </span>
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="mt-4 flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -275,12 +337,32 @@ function Aviso({ children }: { children: ReactNode }) {
 
 export function TelaDetalhe() {
   const [busca] = useSearchParams()
+  const { state } = useLocation()
+  const veioDoMapa = Boolean((state as { veioDoMapa?: boolean } | null)?.veioDoMapa)
   const buscaSalva = useBuscaSalva()
-  const numero = busca.get('numero') ?? ''
+  const numeroUrl = busca.get('numero') ?? ''
   const municipio = busca.get('municipio') ?? ''
-  const ref = useMesReferencia(lerFiltros(busca).mes)
-  const consulta = useConvenio(numero, municipio, ref.mes, { enabled: ref.resolvido })
+  const filtros = lerFiltros(busca)
+  const ref = useMesReferencia(filtros.mes)
+  const conveniosMun = useConveniosMunicipio(municipio, filtros.recorte, ref.mes, { enabled: ref.resolvido })
+  const numero = numeroUrl || conveniosMun.data?.[0]?.numero_convenio || ''
+  const consulta = useConvenio(numero, municipio, ref.mes, { enabled: ref.resolvido && Boolean(numero) })
   const d = consulta.data
+
+  if (!numeroUrl && conveniosMun.isSuccess && (conveniosMun.data?.length ?? 0) === 0) {
+    return (
+      <section className="cartao flex flex-col items-start gap-1">
+        <span className="mb-2 grid size-11 place-items-center rounded-xl bg-marca-50 text-marca-600">
+          <Icone className="size-5">{ICONES.vazio}</Icone>
+        </span>
+        <h1 className="titulo-tela">Convênio não encontrado</h1>
+        <p className="text-sm text-slate-600">Não há convênios cadastrados em {municipio}.</p>
+        <Link to={`/convenios${buscaSalva}`} className="botao-secundario mt-3 inline-block">
+          Ir para a lista de convênios
+        </Link>
+      </section>
+    )
+  }
 
   if (consulta.isError) {
     const erro = consulta.error
@@ -316,7 +398,13 @@ export function TelaDetalhe() {
 
   return (
     <div className="space-y-8">
-      <Identificacao d={d} buscaVoltar={buscaSalva} />
+      <Identificacao
+        d={d}
+        buscaVoltar={buscaSalva}
+        busca={busca}
+        conveniosMunicipio={conveniosMun.data ?? []}
+        veioDoMapa={veioDoMapa}
+      />
 
       {d.codigo_compartilhado && <Compartilhado d={d} busca={busca} />}
 

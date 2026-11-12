@@ -76,7 +76,7 @@ export function TelaMunicipios() {
             ordem={filtros.ordem}
             onOrdem={(ordem) => mudar({ ordem })}
             onPagina={(pagina) => mudar({ pagina })}
-            onLinha={(i) => navegar(`/convenios${buscaGlobal(busca, { municipio: i.municipio })}`)}
+            onLinha={(i) => navegar(`/convenio${buscaGlobal(busca, { municipio: i.municipio })}`)}
             rotuloLinha={(i) => `Ver convênios de ${i.municipio}`}
             unidade={['município', 'municípios']}
             vazio="Nenhum município com convênio neste filtro."

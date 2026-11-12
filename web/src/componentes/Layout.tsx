@@ -123,7 +123,8 @@ export function Layout() {
   const exibirBarraFiltros = comFiltros || pathname === '/convenio'
   const buscaAtual = buscaGlobal(busca)
 
-  if (comFiltros && buscaSalva !== buscaAtual) {
+  const selecionadoPeloMapaOuFiltro = pathname === '/convenio' && !busca.has('numero')
+  if ((comFiltros || selecionadoPeloMapaOuFiltro) && buscaSalva !== buscaAtual) {
     setBuscaSalva(buscaAtual)
   }
 

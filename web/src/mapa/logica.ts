@@ -90,7 +90,7 @@ export function textoDica(nome: string, quantidade: number): string {
   return `${nome} · ${inteiro(quantidade)} ${quantidade === 1 ? 'convênio' : 'convênios'}`
 }
 
-/** Convênios filtrada pelo município, mantendo recorte e mês (como a linha da tabela). */
+/** Abre os detalhes dos convênios do município, mantendo recorte e mês. */
 export function linkMunicipio(busca: URLSearchParams, municipio: string): string {
-  return `/convenios${buscaGlobal(busca, { municipio })}`
+  return `/convenio${buscaGlobal(busca, { municipio })}`
 }

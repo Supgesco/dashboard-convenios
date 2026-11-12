@@ -76,7 +76,7 @@ export function PainelMapa({
                 linhas={linhas}
                 faixas={faixas}
                 selecionados={selecionados}
-                onMunicipio={(nome) => navegar(linkMunicipio(busca, nome))}
+                onMunicipio={(nome) => navegar(linkMunicipio(busca, nome), { state: { veioDoMapa: true } })}
               />
             </div>
           </Suspense>

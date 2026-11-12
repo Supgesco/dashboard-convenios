@@ -197,6 +197,39 @@ export function useConvenio(numero: string, municipio: string, mes: MesConsulta,
   })
 }
 
+/** Lista todos os convênios de um município no recorte (com fallback automático para 342 caso o recorte atual não tenha itens). */
+export function useConveniosMunicipio(
+  municipio: string,
+  recorte: Recorte,
+  mes: MesConsulta,
+  { enabled = true }: Opcoes = {},
+) {
+  return useQuery({
+    queryKey: ['convenios-municipio', municipio, recorte, mes],
+    queryFn: async () => {
+      const r = await apiGet<Convenios>('/painel/convenios', {
+        recorte,
+        municipio: [municipio],
+        ano: mes?.ano,
+        mes: mes?.mes,
+        pagina: 1,
+        tamanho: 100,
+      })
+      if (r.itens.length > 0 || recorte === '342') return r.itens
+      const rGeral = await apiGet<Convenios>('/painel/convenios', {
+        recorte: '342',
+        municipio: [municipio],
+        ano: mes?.ano,
+        mes: mes?.mes,
+        pagina: 1,
+        tamanho: 100,
+      })
+      return rGeral.itens
+    },
+    enabled: enabled && Boolean(municipio),
+  })
+}
+
 export function useTomadaContas(municipios: readonly string[], pagina: PaginaApi) {
   return useQuery({
     queryKey: ['tomada-contas', [...municipios].sort(), pagina],
