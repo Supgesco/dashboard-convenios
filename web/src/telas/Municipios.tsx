@@ -41,6 +41,7 @@ const CONTRATUAIS: Coluna<LinhaMunicipio>[] = CAMPOS_CONTRATUAL.map(({ campo, ro
   valor: (i: LinhaMunicipio) => (pct ? percentual(i[campo]) : moeda(i[campo])),
 }))
 
+/** Tela de Municípios: exibe o mapa interativo do RJ e a tabela consolidada por município. */
 export function TelaMunicipios() {
   const { filtros, busca, mudar, limpar } = useFiltros()
   const ref = useMesReferencia(filtros.mes)
@@ -76,7 +77,7 @@ export function TelaMunicipios() {
             ordem={filtros.ordem}
             onOrdem={(ordem) => mudar({ ordem })}
             onPagina={(pagina) => mudar({ pagina })}
-            onLinha={(i) => navegar(`/convenios${buscaGlobal(busca, { municipio: i.municipio })}`)}
+            onLinha={(i) => navegar(`/convenio${buscaGlobal(busca, { municipio: i.municipio })}`)}
             rotuloLinha={(i) => `Ver convênios de ${i.municipio}`}
             unidade={['município', 'municípios']}
             vazio="Nenhum município com convênio neste filtro."

@@ -1,10 +1,10 @@
 import { motion } from 'motion/react'
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
-import { useLocation } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 
 import { useContagemRecortes, useOpcoesMunicipios } from '../api/hooks'
 import type { Recorte } from '../api/tipos'
-import { useFiltros, useMesReferencia } from '../filtros'
+import { aplicarMudanca, buscaGlobal, lerFiltros, useBuscaSalva, useFiltros, useMesReferencia, type Mudanca } from '../filtros'
 import { inteiro } from '../formato'
 import { NOME_RECORTE, ORDEM_EXIBICAO, rotuloRecorte } from '../recortes'
 import { useExibirNovoConvenio } from '../telas/NovoConvenio'
@@ -42,8 +42,7 @@ const ICONE_CALENDARIO = (
 )
 
 /** Seletor segmentado dos recortes: o fundo do ativo desliza entre as opções. */
-function SeletorRecorte() {
-  const { filtros, mudar } = useFiltros()
+function SeletorRecorte({ recorte, onMudar }: { recorte: Recorte; onMudar: (r: Recorte) => void }) {
   const contagem = useContagemRecortes()
   return (
     <div
@@ -52,7 +51,7 @@ function SeletorRecorte() {
       className="grid grid-cols-3 gap-1 rounded-xl bg-slate-100/80 p-1 sm:flex sm:w-auto"
     >
       {ORDEM_EXIBICAO.map((r) => {
-        const ativo = filtros.recorte === r
+        const ativo = recorte === r
         const qtd = contagem[r]
         return (
           <button
@@ -60,7 +59,7 @@ function SeletorRecorte() {
             type="button"
             aria-pressed={ativo}
             aria-label={rotuloRecorte(r, qtd)}
-            onClick={() => mudar({ recorte: r })}
+            onClick={() => onMudar(r)}
             className={`relative flex flex-col items-center justify-center gap-x-2 gap-y-0.5 rounded-lg px-3 py-1.5 text-[13px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-marca-600 sm:flex-row sm:py-2 ${
               ativo ? 'text-marca-800' : 'text-slate-600 hover:text-slate-900'
             }`}
@@ -325,9 +324,35 @@ function useFixarAoSair() {
  * a barra passa a ficar presa no topo como um cabeçalho de largura total, e volta ao card ao subir.
  */
 export function BarraFiltros() {
-  const { filtros, mudar } = useFiltros()
-  const selecionados = filtros.municipios
+  const { pathname } = useLocation()
+  const navegar = useNavigate()
+  const { filtros, busca, mudar } = useFiltros()
+  const buscaSalva = useBuscaSalva()
+  const filtrosSalvos = buscaSalva ? lerFiltros(new URLSearchParams(buscaSalva)) : null
+  const recorteAtivo = pathname === '/convenio' && filtrosSalvos ? filtrosSalvos.recorte : filtros.recorte
+  const selecionados =
+    pathname === '/convenio'
+      ? filtrosSalvos && filtrosSalvos.municipios.length > 0
+        ? filtrosSalvos.municipios
+        : filtros.municipios
+      : filtros.municipios
   const { vaga, fixo, altura } = useFixarAoSair()
+
+  const mudarFiltro = (mudanca: Mudanca) => {
+    if (pathname === '/convenio' && (mudanca.recorte !== undefined || mudanca.municipios !== undefined)) {
+      const base = new URLSearchParams(
+        buscaSalva || buscaGlobal(new URLSearchParams([...busca].filter(([k]) => k === 'ano' || k === 'mes'))),
+      )
+      if (mudanca.municipios !== undefined && !base.has('municipio')) {
+        for (const m of selecionados) base.append('municipio', m)
+      }
+      const nova = aplicarMudanca(base, mudanca)
+      const q = nova.toString()
+      navegar(`/convenios${q ? `?${q}` : ''}`)
+      return
+    }
+    mudar(mudanca)
+  }
 
   return (
     <div ref={vaga} style={fixo ? { height: altura } : undefined}>
@@ -341,12 +366,12 @@ export function BarraFiltros() {
       >
         <div className={fixo ? 'mx-auto max-w-7xl px-10 py-2' : ''}>
           <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:gap-x-3">
-            <SeletorRecorte />
+            <SeletorRecorte recorte={recorteAtivo} onMudar={(recorte) => mudarFiltro({ recorte })} />
             <div className="flex flex-wrap items-center gap-2">
               <SeletorMunicipios
-                recorte={filtros.recorte}
+                recorte={recorteAtivo}
                 selecionados={selecionados}
-                onMudar={(municipios) => mudar({ municipios })}
+                onMudar={(municipios) => mudarFiltro({ municipios })}
               />
               <SeletorMes />
             </div>
@@ -362,7 +387,7 @@ export function BarraFiltros() {
                   <button
                     type="button"
                     aria-label={`Remover ${m}`}
-                    onClick={() => mudar({ municipios: selecionados.filter((s) => s !== m) })}
+                    onClick={() => mudarFiltro({ municipios: selecionados.filter((s) => s !== m) })}
                     className="grid size-5 place-items-center rounded-full text-marca-500 transition-colors hover:bg-marca-100 hover:text-marca-800"
                   >
                     <Icone className="size-3">
@@ -371,7 +396,7 @@ export function BarraFiltros() {
                   </button>
                 </span>
               ))}
-              <button type="button" className="botao-link ml-1 text-xs" onClick={() => mudar({ municipios: [] })}>
+              <button type="button" className="botao-link ml-1 text-xs" onClick={() => mudarFiltro({ municipios: [] })}>
                 Limpar municípios
               </button>
             </div>

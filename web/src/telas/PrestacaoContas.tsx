@@ -1,11 +1,15 @@
 import { useMemo } from 'react'
-import { useEditarPrestacaoContas, usePrestacaoContas } from '../api/hooks'
+import { useNavigate } from 'react-router'
+import { useEditarPrestacaoContas, usePrestacaoContas, useRemoverConvenio } from '../api/hooks'
 import type { LinhaPrestacaoContas } from '../api/tipos'
 import { Aviso, CaixaErro, Carregando } from '../componentes/Estados'
 import { TabelaPaginada, type Coluna } from '../componentes/TabelaPaginada'
 import { useFiltros } from '../filtros'
 import { AUSENTE, moeda } from '../formato'
+import { linkDetalhe } from './comum'
+import { useConvenioRecemAdicionado } from './NovoConvenio'
 
+/** Retorna o selo colorido correspondente à situação da parcela de prestação de contas. */
 function badgeSituacao(sit: string | null) {
   if (!sit) return <span className="text-slate-400">{AUSENTE}</span>
   const s = sit.toLowerCase()
@@ -121,10 +125,14 @@ const COLUNAS: Coluna<LinhaPrestacaoContas>[] = [
   },
 ]
 
+/** Tela de Prestação de Contas: lista parcelas, repasses, execuções e abre detalhes do convênio ao clicar na linha. */
 export function TelaPrestacaoContas() {
-  const { filtros, mudar, limpar } = useFiltros()
+  const { filtros, busca, mudar, limpar } = useFiltros()
   const consulta = usePrestacaoContas(filtros.municipios, filtros)
   const editar = useEditarPrestacaoContas()
+  const remover = useRemoverConvenio()
+  const navegar = useNavigate()
+  const [recemAdicionado] = useConvenioRecemAdicionado()
   const d = consulta.data
 
   const { totalRepasse, totalExecutado } = useMemo(() => {
@@ -191,8 +199,24 @@ export function TelaPrestacaoContas() {
           ordem={filtros.ordem}
           onOrdem={(ordem) => mudar({ ordem, pagina: 1 })}
           onPagina={(pagina) => mudar({ pagina })}
+          onLinha={(i) => navegar(linkDetalhe(i.numero_convenio, i.municipio, busca))}
+          rotuloLinha={(i) => `Ver detalhe do convênio ${i.numero_convenio} de ${i.municipio}`}
           unidade={['registro', 'registros']}
+          destacarLinha={(i) =>
+            Boolean(
+              recemAdicionado &&
+                i.numero_convenio === recemAdicionado.numero_convenio &&
+                i.municipio === recemAdicionado.municipio,
+            )
+          }
           onSalvarEdicao={(item, alt) => editar.mutateAsync({ ...alt, id: item.id })}
+          onRemoverItem={(item) =>
+            remover.mutateAsync({
+              numero: item.numero_convenio,
+              municipio: item.municipio,
+              prestacao_id: item.id,
+            })
+          }
         />
       )}
     </div>

@@ -1,14 +1,15 @@
 import type { ReactNode } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { Link, useLocation, useSearchParams } from 'react-router'
 
 import { ApiErro } from '../api/cliente'
-import { useConvenio } from '../api/hooks'
-import type { DetalheConvenio } from '../api/tipos'
+import { useConvenio, useConveniosMunicipio } from '../api/hooks'
+import type { DetalheConvenio, LinhaConvenio } from '../api/tipos'
 import { CaixaErro, Carregando } from '../componentes/Estados'
 import { GraficoSerie } from '../componentes/GraficoSerie'
-import { lerFiltros, useMesReferencia } from '../filtros'
+import { lerFiltros, useBuscaSalva, useMesReferencia } from '../filtros'
 import { AUSENTE, data, mesAno, moeda } from '../formato'
 import { NOME_RECORTE, ORDEM_EXIBICAO } from '../recortes'
+import { exportarPdfCompletoConvenio } from '../relatorioPdf'
 import { BlocoContratual, CartoesSaldo, linkDetalhe } from './comum'
 
 // Ícones em linha (traço 1.9), sem biblioteca.
@@ -44,6 +45,12 @@ const ICONES = {
     </>
   ),
   fase: <path d="M4 12h4l3-8 4 16 3-8h2" />,
+  processo: (
+    <>
+      <path d="M7 3h7l5 5v13H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" />
+      <path d="M14 3v5h5M9 13h6M9 17h6" />
+    </>
+  ),
   codigo: <path d="M9 7l-5 5 5 5M15 7l5 5-5 5" />,
   camadas: <path d="m12 3 9 5-9 5-9-5 9-5ZM3 13l9 5 9-5" />,
   alerta: (
@@ -104,7 +111,19 @@ function SeloStatus({ status }: { status: string }) {
 }
 
 /** Topo da tela: título, status, objeto e os dados de identificação num card de destaque. */
-function Identificacao({ d }: { d: DetalheConvenio }) {
+function Identificacao({
+  d,
+  buscaVoltar,
+  busca,
+  conveniosMunicipio,
+  veioDoMapa,
+}: {
+  d: DetalheConvenio
+  buscaVoltar: string
+  busca: URLSearchParams
+  conveniosMunicipio: readonly LinhaConvenio[]
+  veioDoMapa: boolean
+}) {
   const recortes = ORDEM_EXIBICAO.filter((r) => d.recortes.includes(r))
   return (
     <section
@@ -122,13 +141,78 @@ function Identificacao({ d }: { d: DetalheConvenio }) {
       />
 
       <div className="relative">
-        <Link
-          to="/convenios"
-          className="group inline-flex items-center gap-1 rounded-lg text-sm font-medium text-marca-100 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-        >
-          <Icone className="size-4 transition-transform group-hover:-translate-x-0.5">{ICONES.voltar}</Icone>
-          Convênios
-        </Link>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-4">
+            <Link
+              to={`/convenios${buscaVoltar}`}
+              className="group inline-flex items-center gap-1 rounded-lg text-sm font-medium text-marca-100 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            >
+              <Icone className="size-4 transition-transform group-hover:-translate-x-0.5">{ICONES.voltar}</Icone>
+              Convênios
+            </Link>
+            {veioDoMapa && (
+              <>
+                <span aria-hidden="true" className="text-white/25">
+                  |
+                </span>
+                <Link
+                  to={`/municipios${buscaVoltar}`}
+                  className="group inline-flex items-center gap-1.5 rounded-lg text-sm font-medium text-marca-100 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                >
+                  <Icone className="size-4 transition-transform group-hover:-translate-x-0.5">{ICONES.voltar}</Icone>
+                  <Icone className="size-4 text-marca-200">{ICONES.local}</Icone>
+                  Voltar ao mapa
+                </Link>
+              </>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => void exportarPdfCompletoConvenio(d)}
+            className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-white shadow-2xs backdrop-blur-xs transition-colors hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          >
+            <Icone className="size-4">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <path d="M12 18v-6" />
+              <path d="m9 15 3 3 3-3" />
+            </Icone>
+            Exportar PDF
+          </button>
+        </div>
+
+        {conveniosMunicipio.length > 1 && (
+          <div className="mt-4 rounded-xl border border-white/15 bg-white/5 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-marca-200">
+              Convênios de {d.municipio} ({conveniosMunicipio.length})
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {conveniosMunicipio.map((c) => {
+                const ativo = c.numero_convenio === d.numero_convenio
+                return (
+                  <Link
+                    key={c.numero_convenio}
+                    to={linkDetalhe(c.numero_convenio, d.municipio, busca)}
+                    state={veioDoMapa ? { veioDoMapa: true } : undefined}
+                    aria-current={ativo ? 'page' : undefined}
+                    className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-semibold transition-colors ${
+                      ativo
+                        ? 'bg-white text-marca-900 shadow-2xs'
+                        : 'border border-white/20 bg-white/10 text-white hover:bg-white/20'
+                    }`}
+                  >
+                    <span className="tabular-nums">{c.numero_convenio}</span>
+                    {c.status && (
+                      <span className={`text-[10px] font-normal ${ativo ? 'text-marca-700' : 'text-marca-200'}`}>
+                        · {c.status}
+                      </span>
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="mt-4 flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -155,12 +239,15 @@ function Identificacao({ d }: { d: DetalheConvenio }) {
           <p className="mt-1 text-base leading-relaxed text-marca-50">{d.objeto ?? AUSENTE}</p>
         </div>
 
-        <dl className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 border-t border-white/10 pt-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <dl className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 border-t border-white/10 pt-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7">
           <Fato icone={ICONES.calendario} rotulo="Fim da vigência">
             <span className="tabular-nums">{data(d.vigencia_final)}</span>
           </Fato>
           <Fato icone={ICONES.fase} rotulo="Fase">
             {NOME_FASE[d.fase] ?? d.fase}
+          </Fato>
+          <Fato icone={ICONES.processo} rotulo="Processo celebração">
+            <span className="tabular-nums">{d.processo_celebracao ?? AUSENTE}</span>
           </Fato>
           <Fato icone={ICONES.codigo} rotulo="Código SEOBRAS">
             <span className="tabular-nums">{d.codigo_seobras ?? AUSENTE}</span>
@@ -194,6 +281,7 @@ function Identificacao({ d }: { d: DetalheConvenio }) {
   )
 }
 
+/** Exibe aviso de código compartilhado com links clicáveis para os demais convênios relacionados. */
 function Compartilhado({ d, busca }: { d: DetalheConvenio; busca: URLSearchParams }) {
   return (
     <section
@@ -239,6 +327,7 @@ function CabecalhoSecao({ titulo, subtitulo, selo }: { titulo: string; subtitulo
   )
 }
 
+/** Caixa informativa para estados vazios ou sem registros numa seção da tela de detalhes. */
 function Aviso({ children }: { children: ReactNode }) {
   return (
     <p className="flex items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-white/60 px-5 py-4 text-sm text-slate-600">
@@ -248,13 +337,38 @@ function Aviso({ children }: { children: ReactNode }) {
   )
 }
 
+/** Tela principal de detalhes de um convênio, com identificação, saldos, contratuais, série mensal, TCE e prestação. */
 export function TelaDetalhe() {
+  // --- Leitura dos parâmetros da URL e estado de origem (mapa vs. listagens) ---
   const [busca] = useSearchParams()
-  const numero = busca.get('numero') ?? ''
+  const { state } = useLocation()
+  const veioDoMapa = Boolean((state as { veioDoMapa?: boolean } | null)?.veioDoMapa)
+  const buscaSalva = useBuscaSalva()
+  const numeroUrl = busca.get('numero') ?? ''
   const municipio = busca.get('municipio') ?? ''
-  const ref = useMesReferencia(lerFiltros(busca).mes)
-  const consulta = useConvenio(numero, municipio, ref.mes, { enabled: ref.resolvido })
+  const filtros = lerFiltros(busca)
+  const ref = useMesReferencia(filtros.mes)
+
+  // --- Carregamento dos convênios do município e do detalhe do convênio selecionado ---
+  const conveniosMun = useConveniosMunicipio(municipio, filtros.recorte, ref.mes, { enabled: ref.resolvido })
+  const numero = numeroUrl || conveniosMun.data?.[0]?.numero_convenio || ''
+  const consulta = useConvenio(numero, municipio, ref.mes, { enabled: ref.resolvido && Boolean(numero) })
   const d = consulta.data
+
+  if (!numeroUrl && conveniosMun.isSuccess && (conveniosMun.data?.length ?? 0) === 0) {
+    return (
+      <section className="cartao flex flex-col items-start gap-1">
+        <span className="mb-2 grid size-11 place-items-center rounded-xl bg-marca-50 text-marca-600">
+          <Icone className="size-5">{ICONES.vazio}</Icone>
+        </span>
+        <h1 className="titulo-tela">Convênio não encontrado</h1>
+        <p className="text-sm text-slate-600">Não há convênios cadastrados em {municipio}.</p>
+        <Link to={`/convenios${buscaSalva}`} className="botao-secundario mt-3 inline-block">
+          Ir para a lista de convênios
+        </Link>
+      </section>
+    )
+  }
 
   if (consulta.isError) {
     const erro = consulta.error
@@ -268,7 +382,7 @@ export function TelaDetalhe() {
           <p className="text-sm text-slate-600">
             Não há convênio {numero} em {municipio}.
           </p>
-          <Link to="/convenios" className="botao-secundario mt-3 inline-block">
+          <Link to={`/convenios${buscaSalva}`} className="botao-secundario mt-3 inline-block">
             Ir para a lista de convênios
           </Link>
         </section>
@@ -277,7 +391,7 @@ export function TelaDetalhe() {
     return (
       <div className="space-y-3">
         <CaixaErro erro={erro} onTentar={() => void consulta.refetch()} titulo="Não foi possível abrir o convênio" />
-        <Link to="/convenios" className="botao-link">
+        <Link to={`/convenios${buscaSalva}`} className="botao-link">
           Ir para a lista de convênios
         </Link>
       </div>
@@ -290,7 +404,13 @@ export function TelaDetalhe() {
 
   return (
     <div className="space-y-8">
-      <Identificacao d={d} />
+      <Identificacao
+        d={d}
+        buscaVoltar={buscaSalva}
+        busca={busca}
+        conveniosMunicipio={conveniosMun.data ?? []}
+        veioDoMapa={veioDoMapa}
+      />
 
       {d.codigo_compartilhado && <Compartilhado d={d} busca={busca} />}
 

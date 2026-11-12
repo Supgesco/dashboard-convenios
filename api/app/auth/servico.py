@@ -59,6 +59,33 @@ def _publico(linha) -> UsuarioPublico:
     return UsuarioPublico(**{c.key: getattr(linha, c.key) for c in COLUNAS_PUBLICAS})
 
 
+def _garantir_sqlite_local(engine: Engine) -> None:
+    """No modo local sem PostgreSQL (SQLite em memória), cria as tabelas de auth e o usuário padrão."""
+    if engine.dialect.name != "sqlite":
+        return
+    Usuario.__table__.create(engine, checkfirst=True)
+    Sessao.__table__.create(engine, checkfirst=True)
+    with engine.begin() as conn:
+        existe = conn.scalar(select(func.count()).select_from(Usuario))
+        if not existe:
+            conn.execute(
+                insert(Usuario).values(
+                    email="admin@obras.rj.gov.br",
+                    nome="Coordenação de Convênios",
+                    cargo="Gestão",
+                    orgao="SEIOP",
+                    perfil="administrador",
+                    senha_hash=senhas.gerar_hash("Seiop@1234"),
+                )
+            )
+
+
+def _com_tz(dt: datetime | None) -> datetime | None:
+    if dt is None:
+        return None
+    return dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt
+
+
 # --- Login -------------------------------------------------------------------------------
 
 
@@ -68,6 +95,7 @@ def autenticar(engine: Engine, email: str, senha: str, agora: datetime | None = 
     Conta em bloqueio levanta ContaBloqueada sem verificar a senha. Cada senha errada conta
     uma falha; na MAXIMO_FALHAS-ésima a conta fica bloqueada por TEMPO_BLOQUEIO.
     """
+    _garantir_sqlite_local(engine)
     agora = _agora(agora)
     with engine.begin() as conn:
         u = conn.execute(
@@ -76,8 +104,9 @@ def autenticar(engine: Engine, email: str, senha: str, agora: datetime | None = 
         if u is None:
             senhas.verificar_ficticio(senha)
             return None
-        if u.bloqueado_ate is not None and u.bloqueado_ate > agora:
-            raise ContaBloqueada(u.bloqueado_ate)
+        bloqueado_ate = _com_tz(u.bloqueado_ate)
+        if bloqueado_ate is not None and bloqueado_ate > agora:
+            raise ContaBloqueada(bloqueado_ate)
 
         confere = senhas.verificar(senha, u.senha_hash)
         if not confere:
@@ -98,6 +127,7 @@ def autenticar(engine: Engine, email: str, senha: str, agora: datetime | None = 
 
 def abrir_sessao(engine: Engine, usuario_id: int, horas: float, agora: datetime | None = None) -> str:
     """Cria a sessão e devolve o token (só ele vai para o cookie). Apaga as sessões vencidas."""
+    _garantir_sqlite_local(engine)
     agora = _agora(agora)
     token = secrets.token_urlsafe(32)
     with engine.begin() as conn:
@@ -112,6 +142,7 @@ def abrir_sessao(engine: Engine, usuario_id: int, horas: float, agora: datetime 
 
 def usuario_da_sessao(engine: Engine, token: str, agora: datetime | None = None) -> UsuarioPublico | None:
     """Usuário ativo dono de uma sessão não vencida, ou None."""
+    _garantir_sqlite_local(engine)
     agora = _agora(agora)
     with engine.connect() as conn:
         u = conn.execute(
@@ -123,6 +154,7 @@ def usuario_da_sessao(engine: Engine, token: str, agora: datetime | None = None)
 
 
 def encerrar_sessao(engine: Engine, token: str) -> None:
+    _garantir_sqlite_local(engine)
     with engine.begin() as conn:
         conn.execute(delete(Sessao).where(Sessao.token_hash == hash_token(token)))
 

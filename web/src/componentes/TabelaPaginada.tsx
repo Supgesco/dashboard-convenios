@@ -40,10 +40,14 @@ interface Props<T> {
   onSalvarEdicao?: (itemOriginal: T, alteracoes: Record<string, unknown>) => Promise<unknown> | void
   /** Callback opcional para remover o item da tabela e da API. */
   onRemoverItem?: (itemOriginal: T) => Promise<unknown> | void
+  /** Callback opcional para exportar relatório em PDF do item. */
+  onExportarPdf?: (itemOriginal: T) => Promise<unknown> | void
   /** Lista opcional de campos editáveis; se omitida, usa as colunas da própria tabela. */
   camposEdicao?: CampoEdicao[]
   /** Se falso, oculta a coluna Ações / Editar (ex.: na tela de Cargas). Padrão: true. */
   editavel?: boolean
+  /** Função opcional para destacar uma linha recém-adicionada com sombreado verde claro. */
+  destacarLinha?: (item: T) => boolean
 }
 
 const CAMPOS_CALCULADOS = new Set(['id', 'execucao_pct', 'investido_sobre_total_pct'])
@@ -68,6 +72,18 @@ export function TabelaPaginada<T>(p: Props<T>) {
   const [itemParaRemover, setItemParaRemover] = useState<T | null>(null)
   const [etapaRemocao, setEtapaRemocao] = useState<1 | 2>(1)
   const [erroRemover, setErroRemover] = useState<string | null>(null)
+  const [exportandoPdfChave, setExportandoPdfChave] = useState<string | null>(null)
+
+  const handleExportarPdf = async (item: T) => {
+    if (!p.onExportarPdf) return
+    const ch = p.chave(item)
+    setExportandoPdfChave(ch)
+    try {
+      await p.onExportarPdf(item)
+    } finally {
+      setExportandoPdfChave(null)
+    }
+  }
 
   const iniciarRemocao = (item: T) => {
     setErroRemover(null)
@@ -227,13 +243,20 @@ export function TabelaPaginada<T>(p: Props<T>) {
                   const item = edicoesLocais[ch]
                     ? ({ ...itemOriginal, ...edicoesLocais[ch] } as T)
                     : itemOriginal
+                  const destacada = p.destacarLinha?.(item) ?? false
                   return (
                     <tr
                       key={ch}
                       style={{ animationDelay: `${Math.min(k, 10) * 30}ms` }}
                       className={`group animate-surgir transition-colors ${
+                        destacada
+                          ? 'bg-emerald-50/90 shadow-[inset_3px_0_0_0_#10b981,0_2px_10px_-2px_rgba(16,185,129,0.22)] hover:bg-emerald-100/80'
+                          : p.onLinha
+                            ? 'hover:bg-marca-50 focus-visible:bg-marca-50'
+                            : ''
+                      } ${
                         p.onLinha
-                          ? 'cursor-pointer hover:bg-marca-50 focus-visible:bg-marca-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-marca-600'
+                          ? 'cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-marca-600'
                           : ''
                       }`}
                       onClick={p.onLinha ? () => p.onLinha?.(item) : undefined}
@@ -254,8 +277,10 @@ export function TabelaPaginada<T>(p: Props<T>) {
                             c.numerica ? 'text-right tabular-nums' : ''
                           } ${
                             c.fixa
-                              ? `sticky left-0 z-[1] bg-white font-medium text-slate-900 ${
-                                  p.onLinha ? 'group-hover:bg-marca-50 group-focus-visible:bg-marca-50' : ''
+                              ? `sticky left-0 z-[1] font-medium text-slate-900 ${
+                                  destacada
+                                    ? 'bg-emerald-50 shadow-[inset_3px_0_0_0_#10b981] group-hover:bg-emerald-100'
+                                    : `bg-white ${p.onLinha ? 'group-hover:bg-marca-50 group-focus-visible:bg-marca-50' : ''}`
                                 }`
                               : ''
                           }`}
@@ -274,13 +299,41 @@ export function TabelaPaginada<T>(p: Props<T>) {
                       ))}
                       {mostrarAcoes && (
                         <td
-                          className={`tabela-td sticky right-0 z-[1] bg-white text-right whitespace-nowrap ${
-                            p.onLinha ? 'group-hover:bg-marca-50 group-focus-visible:bg-marca-50' : ''
+                          className={`tabela-td sticky right-0 z-[1] text-right whitespace-nowrap ${
+                            destacada
+                              ? 'bg-emerald-50 group-hover:bg-emerald-100'
+                              : `bg-white ${p.onLinha ? 'group-hover:bg-marca-50 group-focus-visible:bg-marca-50' : ''}`
                           }`}
                           onClick={(e) => e.stopPropagation()}
                           onKeyDown={(e) => e.stopPropagation()}
                         >
                           <div className="inline-flex items-center justify-end gap-1.5">
+                            {p.onExportarPdf && (
+                              <button
+                                type="button"
+                                disabled={exportandoPdfChave === ch}
+                                onClick={() => void handleExportarPdf(item)}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 shadow-2xs transition-colors hover:border-marca-300 hover:bg-marca-50 hover:text-marca-800 focus-visible:outline-2 focus-visible:outline-marca-600 disabled:opacity-50"
+                                title="Exportar relatório em PDF deste convênio"
+                              >
+                                <svg
+                                  aria-hidden="true"
+                                  viewBox="0 0 24 24"
+                                  className="size-3.5 text-marca-600"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth={2}
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                  <polyline points="14 2 14 8 20 8" />
+                                  <path d="M12 18v-6" />
+                                  <path d="m9 15 3 3 3-3" />
+                                </svg>
+                                {exportandoPdfChave === ch ? 'Gerando…' : 'PDF'}
+                              </button>
+                            )}
                             <button
                               type="button"
                               onClick={() => abrirEdicao(item)}

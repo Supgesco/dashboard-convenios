@@ -11,6 +11,7 @@ import { TabelaPaginada, type Coluna } from '../componentes/TabelaPaginada'
 import { useFiltros } from '../filtros'
 import { AUSENTE, dataHora, inteiro, moeda, percentual } from '../formato'
 import { BarraProgresso, CartaoDestaque, MarcaCompartilhado, linkDetalhe } from './comum'
+import { useConvenioRecemAdicionado } from './NovoConvenio'
 
 // Visão geral fixa da carteira: não usa recorte, município nem mês da URL (só `pagina`/`ordem` da lista).
 // "Cadastrados" é o recorte mais amplo (Histórico inicial, 342); os valores contratuais são dos Vigentes (31).
@@ -201,6 +202,7 @@ function ListaVigentes() {
   const consulta = useConvenios({ recorte: VIGENTES, ...SEM_FILTRO }, null, { pagina: filtros.pagina, ordem })
   const editar = useEditarConvenio()
   const remover = useRemoverConvenio()
+  const [recemAdicionado] = useConvenioRecemAdicionado()
   const navegar = useNavigate()
   const d = consulta.data
 
@@ -230,6 +232,13 @@ function ListaVigentes() {
           unidade={['convênio vigente', 'convênios vigentes']}
           vazio="Nenhum convênio vigente."
           atualizando={consulta.isPlaceholderData}
+          destacarLinha={(i) =>
+            Boolean(
+              recemAdicionado &&
+                i.numero_convenio === recemAdicionado.numero_convenio &&
+                i.municipio === recemAdicionado.municipio,
+            )
+          }
           onSalvarEdicao={(item, alt) =>
             editar.mutateAsync({ ...alt, numero_convenio: item.numero_convenio, municipio: item.municipio })
           }

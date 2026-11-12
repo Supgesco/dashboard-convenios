@@ -1,9 +1,16 @@
 // Estado dos filtros: vive só na URL. Este módulo lê e escreve os parâmetros; nada é copiado para estado local.
-import { useCallback, useMemo } from 'react'
+import { createContext, useCallback, useContext, useMemo } from 'react'
 import { useSearchParams } from 'react-router'
 
 import { useResumoGeral, type FiltroApi, type MesConsulta } from './api/hooks'
 import { RECORTES, type Recorte } from './api/tipos'
+
+export const ContextoBuscaSalva = createContext<string>('')
+
+/** Retorna a string de busca salva na sessão da barra de filtros antes de abrir o detalhe. */
+export function useBuscaSalva(): string {
+  return useContext(ContextoBuscaSalva)
+}
 
 export const RECORTE_PADRAO: Recorte = '31'
 
@@ -21,6 +28,7 @@ function inteiro(texto: string | null): number | null {
   return Number(texto)
 }
 
+/** Lê e valida os filtros globais (`recorte`, `municipio`, `ano`, `mes`, `pagina`, `ordem`) da URL. */
 export function lerFiltros(busca: URLSearchParams): Filtros {
   const erros: string[] = []
 
@@ -69,6 +77,7 @@ export function aplicarMudanca(busca: URLSearchParams, mudanca: Mudanca): URLSea
   }
   if (mudanca.municipios !== undefined) {
     nova.delete('municipio')
+    nova.delete('numero')
     for (const m of mudanca.municipios) nova.append('municipio', m)
     resetarPagina = true
   }
@@ -109,6 +118,7 @@ export function buscaGlobal(busca: URLSearchParams, extra: Record<string, string
   return texto ? `?${texto}` : ''
 }
 
+/** Hook principal para ler, alterar e limpar os filtros sincronizados na URL. */
 export function useFiltros() {
   const [busca, setBusca] = useSearchParams()
   const filtros = useMemo(() => lerFiltros(busca), [busca])

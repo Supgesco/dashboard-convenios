@@ -372,6 +372,7 @@ SELECT
     g.situacao_vigencia,
     g.vigencia_final,
     g.objeto,
+    g.processo_celebracao,
     c.codigo_seobras,
     c.codigo_seiop,
     ARRAY(

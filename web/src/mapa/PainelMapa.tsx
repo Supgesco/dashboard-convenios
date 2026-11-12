@@ -10,6 +10,7 @@ import { COR_SEM, chave, coresFaixas, faixas as calcularFaixas, linkMunicipio, r
 
 const MapaMunicipios = lazy(() => import('./MapaMunicipios'))
 
+/** Exibe a legenda cromática das faixas de quantidade de convênios do mapa. */
 export function LegendaMapa({ faixas }: { faixas: readonly Faixa[] }) {
   const cores = coresFaixas(faixas)
   const itens = [
@@ -35,6 +36,7 @@ export function LegendaMapa({ faixas }: { faixas: readonly Faixa[] }) {
   )
 }
 
+/** Seção do mapa na tela de Municípios, gerenciando carregamento, erro, legenda e navegação para detalhes. */
 export function PainelMapa({
   recorte,
   municipios,
@@ -76,7 +78,7 @@ export function PainelMapa({
                 linhas={linhas}
                 faixas={faixas}
                 selecionados={selecionados}
-                onMunicipio={(nome) => navegar(linkMunicipio(busca, nome))}
+                onMunicipio={(nome) => navegar(linkMunicipio(busca, nome), { state: { veioDoMapa: true } })}
               />
             </div>
           </Suspense>

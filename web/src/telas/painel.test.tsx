@@ -255,13 +255,14 @@ describe('Municípios', () => {
     expect(screen.getByText(/Código compartilhado: um código SIAFE/)).toBeInTheDocument()
   })
 
-  it('clique na linha abre Convênios com o município, mesmo recorte e mês', async () => {
+  it('clique na linha abre o detalhe do município, mesmo recorte e mês', async () => {
     const a = await api()
     renderizar(<App />, '/municipios?recorte=89&ano=2026&mes=5&ordem=a_pagar&pagina=2')
     await userEvent.click(await screen.findByRole('row', { name: 'Ver convênios de Niterói' }))
-    expect(urlAtual().pathname).toBe('/convenios')
+    expect(urlAtual().pathname).toBe('/convenio')
     expect(Object.fromEntries(urlAtual().searchParams)).toEqual({ recorte: '89', ano: '2026', mes: '5', municipio: 'Niterói' })
     await waitFor(() => expect(a.para('/painel/convenios')[0]?.params.getAll('municipio')).toEqual(['Niterói']))
+    expect(await screen.findByRole('heading', { name: /Convênio 901\/2020/ })).toBeInTheDocument()
   })
 
   it('recorte 342 não mostra colunas contratuais', async () => {
@@ -337,7 +338,7 @@ describe('Mapa de municípios', () => {
     expect(screen.getByRole('button', { name: 'Niterói · 2 convênios' }).dataset.apagado).toBe('true')
   })
 
-  it('clique abre Convênios com o município, mesmo recorte e mês; sem convênio não navega', async () => {
+  it('clique abre o detalhe do município, mesmo recorte e mês; sem convênio não navega', async () => {
     await rotasMapa({
       'GET /painel/municipios': () => ok(f.municipios([f.linhaMunicipio('Niterói', { convenios: 5 })])),
     })
@@ -346,8 +347,9 @@ describe('Mapa de municípios', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Maricá · 0 convênios' }))
     expect(urlAtual().pathname).toBe('/municipios')
     await userEvent.click(screen.getByRole('button', { name: 'Niterói · 5 convênios' }))
-    expect(urlAtual().pathname).toBe('/convenios')
+    expect(urlAtual().pathname).toBe('/convenio')
     expect(Object.fromEntries(urlAtual().searchParams)).toEqual({ recorte: '89', ano: '2026', mes: '10', municipio: 'Niterói' })
+    expect(await screen.findByRole('heading', { name: /Convênio 901\/2020/ })).toBeInTheDocument()
   })
 
   it('falha só no mapa: erro com "Tentar de novo", e a tabela continua', async () => {
@@ -467,6 +469,8 @@ describe('Detalhe do convênio', () => {
     const id = screen.getByRole('region', { name: 'Identificação' })
     expect(id).toHaveTextContent('Obra sintética de teste')
     expect(id).toHaveTextContent('30/06/2027')
+    expect(id).toHaveTextContent('Processo celebração')
+    expect(id).toHaveTextContent('E-17/001/1114/2014')
     const recortes = within(within(id).getByRole('list', { name: 'Recortes' })).getAllByRole('listitem')
     expect(recortes.map((r) => r.textContent)).toEqual(['Histórico inicial', 'Primeiro realinhamento', 'Vigentes'])
     expect(screen.getByRole('region', { name: 'Valores contratuais · Vigentes' })).toHaveTextContent('R$ 5.000,00')

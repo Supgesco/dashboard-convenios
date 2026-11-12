@@ -1,11 +1,15 @@
 import { useMemo } from 'react'
-import { useEditarTomadaContas, useTomadaContas } from '../api/hooks'
+import { useNavigate } from 'react-router'
+import { useEditarTomadaContas, useRemoverConvenio, useTomadaContas } from '../api/hooks'
 import type { LinhaTomadaContas } from '../api/tipos'
 import { Aviso, CaixaErro, Carregando } from '../componentes/Estados'
 import { TabelaPaginada, type Coluna } from '../componentes/TabelaPaginada'
 import { useFiltros } from '../filtros'
 import { AUSENTE, moeda } from '../formato'
+import { linkDetalhe } from './comum'
+import { useConvenioRecemAdicionado } from './NovoConvenio'
 
+/** Retorna o selo colorido correspondente ao status do processo de Tomada de Contas Especial. */
 function badgeStatus(status: string | null) {
   if (!status) return <span className="text-slate-400">{AUSENTE}</span>
   const s = status.toLowerCase()
@@ -86,10 +90,14 @@ const COLUNAS: Coluna<LinhaTomadaContas>[] = [
   },
 ]
 
+/** Tela de Tomada de Contas Especial: lista processos TCE-RJ/CGE e abre detalhes do convênio ao clicar na linha. */
 export function TelaTomadaContas() {
-  const { filtros, mudar, limpar } = useFiltros()
+  const { filtros, busca, mudar, limpar } = useFiltros()
   const consulta = useTomadaContas(filtros.municipios, filtros)
   const editar = useEditarTomadaContas()
+  const remover = useRemoverConvenio()
+  const navegar = useNavigate()
+  const [recemAdicionado] = useConvenioRecemAdicionado()
   const d = consulta.data
 
   const { totalValorSiafe, totalComParecer } = useMemo(() => {
@@ -156,8 +164,24 @@ export function TelaTomadaContas() {
           ordem={filtros.ordem}
           onOrdem={(ordem) => mudar({ ordem, pagina: 1 })}
           onPagina={(pagina) => mudar({ pagina })}
+          onLinha={(i) => navegar(linkDetalhe(i.numero_convenio, i.municipio, busca))}
+          rotuloLinha={(i) => `Ver detalhe do convênio ${i.numero_convenio} de ${i.municipio}`}
           unidade={['processo', 'processos']}
+          destacarLinha={(i) =>
+            Boolean(
+              recemAdicionado &&
+                i.numero_convenio === recemAdicionado.numero_convenio &&
+                i.municipio === recemAdicionado.municipio,
+            )
+          }
           onSalvarEdicao={(item, alt) => editar.mutateAsync({ ...alt, id: item.id })}
+          onRemoverItem={(item) =>
+            remover.mutateAsync({
+              numero: item.numero_convenio,
+              municipio: item.municipio,
+              tomada_id: item.id,
+            })
+          }
         />
       )}
     </div>

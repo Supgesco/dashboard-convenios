@@ -1,27 +1,36 @@
 @import "tailwindcss";
 
+/* Variante dark baseada em classe .dark (padrão GIO) */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /*
- * Paleta "branco gelo e azul". O azul (marca) é a cor da interface: ativo, links, foco e botão primário.
+ * Paleta "branco gelo e azul" integrada aos tokens institucionais do GIO (SGO).
  * Contraste de texto (contrast() do validador da skill de dataviz):
  *   marca-600 #1d5fc4: 6,02 no branco · 5,61 no gelo · 5,44 no marca-50
  *   marca-700 #184ea3: 7,90 no branco · 7,35 no gelo · 7,14 no marca-50
  *   slate-500 #64748b: 4,76 no branco, mas 4,43 no gelo → texto pequeno direto sobre o gelo usa slate-600.
- * Barra lateral em marca-900/950: texto branco (13,9:1 no 900) e marca-200 (≈ 9:1) nos itens inativos.
  * Âmbar fica reservado à marca de código compartilhado e à faixa "em desenvolvimento" do topo; vermelho, aos erros.
  */
 @theme {
-  --color-gelo: #f4f7fb;
-  --color-marca-50: #eef4fc;
-  --color-marca-100: #d9e6f8;
-  --color-marca-200: #b5cdf1;
-  --color-marca-300: #86ace6;
-  --color-marca-400: #5389d8;
-  --color-marca-500: #2f6fcf;
-  --color-marca-600: #1d5fc4;
-  --color-marca-700: #184ea3;
-  --color-marca-800: #163f82;
-  --color-marca-900: #142f5e;
-  --color-marca-950: #0d1f40;
+  --color-gelo: #f9fafb;
+  --color-gray-850: #1a2234;
+  --color-sgo-blue: #005a92;
+  --color-sgo-orange: #d97706;
+  --color-sgo-green: #198754;
+  --color-sgo-red: #dc3545;
+  --color-sgo-sky: #0ea5e9;
+  --color-sgo-purple: #905bc9;
+  --color-marca-50: #eff6ff;
+  --color-marca-100: #dbeafe;
+  --color-marca-200: #bae6fd;
+  --color-marca-300: #7dd3fc;
+  --color-marca-400: #38bdf8;
+  --color-marca-500: #075f9a;
+  --color-marca-600: #005a92;
+  --color-marca-700: #084b7a;
+  --color-marca-800: #083b66;
+  --color-marca-900: #062c4d;
+  --color-marca-950: #041d33;
 
   --shadow-cartao: 0 1px 2px rgb(15 23 42 / 0.04), 0 4px 16px -4px rgb(15 23 42 / 0.06);
   --shadow-cartao-alto: 0 2px 4px rgb(15 23 42 / 0.05), 0 12px 28px -8px rgb(15 23 42 / 0.12);
@@ -75,7 +84,7 @@
 
 @layer base {
   body {
-    @apply bg-gelo text-slate-900 antialiased;
+    @apply bg-gelo text-slate-900 antialiased dark:bg-gray-950 dark:text-slate-100;
   }
   input::-ms-reveal,
   input::-ms-clear {
@@ -83,57 +92,89 @@
   }
 }
 
+/* Scrollbar com suporte a modo claro e escuro (padrão GIO) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+.dark ::-webkit-scrollbar-track {
+  background: #111827;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #374151;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+.dark * {
+  scrollbar-color: #374151 #111827;
+}
+
 @layer components {
   .cartao {
-    @apply rounded-2xl border border-slate-200/60 bg-white p-6 shadow-cartao;
+    @apply rounded-2xl border border-gray-200 bg-white p-6 shadow-cartao dark:border-gray-700 dark:bg-gray-900;
   }
   /* Card de indicador: faixa de cor no topo, vinda de --cor (definida em linha). */
   .cartao-kpi {
-    @apply relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white p-5 pt-6 shadow-cartao transition-[box-shadow,translate] duration-200 hover:-translate-y-0.5 hover:shadow-cartao-alto;
+    @apply relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 pt-6 shadow-cartao transition-[box-shadow,translate] duration-200 hover:-translate-y-0.5 hover:shadow-cartao-alto dark:border-gray-700 dark:bg-gray-900;
   }
   .cartao-kpi::before {
     content: '';
     @apply absolute inset-x-0 top-0 h-1;
-    background-color: var(--cor, var(--color-marca-600));
+    background-color: var(--cor, var(--color-sgo-blue));
   }
   .kpi-rotulo {
-    @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
+    @apply text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400;
   }
   .kpi-valor {
-    @apply text-2xl font-semibold tracking-tight break-words tabular-nums text-slate-900 xl:text-[1.65rem];
+    @apply text-2xl font-semibold tracking-tight break-words tabular-nums text-slate-900 dark:text-white xl:text-[1.65rem];
   }
   .kpi-valor-grande {
     @apply text-3xl xl:text-4xl;
   }
   .titulo-secao {
-    @apply text-base font-semibold tracking-tight text-slate-800;
+    @apply text-base font-semibold tracking-tight text-slate-800 dark:text-slate-100;
   }
   .subtitulo-secao {
-    @apply mt-0.5 text-sm text-slate-500;
+    @apply mt-0.5 text-sm text-slate-500 dark:text-slate-400;
   }
   .titulo-tela {
-    @apply text-2xl font-semibold tracking-tight text-slate-900;
+    @apply text-2xl font-semibold tracking-tight text-slate-900 dark:text-white;
   }
   .subtitulo-tela {
-    @apply mt-1 text-sm text-slate-600;
+    @apply mt-1 text-sm text-slate-600 dark:text-slate-300;
   }
   .selo {
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
   }
   .botao-primario {
-    @apply rounded-lg bg-marca-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-[background-color,scale] hover:bg-marca-700 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-600 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply rounded-lg bg-sgo-blue px-4 py-2 text-sm font-medium text-white shadow-sm transition-[background-color,scale] hover:bg-marca-700 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sgo-blue disabled:cursor-not-allowed disabled:opacity-50;
   }
   .botao-secundario {
-    @apply rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 transition-[background-color,border-color,scale] hover:border-marca-200 active:scale-[0.98] disabled:active:scale-100 hover:bg-marca-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-200 disabled:hover:bg-white;
+    @apply rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 transition-[background-color,border-color,scale] hover:border-marca-200 active:scale-[0.98] disabled:active:scale-100 hover:bg-marca-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-200 disabled:hover:bg-white dark:border-gray-700 dark:bg-gray-800 dark:text-slate-200 dark:hover:bg-gray-700;
   }
   .botao-link {
-    @apply text-sm font-medium text-marca-700 underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-marca-600;
+    @apply text-sm font-medium text-marca-700 underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-marca-600 dark:text-sgo-sky;
   }
   .campo {
-    @apply rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition-colors hover:border-marca-200 focus:border-marca-500 focus:outline-none focus:ring-2 focus:ring-marca-100;
+    @apply rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition-colors hover:border-marca-200 focus:border-marca-500 focus:outline-none focus:ring-2 focus:ring-marca-100 dark:border-gray-700 dark:bg-gray-800 dark:text-slate-100;
   }
   .rotulo-campo {
-    @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
+    @apply text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400;
   }
 
   /* Tabelas: sem zebra, separador fino entre linhas, cabeçalho em caixa-alta pequena. */
@@ -141,10 +182,10 @@
     @apply min-w-full border-separate border-spacing-0 text-sm;
   }
   .tabela-th {
-    @apply border-b border-slate-200 bg-slate-50/95 px-4 py-3 text-left text-[0.7rem] font-semibold uppercase tracking-wider whitespace-nowrap text-slate-500;
+    @apply border-b border-gray-200 bg-gray-50 px-4 py-3 text-left text-[0.7rem] font-semibold uppercase tracking-wider whitespace-nowrap text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300;
   }
   .tabela-td {
-    @apply border-b border-slate-100 px-4 py-3 text-slate-700;
+    @apply border-b border-gray-100 px-4 py-3 text-gray-700 dark:border-gray-800 dark:text-gray-200;
   }
   /* Grade cujos filhos entram em sequência (cards). */
   .grade-surgir > * {
@@ -167,9 +208,12 @@
   }
   /* Bloco de espera com brilho passando (skeleton). */
   .esqueleto {
-    @apply animate-brilho rounded-2xl bg-slate-200/60;
+    @apply animate-brilho rounded-2xl bg-slate-200/60 dark:bg-gray-800/80;
     background-image: linear-gradient(90deg, transparent 0%, rgb(255 255 255 / 0.65) 50%, transparent 100%);
     background-size: 200% 100%;
+  }
+  .dark .esqueleto {
+    background-image: linear-gradient(90deg, transparent 0%, rgb(255 255 255 / 0.08) 50%, transparent 100%);
   }
 }
 
@@ -182,12 +226,16 @@
 /* Mapa de municípios (Leaflet): fundo do OSM atenuado para não competir com as cores; dica em tinta slate. */
 @layer components {
   .mapa-municipios {
-    @apply bg-slate-100 font-sans;
+    @apply bg-slate-100 font-sans dark:bg-gray-900;
     z-index: 0;
   }
   .mapa-municipios .mapa-fundo {
     filter: grayscale(1) contrast(0.9) brightness(1.05);
     opacity: 0.6;
+  }
+  .dark .mapa-municipios .mapa-fundo {
+    filter: grayscale(1) invert(0.92) contrast(0.9) brightness(0.85);
+    opacity: 0.45;
   }
   .mapa-municipios path.leaflet-interactive {
     transition:
@@ -195,6 +243,226 @@
       fill-opacity 0.4s ease;
   }
   .mapa-municipios .dica-mapa {
-    @apply rounded-lg border-0 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-800 shadow-cartao-alto;
+    @apply rounded-lg border-0 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-800 shadow-cartao-alto dark:border dark:border-gray-700 dark:bg-gray-900 dark:text-slate-100;
+  }
+}
+
+/* Ajustes globais de tema escuro para selects nativos e gráficos Recharts */
+.dark select option {
+  background-color: #1f2937;
+  color: #f3f4f6;
+}
+.dark .recharts-default-tooltip {
+  background-color: #111827 !important;
+  border-color: #374151 !important;
+  color: #f3f4f6 !important;
+}
+.dark .recharts-tooltip-label,
+.dark .recharts-tooltip-item {
+  color: #e5e7eb !important;
+}
+.dark .recharts-cartesian-axis-tick-value,
+.dark .recharts-legend-item-text {
+  fill: #9ca3af !important;
+  color: #9ca3af !important;
+}
+.dark .recharts-cartesian-grid line {
+  stroke: #374151 !important;
+}
+/* Garante legibilidade nos controles e popups nativos do Leaflet no tema escuro */
+.dark .leaflet-bar a,
+.dark .leaflet-popup-content-wrapper,
+.dark .leaflet-popup-tip {
+  background-color: #111827 !important;
+  color: #f3f4f6 !important;
+  border-color: #374151 !important;
+}
+.dark .leaflet-control-attribution {
+  background-color: rgb(17 24 39 / 0.85) !important;
+  color: #cbd5e1 !important;
+}
+.dark .leaflet-control-attribution a {
+  color: #93c5fd !important;
+}
+
+/* Garantias de legibilidade para formulários e textos base no tema escuro */
+@layer base {
+  .dark input:not([type='checkbox']):not([type='radio']),
+  .dark select,
+  .dark textarea {
+    color: #f3f4f6;
+    background-color: #1f2937;
+    border-color: #4b5563;
+  }
+  .dark input::placeholder,
+  .dark textarea::placeholder {
+    color: #9ca3af;
+  }
+}
+
+/* Adaptação automática de superfícies, textos, badges e bordas claras no tema escuro (baixa especificidade via :where). */
+@layer utilities {
+  :where(.dark) .bg-white {
+    background-color: #111827;
+  }
+  :where(.dark) .bg-white\/95 {
+    background-color: rgb(17 24 39 / 0.95);
+  }
+  :where(.dark) .bg-white\/90 {
+    background-color: rgb(17 24 39 / 0.9);
+  }
+  :where(.dark) .bg-white\/80 {
+    background-color: rgb(17 24 39 / 0.85);
+  }
+  :where(.dark) .bg-white\/70,
+  :where(.dark) .bg-white\/60 {
+    background-color: rgb(17 24 39 / 0.75);
+  }
+  :where(.dark) .bg-slate-50,
+  :where(.dark) .bg-slate-50\/60,
+  :where(.dark) .bg-slate-50\/70,
+  :where(.dark) .bg-slate-50\/80,
+  :where(.dark) .bg-gray-50,
+  :where(.dark) .bg-gelo,
+  :where(.dark) .bg-papel {
+    background-color: #1f2937;
+  }
+  :where(.dark) .bg-slate-100,
+  :where(.dark) .bg-slate-100\/80,
+  :where(.dark) .bg-gray-100 {
+    background-color: rgb(31 41 55 / 0.92);
+  }
+  :where(.dark) .bg-marca-50,
+  :where(.dark) .bg-marca-50\/50,
+  :where(.dark) .bg-marca-100 {
+    background-color: rgb(217 119 6 / 0.16);
+  }
+  :where(.dark) .bg-emerald-50,
+  :where(.dark) .bg-emerald-100,
+  :where(.dark) .bg-green-100 {
+    background-color: rgb(16 185 129 / 0.16);
+  }
+  :where(.dark) .bg-amber-50,
+  :where(.dark) .bg-amber-100 {
+    background-color: rgb(245 158 11 / 0.16);
+  }
+  :where(.dark) .bg-red-50,
+  :where(.dark) .bg-red-100,
+  :where(.dark) .bg-rose-50 {
+    background-color: rgb(239 68 68 / 0.16);
+  }
+  :where(.dark) .bg-blue-50 {
+    background-color: rgb(59 130 246 / 0.16);
+  }
+
+  :where(.dark) .hover\:bg-slate-50:hover,
+  :where(.dark) .hover\:bg-slate-100:hover,
+  :where(.dark) .hover\:bg-gray-50:hover,
+  :where(.dark) .hover\:bg-gray-100:hover,
+  :where(.dark) .hover\:bg-white:hover {
+    background-color: #374151;
+  }
+  :where(.dark) .hover\:bg-marca-50:hover {
+    background-color: rgb(217 119 6 / 0.22);
+  }
+
+  :where(.dark) .text-slate-900,
+  :where(.dark) .text-gray-900 {
+    color: #f9fafb;
+  }
+  :where(.dark) .text-slate-800,
+  :where(.dark) .text-gray-800 {
+    color: #f3f4f6;
+  }
+  :where(.dark) .text-slate-700,
+  :where(.dark) .text-gray-700 {
+    color: #e5e7eb;
+  }
+  :where(.dark) .text-slate-600,
+  :where(.dark) .text-gray-600 {
+    color: #d1d5db;
+  }
+  :where(.dark) .text-slate-500,
+  :where(.dark) .text-gray-500 {
+    color: #cbd5e1;
+  }
+  :where(.dark) .text-slate-400,
+  :where(.dark) .text-gray-400 {
+    color: #9ca3af;
+  }
+
+  :where(.dark) .text-marca-950,
+  :where(.dark) .text-marca-900,
+  :where(.dark) .text-marca-800,
+  :where(.dark) .text-marca-700,
+  :where(.dark) .text-marca-600 {
+    color: #fbbf24;
+  }
+  :where(.dark) .text-emerald-950,
+  :where(.dark) .text-emerald-800,
+  :where(.dark) .text-emerald-700,
+  :where(.dark) .text-emerald-600,
+  :where(.dark) .text-green-600 {
+    color: #6ee7b7;
+  }
+  :where(.dark) .text-amber-900,
+  :where(.dark) .text-amber-800,
+  :where(.dark) .text-amber-700,
+  :where(.dark) .text-amber-600 {
+    color: #fcd34d;
+  }
+  :where(.dark) .text-red-900,
+  :where(.dark) .text-red-800,
+  :where(.dark) .text-red-700,
+  :where(.dark) .text-red-600,
+  :where(.dark) .text-rose-700,
+  :where(.dark) .text-rose-600 {
+    color: #fca5a5;
+  }
+  :where(.dark) .text-blue-700,
+  :where(.dark) .text-blue-600 {
+    color: #93c5fd;
+  }
+
+  :where(.dark) .border-slate-200,
+  :where(.dark) .border-slate-200\/80,
+  :where(.dark) .border-slate-200\/70,
+  :where(.dark) .border-slate-200\/60,
+  :where(.dark) .border-slate-300,
+  :where(.dark) .border-slate-400,
+  :where(.dark) .border-gray-200,
+  :where(.dark) .border-gray-300 {
+    border-color: #374151;
+  }
+  :where(.dark) .border-slate-100 {
+    border-color: #1f2937;
+  }
+  :where(.dark) .border-marca-100,
+  :where(.dark) .border-marca-200,
+  :where(.dark) .border-marca-300 {
+    border-color: rgb(245 158 11 / 0.45);
+  }
+  :where(.dark) .border-emerald-200,
+  :where(.dark) .border-emerald-300 {
+    border-color: rgb(16 185 129 / 0.4);
+  }
+  :where(.dark) .border-amber-200,
+  :where(.dark) .border-amber-300 {
+    border-color: rgb(245 158 11 / 0.4);
+  }
+  :where(.dark) .border-red-200,
+  :where(.dark) .border-red-300 {
+    border-color: rgb(239 68 68 / 0.4);
+  }
+  :where(.dark) .divide-slate-200 > :not(:last-child),
+  :where(.dark) .divide-slate-100 > :not(:last-child) {
+    border-color: #1f2937;
+  }
+  /* Caso algum bloco mantenha fundo branco explícito, mantém a fonte preta para leitura */
+  .dark [style*='background: white'],
+  .dark [style*='background-color: white'],
+  .dark [style*='background-color: #fff'],
+  .dark [style*='background-color:#fff'] {
+    color: #0f172a;
   }
 }

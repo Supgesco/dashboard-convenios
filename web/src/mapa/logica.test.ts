@@ -106,7 +106,7 @@ describe('dica e link', () => {
   it('o link mantém recorte e mês, troca o município e descarta página e ordem', () => {
     const busca = new URLSearchParams('recorte=89&ano=2026&mes=10&municipio=Paraty&pagina=3&ordem=-a_pagar')
     const url = new URL(linkMunicipio(busca, 'Niterói'), 'http://x')
-    expect(url.pathname).toBe('/convenios')
+    expect(url.pathname).toBe('/convenio')
     expect(url.searchParams.get('recorte')).toBe('89')
     expect(url.searchParams.get('ano')).toBe('2026')
     expect(url.searchParams.get('mes')).toBe('10')

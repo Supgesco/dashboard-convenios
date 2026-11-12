@@ -128,6 +128,7 @@ export function detalhe(parcial: Partial<DetalheConvenio> = {}): DetalheConvenio
     vigencia_final: '2027-06-30',
     objeto: 'Obra sintética de teste',
     recortes,
+    processo_celebracao: 'E-17/001/1114/2014',
     codigo_seobras: '000101',
     codigo_seiop: '000202',
     codigo_compartilhado: false,
