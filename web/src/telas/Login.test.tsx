@@ -89,6 +89,18 @@ describe('TelaLogin', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/Não foi possível falar com o serviço de autenticação/)
   })
+
+  it('oferece opções para retornar à intranet na página de login', async () => {
+    await semSessao()
+    renderizar(<App />, '/login', { sessao: null })
+
+    const linksIntranet = await screen.findAllByRole('link', { name: /retornar à intranet/i })
+    expect(linksIntranet.length).toBeGreaterThanOrEqual(1)
+    for (const link of linksIntranet) {
+      expect(link).toHaveAttribute('href', 'https://intranet.obras.rj.gov.br/')
+      expect(link).toHaveAttribute('target', '_blank')
+    }
+  })
 })
 
 describe('sessão', () => {
