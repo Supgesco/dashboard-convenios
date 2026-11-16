@@ -372,16 +372,17 @@ export function TelaLogin() {
                         {processando ? 'Autenticando...' : 'Acessar Painel'}
                       </button>
 
-                      <div className="border-t border-gray-200 pt-4 text-center dark:border-gray-700">
+                      <div className="border-t border-gray-200 pt-4 text-center text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                        <span>Não tem acesso? </span>
                         <button
                           type="button"
                           onClick={() => {
                             setModoSolicitar(true)
                             setErro(null)
                           }}
-                          className="text-xs font-medium text-gray-600 transition-colors hover:text-orange-600 dark:text-gray-400 dark:hover:text-orange-400"
+                          className="font-medium text-gray-700 underline underline-offset-2 transition-all duration-200 hover:text-orange-500 hover:drop-shadow-[0_0_8px_rgba(249,115,22,0.65)] active:text-orange-500 active:drop-shadow-[0_0_12px_rgba(249,115,22,0.95)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-orange-500 cursor-pointer dark:text-gray-300 dark:hover:text-orange-400 dark:active:text-orange-400"
                         >
-                          Não tem acesso? <span className="underline">Solicitar acesso</span>
+                          Solicitar acesso
                         </button>
                       </div>
                     </form>
