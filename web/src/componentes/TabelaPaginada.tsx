@@ -250,9 +250,9 @@ export function TabelaPaginada<T>(p: Props<T>) {
                       style={{ animationDelay: `${Math.min(k, 10) * 30}ms` }}
                       className={`group animate-surgir transition-colors ${
                         destacada
-                          ? 'bg-emerald-50/90 shadow-[inset_3px_0_0_0_#10b981,0_2px_10px_-2px_rgba(16,185,129,0.22)] hover:bg-emerald-100/80'
+                          ? 'bg-emerald-50/90 shadow-[inset_3px_0_0_0_#10b981,0_2px_10px_-2px_rgba(16,185,129,0.22)] hover:bg-emerald-100/80 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/50'
                           : p.onLinha
-                            ? 'hover:bg-marca-50 focus-visible:bg-marca-50'
+                            ? 'hover:bg-marca-50 focus-visible:bg-marca-50 dark:hover:bg-[#103752] dark:focus-visible:bg-[#103752]'
                             : ''
                       } ${
                         p.onLinha
@@ -273,14 +273,18 @@ export function TabelaPaginada<T>(p: Props<T>) {
                       {p.colunas.map((c, ic) => (
                         <td
                           key={c.campo}
-                          className={`tabela-td whitespace-nowrap ${
+                          className={`tabela-td whitespace-nowrap transition-colors ${
                             c.numerica ? 'text-right tabular-nums' : ''
                           } ${
                             c.fixa
-                              ? `sticky left-0 z-[1] font-medium text-slate-900 ${
+                              ? `sticky left-0 z-[1] font-medium text-slate-900 transition-colors dark:text-slate-100 ${
                                   destacada
-                                    ? 'bg-emerald-50 shadow-[inset_3px_0_0_0_#10b981] group-hover:bg-emerald-100'
-                                    : `bg-white ${p.onLinha ? 'group-hover:bg-marca-50 group-focus-visible:bg-marca-50' : ''}`
+                                    ? 'bg-emerald-50 shadow-[inset_3px_0_0_0_#10b981] group-hover:bg-emerald-100 dark:bg-emerald-950/40 dark:group-hover:bg-emerald-900/60'
+                                    : `bg-white dark:bg-gray-900 ${
+                                        p.onLinha
+                                          ? 'group-hover:bg-marca-50 group-focus-visible:bg-marca-50 dark:group-hover:bg-[#103752] dark:group-focus-visible:bg-[#103752]'
+                                          : ''
+                                      }`
                                 }`
                               : ''
                           }`}
@@ -290,7 +294,7 @@ export function TabelaPaginada<T>(p: Props<T>) {
                           {p.onLinha && ic === p.colunas.length - 1 && (
                             <span
                               aria-hidden="true"
-                              className="ml-2 inline-block -translate-x-1 text-marca-600 opacity-0 transition-[opacity,translate] group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100"
+                              className="ml-2 inline-block -translate-x-1 text-marca-600 opacity-0 transition-[opacity,translate] group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100 dark:text-sky-400"
                             >
                               ›
                             </span>
@@ -299,10 +303,14 @@ export function TabelaPaginada<T>(p: Props<T>) {
                       ))}
                       {mostrarAcoes && (
                         <td
-                          className={`tabela-td sticky right-0 z-[1] text-right whitespace-nowrap ${
+                          className={`tabela-td sticky right-0 z-[1] text-right whitespace-nowrap transition-colors ${
                             destacada
-                              ? 'bg-emerald-50 group-hover:bg-emerald-100'
-                              : `bg-white ${p.onLinha ? 'group-hover:bg-marca-50 group-focus-visible:bg-marca-50' : ''}`
+                              ? 'bg-emerald-50 group-hover:bg-emerald-100 dark:bg-emerald-950/40 dark:group-hover:bg-emerald-900/60'
+                              : `bg-white dark:bg-gray-900 ${
+                                  p.onLinha
+                                    ? 'group-hover:bg-marca-50 group-focus-visible:bg-marca-50 dark:group-hover:bg-[#103752] dark:group-focus-visible:bg-[#103752]'
+                                    : ''
+                                }`
                           }`}
                           onClick={(e) => e.stopPropagation()}
                           onKeyDown={(e) => e.stopPropagation()}
@@ -313,13 +321,13 @@ export function TabelaPaginada<T>(p: Props<T>) {
                                 type="button"
                                 disabled={exportandoPdfChave === ch}
                                 onClick={() => void handleExportarPdf(item)}
-                                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 shadow-2xs transition-colors hover:border-marca-300 hover:bg-marca-50 hover:text-marca-800 focus-visible:outline-2 focus-visible:outline-marca-600 disabled:opacity-50"
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 shadow-2xs transition-colors hover:border-marca-300 hover:bg-marca-50 hover:text-marca-800 focus-visible:outline-2 focus-visible:outline-marca-600 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-slate-200 dark:hover:bg-gray-800"
                                 title="Exportar relatório em PDF deste convênio"
                               >
                                 <svg
                                   aria-hidden="true"
                                   viewBox="0 0 24 24"
-                                  className="size-3.5 text-marca-600"
+                                  className="size-3.5 text-marca-600 dark:text-sky-400"
                                   fill="none"
                                   stroke="currentColor"
                                   strokeWidth={2}
@@ -337,13 +345,13 @@ export function TabelaPaginada<T>(p: Props<T>) {
                             <button
                               type="button"
                               onClick={() => abrirEdicao(item)}
-                              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 shadow-2xs transition-colors hover:border-marca-300 hover:bg-marca-50 hover:text-marca-800 focus-visible:outline-2 focus-visible:outline-marca-600"
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 shadow-2xs transition-colors hover:border-marca-300 hover:bg-marca-50 hover:text-marca-800 focus-visible:outline-2 focus-visible:outline-marca-600 dark:border-gray-700 dark:bg-gray-900 dark:text-slate-200 dark:hover:bg-gray-800 dark:hover:text-white"
                               title="Editar este item"
                             >
                               <svg
                                 aria-hidden="true"
                                 viewBox="0 0 24 24"
-                                className="size-3.5 text-marca-600"
+                                className="size-3.5 text-marca-600 dark:text-sky-400"
                                 fill="none"
                                 stroke="currentColor"
                                 strokeWidth={2}
@@ -360,13 +368,13 @@ export function TabelaPaginada<T>(p: Props<T>) {
                                 type="button"
                                 disabled={removendoChave === ch}
                                 onClick={() => iniciarRemocao(item)}
-                                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-red-700 shadow-2xs transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-800 focus-visible:outline-2 focus-visible:outline-red-600 disabled:opacity-50"
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-red-700 shadow-2xs transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-800 focus-visible:outline-2 focus-visible:outline-red-600 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-red-400 dark:hover:bg-red-950/40 dark:hover:text-red-300"
                                 title="Remover este convênio"
                               >
                                 <svg
                                   aria-hidden="true"
                                   viewBox="0 0 24 24"
-                                  className="size-3.5 text-red-600"
+                                  className="size-3.5 text-red-600 dark:text-red-400"
                                   fill="none"
                                   stroke="currentColor"
                                   strokeWidth={2}

@@ -398,8 +398,11 @@
   :where(.dark) .hover\:bg-white:hover {
     background-color: #374151;
   }
-  :where(.dark) .hover\:bg-marca-50:hover {
-    background-color: rgba(14, 165, 233, 0.22);
+  :where(.dark) .hover\:bg-marca-50:hover,
+  :where(.dark) .focus-visible\:bg-marca-50:focus-visible,
+  :where(.dark) .group:hover .group-hover\:bg-marca-50,
+  :where(.dark) .group:focus-visible .group-focus-visible\:bg-marca-50 {
+    background-color: #103752;
   }
 
   :where(.dark) .text-slate-900,
