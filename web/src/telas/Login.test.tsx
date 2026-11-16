@@ -94,11 +94,12 @@ describe('TelaLogin', () => {
     await semSessao()
     renderizar(<App />, '/login', { sessao: null })
 
-    // Deve conter exatamente uma opção de retorno à Intranet (sem duplicatas)
+    // Deve conter exatamente uma opção de retorno à Intranet posicionada no rodapé ao lado de "Ambiente seguro"
     const linksIntranet = await screen.findAllByRole('link', { name: /retornar à intranet/i })
     expect(linksIntranet).toHaveLength(1)
     expect(linksIntranet[0]).toHaveAttribute('href', 'https://intranet.obras.rj.gov.br/')
     expect(linksIntranet[0]).toHaveAttribute('target', '_blank')
+    expect(linksIntranet[0].closest('footer')).toHaveTextContent(/Ambiente seguro/)
 
     // Deve conter também a opção de retornar ao GIO oficial
     const linksGIO = await screen.findAllByRole('link', { name: /retornar ao gio/i })
