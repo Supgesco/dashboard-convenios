@@ -1,0 +1,11 @@
+{
+  "name": "gio-squad",
+  "displayName": "GIO Convênios Squad",
+  "description": "Squad de agentes especialistas para o Dashboard de Convênios do Governo do Estado (Backend, Frontend, Cibersegurança, QA, Banco de Dados e DevOps).",
+  "version": "1.0.0",
+  "suggestedPrompts": [
+    "Auditar a segurança dos endpoints de autenticação e permissões",
+    "Verificar a conformidade do frontend com o Padrão Visual GIO",
+    "Executar a suíte completa de testes e validar regressões"
+  ]
+}
