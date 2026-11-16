@@ -103,37 +103,55 @@ const MENU = [
   },
 ]
 
-/** Aviso fixo no topo de todas as telas enquanto o sistema estiver em desenvolvimento com atalho ao GIO oficial. */
+/** Aviso fixo no topo de todas as telas enquanto o sistema estiver em desenvolvimento. */
 function FaixaDesenvolvimento() {
   return (
     <div
       role="note"
-      className="relative z-40 flex flex-wrap items-center justify-between gap-2 bg-amber-400 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-amber-950 bg-[repeating-linear-gradient(-45deg,transparent_0_12px,rgb(0_0_0/0.05)_12px_24px)]"
+      className="relative z-40 flex items-center justify-center gap-2 bg-amber-400 px-4 py-1.5 text-center text-xs font-semibold uppercase tracking-wide text-amber-950 bg-[repeating-linear-gradient(-45deg,transparent_0_12px,rgb(0_0_0/0.05)_12px_24px)]"
     >
-      <div className="hidden lg:block lg:w-48" />
-      <div className="flex items-center justify-center gap-2 mx-auto sm:mx-0 lg:mx-auto">
-        <Icone>
-          <path d="M12 3 2 20h20L12 3Z" />
-          <path d="M12 10v4M12 17h.01" />
-        </Icone>
-        <span>Em desenvolvimento (passível de bugs e/ou erros inesperados)</span>
-      </div>
-      <div className="flex items-center justify-end">
-        <a
-          href={URL_GIO_OFICIAL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 rounded bg-amber-950/15 px-2.5 py-0.5 text-[10px] font-bold tracking-normal uppercase text-amber-950 transition-colors hover:bg-amber-950/25 active:scale-95"
-          title="Retornar ao painel oficial da SEIOP / GIO (https://gio.obras.rj.gov.br/)"
-          aria-label="Retornar ao painel oficial da SEIOP / GIO"
-        >
-          <span>Painel Oficial GIO / SEIOP</span>
-          <Icone>
-            <path d="M15 3h6v6M10 14L21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-          </Icone>
-        </a>
-      </div>
+      <Icone>
+        <path d="M12 3 2 20h20L12 3Z" />
+        <path d="M12 10v4M12 17h.01" />
+      </Icone>
+      <span>Em desenvolvimento (passível de bugs e/ou erros inesperados)</span>
     </div>
+  )
+}
+
+/**
+ * AlternadorEcossistema — Botão de acesso rápido ao painel oficial do GIO (Gestão de Obras).
+ * Concebido como uma pílula translúcida única exatamente no padrão visual do GIO (EcosystemSwitcher).
+ */
+function AlternadorEcossistema() {
+  return (
+    <a
+      href={URL_GIO_OFICIAL}
+      target="_blank"
+      rel="noopener noreferrer"
+      title="Acessar o GIO — Gestão Integrada de Obras (https://gio.obras.rj.gov.br/)"
+      aria-label="Ir para o GIO Gestão Integrada de Obras"
+      className="group inline-flex shrink-0 items-center gap-2 h-[34px] rounded-full border border-gray-200/90 bg-white/80 pl-1 pr-3 py-0.5 text-gray-700 shadow-sm backdrop-blur-md select-none transition-all duration-200 ease-out hover:-translate-y-px hover:border-gray-300 hover:bg-white hover:text-gray-900 hover:shadow active:translate-y-0 cursor-pointer dark:border-gray-700 dark:bg-gray-800/80 dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-white"
+    >
+      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white shadow-xs transition-transform duration-200 ease-out group-hover:scale-105">
+        <img src={oGio} alt="GIO" className="h-4 w-4 object-contain block" />
+      </div>
+      <span className="text-xs font-bold tracking-wider uppercase leading-none font-sans">
+        GIO
+      </span>
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+        className="size-3.5 shrink-0 text-gray-400 transition-all duration-200 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-gray-700 dark:group-hover:text-white"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2.2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M7 17L17 7M7 7h10v10" />
+      </svg>
+    </a>
   )
 }
 
@@ -320,59 +338,10 @@ export function Layout() {
                 </li>
               ))}
             </ul>
-
-            {/* Divisor e link para retorno ao ecossistema oficial GIO / SEIOP */}
-            <div className="pt-3">
-              <div className="my-2 border-t border-gray-200 dark:border-gray-700/60" />
-              {!recolhida && (
-                <p className="px-3 pb-1 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                  Ecossistema GIO
-                </p>
-              )}
-              <a
-                href={URL_GIO_OFICIAL}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={recolhida ? 'Retornar ao painel oficial da SEIOP / GIO' : undefined}
-                className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-orange-500/80 hover:text-white dark:text-gray-300 dark:hover:text-white ${
-                  recolhida ? 'lg:justify-center lg:px-2' : ''
-                }`}
-                aria-label="Painel Oficial SEIOP / GIO"
-              >
-                <span className="shrink-0 transition-transform duration-200 group-hover:scale-105">
-                  <Icone>
-                    <path d="M15 3h6v6M10 14L21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                  </Icone>
-                </span>
-                <span className={`flex items-center gap-1.5 ${recolhida ? 'lg:hidden' : ''}`}>
-                  <span>Painel Oficial GIO</span>
-                  <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[9px] font-bold text-gray-500 group-hover:bg-white/20 group-hover:text-white dark:bg-gray-800 dark:text-gray-400">
-                    SEIOP ↗
-                  </span>
-                </span>
-              </a>
-            </div>
           </nav>
 
           {/* Rodapé da sidebar: alternância de tema e usuário autenticado */}
           <div className="mt-auto border-t border-gray-200 p-3 dark:border-gray-700">
-            {/* Atalho rápido para retornar ao GIO / SEIOP */}
-            <a
-              href={URL_GIO_OFICIAL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`mb-2 flex w-full items-center gap-2.5 rounded-lg border border-gray-200 bg-gray-50/80 px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:border-orange-500/50 hover:bg-orange-50 hover:text-orange-600 dark:border-gray-700 dark:bg-gray-800/80 dark:text-gray-200 dark:hover:border-orange-500/50 dark:hover:bg-orange-950/30 dark:hover:text-orange-300 ${
-                recolhida ? 'lg:justify-center lg:px-2' : ''
-              }`}
-              title={recolhida ? 'Retornar ao painel oficial da SEIOP / GIO' : undefined}
-              aria-label="Retornar ao painel oficial da SEIOP / GIO"
-            >
-              <Icone>
-                <path d="M15 3h6v6M10 14L21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-              </Icone>
-              <span className={recolhida ? 'lg:hidden' : ''}>Retornar ao GIO / SEIOP</span>
-            </a>
-
             <button
               type="button"
               onClick={alternarModoEscuro}
@@ -432,14 +401,14 @@ export function Layout() {
           </div>
         </aside>
 
-        {/* Área principal (header mobile + conteúdo + rodapé GIO) */}
+        {/* Área principal (header topbar + conteúdo + rodapé GIO) */}
         <div className="relative z-10 flex min-w-0 flex-1 flex-col">
-          {/* Barra superior só em tela estreita */}
-          <header className="sticky top-0 z-30 flex items-center justify-between border-b border-gray-200 bg-white/95 px-4 py-2.5 text-gray-800 shadow-sm backdrop-blur lg:hidden dark:border-gray-700 dark:bg-gray-900/95 dark:text-gray-100">
+          {/* Barra superior (Topbar padrão GIO) */}
+          <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-gray-200/80 bg-white/90 px-4 py-2.5 backdrop-blur-md dark:border-gray-700/80 dark:bg-gray-900/90 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 lg:hidden dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
                 aria-expanded={aberto}
                 aria-controls={ID_MENU}
                 onClick={() => setAberto((a) => !a)}
@@ -449,27 +418,30 @@ export function Layout() {
                 </Icone>
                 Menu
               </button>
-              <span className="text-sm font-semibold">GIO Convênios</span>
+
+              <div className="hidden lg:flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                  GIO
+                </span>
+                <span className="text-gray-300 dark:text-gray-600">·</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  SEIOP
+                </span>
+              </div>
+
+              <span className="text-sm font-semibold text-gray-800 lg:hidden dark:text-gray-100">
+                GIO Convênios
+              </span>
             </div>
-            <div className="flex items-center gap-2">
-              <a
-                href={URL_GIO_OFICIAL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-700 transition-colors hover:border-orange-500/50 hover:bg-orange-50 hover:text-orange-600 dark:border-gray-700 dark:text-gray-200 dark:hover:border-orange-500/50 dark:hover:bg-orange-950/30 dark:hover:text-orange-300"
-                title="Retornar ao painel oficial da SEIOP / GIO"
-                aria-label="Retornar ao painel oficial da SEIOP / GIO"
-              >
-                <span>Painel GIO</span>
-                <Icone>
-                  <path d="M15 3h6v6M10 14L21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                </Icone>
-              </a>
+
+            <div className="flex items-center gap-3">
+              <AlternadorEcossistema />
+
               {usuario && (
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="rounded-lg border border-gray-200 px-2.5 py-1 text-xs text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                  className="rounded-lg border border-gray-200 px-2.5 py-1 text-xs text-gray-700 hover:bg-gray-100 lg:hidden dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
                   title="Encerrar sessão"
                 >
                   Sair

@@ -38,14 +38,12 @@ describe('navegação', () => {
     },
   )
 
-  it('oferece opções para retornar ao painel oficial da SEIOP / GIO', async () => {
+  it('oferece a opção oficial para retornar ao painel oficial da SEIOP / GIO no cabeçalho', async () => {
     stubApi(await rotasPadrao())
     renderizar(<App />, '/')
-    const linksGIO = screen.getAllByRole('link', { name: /GIO/i })
-    expect(linksGIO.length).toBeGreaterThanOrEqual(2)
-    for (const link of linksGIO) {
-      expect(link).toHaveAttribute('href', 'https://gio.obras.rj.gov.br/')
-    }
+    const linkGIO = screen.getByRole('link', { name: 'Ir para o GIO Gestão Integrada de Obras' })
+    expect(linkGIO).toHaveAttribute('href', 'https://gio.obras.rj.gov.br/')
+    expect(within(linkGIO).getByText('GIO')).toBeInTheDocument()
   })
 
   it('trocar de tela pelo menu mantém os filtros', async () => {
