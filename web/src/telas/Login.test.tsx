@@ -90,16 +90,21 @@ describe('TelaLogin', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(/Não foi possível falar com o serviço de autenticação/)
   })
 
-  it('oferece opções para retornar à intranet na página de login', async () => {
+  it('oferece opções únicas de retornar ao GIO e à intranet na página de login, sem duplicatas', async () => {
     await semSessao()
     renderizar(<App />, '/login', { sessao: null })
 
+    // Deve conter exatamente uma opção de retorno à Intranet (sem duplicatas)
     const linksIntranet = await screen.findAllByRole('link', { name: /retornar à intranet/i })
-    expect(linksIntranet.length).toBeGreaterThanOrEqual(1)
-    for (const link of linksIntranet) {
-      expect(link).toHaveAttribute('href', 'https://intranet.obras.rj.gov.br/')
-      expect(link).toHaveAttribute('target', '_blank')
-    }
+    expect(linksIntranet).toHaveLength(1)
+    expect(linksIntranet[0]).toHaveAttribute('href', 'https://intranet.obras.rj.gov.br/')
+    expect(linksIntranet[0]).toHaveAttribute('target', '_blank')
+
+    // Deve conter também a opção de retornar ao GIO oficial
+    const linksGIO = await screen.findAllByRole('link', { name: /retornar ao gio/i })
+    expect(linksGIO).toHaveLength(1)
+    expect(linksGIO[0]).toHaveAttribute('href', 'https://gio.obras.rj.gov.br/')
+    expect(linksGIO[0]).toHaveAttribute('target', '_blank')
   })
 })
 

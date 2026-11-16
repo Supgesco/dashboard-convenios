@@ -4,10 +4,17 @@ import { useLocation, useNavigate } from 'react-router'
 import govLogo from '../assets/govlogo.png'
 import logoGio from '../assets/LogoGio.png'
 import logoGioBranca from '../assets/LogoGioBranca.png'
+import oGio from '../assets/O-GIO.png'
 import { useAuth } from '../autenticacao'
 import { FundoGio } from '../componentes/FundoGio'
 
 const DOMINIO_INSTITUCIONAL = '@obras.rj.gov.br'
+
+const URL_GIO_OFICIAL =
+  (typeof window !== 'undefined' &&
+    (window as unknown as { __GIO_CONFIG__?: { gioUrl?: string } }).__GIO_CONFIG__?.gioUrl) ||
+  import.meta.env.VITE_GIO_URL ||
+  'https://gio.obras.rj.gov.br/'
 
 const URL_INTRANET =
   (typeof window !== 'undefined' &&
@@ -119,8 +126,8 @@ export function TelaLogin() {
             />
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 backdrop-blur-md sm:flex">
+          <div className="flex flex-wrap items-center justify-end gap-2.5 sm:gap-3">
+            <div className="hidden items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 backdrop-blur-md lg:flex">
               <span className="h-2 w-2 rounded-full bg-green-400" />
               <span className="text-xs font-medium text-white/90">
                 Sistema Oficial • GIO Convênios
@@ -128,12 +135,36 @@ export function TelaLogin() {
             </div>
 
             <a
+              href={URL_GIO_OFICIAL}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Retornar ao GIO — Gestão Integrada de Obras (https://gio.obras.rj.gov.br/)"
+              aria-label="Retornar ao GIO"
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/15 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm backdrop-blur-md transition-all hover:bg-white/25 hover:border-white/40 hover:shadow active:scale-95 cursor-pointer"
+            >
+              <img src={oGio} alt="" className="h-3.5 w-3.5 object-contain" />
+              <span>Retornar ao GIO</span>
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="h-3 w-3 shrink-0 opacity-80"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2.2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M7 17L17 7M7 7h10v10" />
+              </svg>
+            </a>
+
+            <a
               href={URL_INTRANET}
               target="_blank"
               rel="noopener noreferrer"
               title="Retornar à Intranet SEIOP (https://intranet.obras.rj.gov.br/)"
               aria-label="Retornar à Intranet"
-              className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/15 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm backdrop-blur-md transition-all hover:bg-white/25 hover:border-white/40 hover:shadow active:scale-95 cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/15 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm backdrop-blur-md transition-all hover:bg-white/25 hover:border-white/40 hover:shadow active:scale-95 cursor-pointer"
             >
               <svg
                 aria-hidden="true"
@@ -364,42 +395,17 @@ export function TelaLogin() {
                         {processando ? 'Autenticando...' : 'Acessar Painel'}
                       </button>
 
-                      <div className="border-t border-gray-200 pt-4 text-center dark:border-gray-700 space-y-2.5">
-                        <div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setModoSolicitar(true)
-                              setErro(null)
-                            }}
-                            className="text-xs font-medium text-gray-600 transition-colors hover:text-orange-600 dark:text-gray-400 dark:hover:text-orange-400"
-                          >
-                            Não tem acesso? <span className="underline">Solicitar acesso</span>
-                          </button>
-                        </div>
-                        <div>
-                          <a
-                            href={URL_INTRANET}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-orange-600 dark:text-gray-400 dark:hover:text-orange-400 transition-colors"
-                            title="Retornar à Intranet SEIOP"
-                          >
-                            <svg
-                              aria-hidden="true"
-                              viewBox="0 0 24 24"
-                              className="h-3.5 w-3.5"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth={2}
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M19 12H5M12 19l-7-7 7-7" />
-                            </svg>
-                            <span>Retornar à Intranet</span>
-                          </a>
-                        </div>
+                      <div className="border-t border-gray-200 pt-4 text-center dark:border-gray-700">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setModoSolicitar(true)
+                            setErro(null)
+                          }}
+                          className="text-xs font-medium text-gray-600 transition-colors hover:text-orange-600 dark:text-gray-400 dark:hover:text-orange-400"
+                        >
+                          Não tem acesso? <span className="underline">Solicitar acesso</span>
+                        </button>
                       </div>
                     </form>
                   ) : solicitacaoEnviada ? (
@@ -432,28 +438,6 @@ export function TelaLogin() {
                       >
                         Voltar para o login
                       </button>
-                      <div className="pt-1">
-                        <a
-                          href={URL_INTRANET}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-orange-600 dark:text-gray-400 dark:hover:text-orange-400 transition-colors"
-                        >
-                          <svg
-                            aria-hidden="true"
-                            viewBox="0 0 24 24"
-                            className="h-3.5 w-3.5"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M19 12H5M12 19l-7-7 7-7" />
-                          </svg>
-                          <span>Retornar à Intranet</span>
-                        </a>
-                      </div>
                     </div>
                   ) : (
                     <form onSubmit={handleSolicitarAcesso} className="space-y-4">
@@ -526,29 +510,6 @@ export function TelaLogin() {
                           Enviar solicitação
                         </button>
                       </div>
-
-                      <div className="text-center pt-2">
-                        <a
-                          href={URL_INTRANET}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-orange-600 dark:text-gray-400 dark:hover:text-orange-400 transition-colors"
-                        >
-                          <svg
-                            aria-hidden="true"
-                            viewBox="0 0 24 24"
-                            className="h-3.5 w-3.5"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M19 12H5M12 19l-7-7 7-7" />
-                          </svg>
-                          <span>Retornar à Intranet</span>
-                        </a>
-                      </div>
                     </form>
                   )}
                 </div>
@@ -562,15 +523,7 @@ export function TelaLogin() {
       <footer className="relative z-10 w-full px-6 py-4 text-center">
         <p className="text-xs text-white/60">
           Secretaria de Infraestrutura de Obras Públicas (SEIOP) • Todos os direitos reservados •
-          Ambiente seguro •{' '}
-          <a
-            href={URL_INTRANET}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline hover:text-white transition-colors"
-          >
-            Retornar à Intranet
-          </a>
+          Ambiente seguro
         </p>
       </footer>
     </div>
