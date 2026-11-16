@@ -305,7 +305,7 @@ export function Layout() {
           {!recolhida && (
             <div className="px-4 pb-1 pt-4">
               <p className="text-[0.68rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                GIO Convênios · SEIOP
+                GIO Convênios
               </p>
             </div>
           )}
@@ -420,12 +420,8 @@ export function Layout() {
               </button>
 
               <div className="hidden lg:flex items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                  GIO
-                </span>
-                <span className="text-gray-300 dark:text-gray-600">·</span>
-                <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  SEIOP
+                <span className="text-sm font-semibold tracking-tight text-gray-900 dark:text-white">
+                  GIO Convênios
                 </span>
               </div>
 
@@ -482,7 +478,7 @@ export function Layout() {
 
           {/* Rodapé institucional padrão GIO */}
           <footer className="border-t border-gray-200/80 bg-white/70 px-6 py-3 text-center text-xs text-gray-500 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-900/70 dark:text-gray-400">
-            Copyright © 2026, Todos os direitos reservados · SEIOP · GIO Convênios
+            Copyright © 2026, Todos os direitos reservados · GIO Convênios
           </footer>
         </div>
       </div>

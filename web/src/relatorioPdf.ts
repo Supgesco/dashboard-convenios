@@ -176,7 +176,7 @@ export function gerarPdfConvenio(d: DetalheConvenio, extras: DadosMunicipioPdf =
   retangulo(MARGEM, y - alturaCabecalho + 3.5, LARGURA_UTIL, 3.5, [0.2, 0.83, 0.6])
 
   escrever(
-    'GIO CONVÊNIOS · FAZENDA RJ / SEIOP · SIAFE',
+    'GIO CONVÊNIOS · FAZENDA RJ · SIAFE',
     MARGEM + 16,
     y - 20,
     8.5,

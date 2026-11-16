@@ -38,7 +38,7 @@ describe('navegação', () => {
     },
   )
 
-  it('oferece a opção oficial para retornar ao painel oficial da SEIOP / GIO no cabeçalho', async () => {
+  it('oferece a opção oficial para retornar ao painel oficial do GIO no cabeçalho', async () => {
     stubApi(await rotasPadrao())
     renderizar(<App />, '/')
     const linkGIO = screen.getByRole('link', { name: 'Ir para o GIO Gestão Integrada de Obras' })
