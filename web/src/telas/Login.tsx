@@ -116,13 +116,13 @@ export function TelaLogin() {
       <FundoGio />
 
       {/* Cabeçalho institucional padrão GIO */}
-      <header className="relative z-10 w-full px-6 py-5 md:px-12">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
+      <header className="relative z-10 w-full bg-transparent px-6 py-4">
+        <div className="mx-auto flex w-full items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <img
               src={govLogo}
-              alt="Logo Governo do Estado"
-              className="h-11 w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
+              alt="Governo do Estado do Rio de Janeiro"
+              className="h-10 w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
             />
           </div>
 
