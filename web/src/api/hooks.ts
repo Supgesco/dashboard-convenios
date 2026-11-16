@@ -197,26 +197,17 @@ export function useConvenio(numero: string, municipio: string, mes: MesConsulta,
   })
 }
 
-/** Lista todos os convênios de um município no recorte (com fallback automático para 342 caso o recorte atual não tenha itens). */
+/** Lista todos os convênios de um município (sempre traz a carteira completa da base geral 342). */
 export function useConveniosMunicipio(
   municipio: string,
-  recorte: Recorte,
+  _recorte: Recorte,
   mes: MesConsulta,
   { enabled = true }: Opcoes = {},
 ) {
   return useQuery({
-    queryKey: ['convenios-municipio', municipio, recorte, mes],
+    queryKey: ['convenios-municipio', municipio, mes],
     queryFn: async () => {
       const r = await apiGet<Convenios>('/painel/convenios', {
-        recorte,
-        municipio: [municipio],
-        ano: mes?.ano,
-        mes: mes?.mes,
-        pagina: 1,
-        tamanho: 100,
-      })
-      if (r.itens.length > 0 || recorte === '342') return r.itens
-      const rGeral = await apiGet<Convenios>('/painel/convenios', {
         recorte: '342',
         municipio: [municipio],
         ano: mes?.ano,
@@ -224,7 +215,7 @@ export function useConveniosMunicipio(
         pagina: 1,
         tamanho: 100,
       })
-      return rGeral.itens
+      return r.itens
     },
     enabled: enabled && Boolean(municipio),
   })
