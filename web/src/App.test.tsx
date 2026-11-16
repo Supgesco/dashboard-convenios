@@ -38,6 +38,16 @@ describe('navegação', () => {
     },
   )
 
+  it('oferece opções para retornar ao painel oficial da SEIOP / GIO', async () => {
+    stubApi(await rotasPadrao())
+    renderizar(<App />, '/')
+    const linksGIO = screen.getAllByRole('link', { name: /GIO/i })
+    expect(linksGIO.length).toBeGreaterThanOrEqual(2)
+    for (const link of linksGIO) {
+      expect(link).toHaveAttribute('href', 'https://gio.obras.rj.gov.br/')
+    }
+  })
+
   it('trocar de tela pelo menu mantém os filtros', async () => {
     const api = stubApi(await rotasPadrao())
     renderizar(<App />, '/municipios?recorte=342&municipio=Paraty')
