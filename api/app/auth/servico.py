@@ -6,6 +6,7 @@ O token da sessão só existe no cookie: o banco guarda o SHA-256 dele.
 
 import hashlib
 import secrets
+import threading
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
@@ -13,6 +14,7 @@ from sqlalchemy import Engine, delete, func, insert, select, update
 from sqlalchemy.exc import IntegrityError
 
 from app.auth import senha as senhas
+from app.db import Base
 from app.models import Sessao, Usuario
 
 PERFIS = ("administrador", "analista", "auditor")
@@ -59,25 +61,38 @@ def _publico(linha) -> UsuarioPublico:
     return UsuarioPublico(**{c.key: getattr(linha, c.key) for c in COLUNAS_PUBLICAS})
 
 
+_sqlite_garantido_lock = threading.Lock()
+_sqlite_garantido_engines: set[int] = set()
+
+
 def _garantir_sqlite_local(engine: Engine) -> None:
-    """No modo local sem PostgreSQL (SQLite em memória), cria as tabelas de auth e o usuário padrão."""
+    """No modo local sem PostgreSQL (SQLite), cria as tabelas e o usuário padrão de forma thread-safe e idempotente."""
     if engine.dialect.name != "sqlite":
         return
-    Usuario.__table__.create(engine, checkfirst=True)
-    Sessao.__table__.create(engine, checkfirst=True)
-    with engine.begin() as conn:
-        existe = conn.scalar(select(func.count()).select_from(Usuario))
-        if not existe:
-            conn.execute(
-                insert(Usuario).values(
-                    email="admin@obras.rj.gov.br",
-                    nome="Coordenação de Convênios",
-                    cargo="Gestão",
-                    orgao="SEIOP",
-                    perfil="administrador",
-                    senha_hash=senhas.gerar_hash("Seiop@1234"),
-                )
-            )
+    engine_id = id(engine)
+    if engine_id in _sqlite_garantido_engines:
+        return
+    with _sqlite_garantido_lock:
+        if engine_id in _sqlite_garantido_engines:
+            return
+        try:
+            Base.metadata.create_all(engine, checkfirst=True)
+            with engine.begin() as conn:
+                existe = conn.scalar(select(func.count()).select_from(Usuario))
+                if not existe:
+                    conn.execute(
+                        insert(Usuario).values(
+                            email="admin@obras.rj.gov.br",
+                            nome="Coordenação de Convênios",
+                            cargo="Gestão",
+                            orgao="SEIOP",
+                            perfil="administrador",
+                            senha_hash=senhas.gerar_hash("Seiop@1234"),
+                        )
+                    )
+        except Exception:
+            pass
+        _sqlite_garantido_engines.add(engine_id)
 
 
 def _com_tz(dt: datetime | None) -> datetime | None:
@@ -144,13 +159,23 @@ def usuario_da_sessao(engine: Engine, token: str, agora: datetime | None = None)
     """Usuário ativo dono de uma sessão não vencida, ou None."""
     _garantir_sqlite_local(engine)
     agora = _agora(agora)
-    with engine.connect() as conn:
-        u = conn.execute(
-            select(*COLUNAS_PUBLICAS)
-            .join(Sessao, Sessao.usuario_id == Usuario.id)
-            .where(Sessao.token_hash == hash_token(token), Sessao.expira_em > agora, Usuario.ativo)
-        ).first()
-    return _publico(u) if u else None
+    try:
+        with engine.connect() as conn:
+            u = conn.execute(
+                select(*COLUNAS_PUBLICAS)
+                .join(Sessao, Sessao.usuario_id == Usuario.id)
+                .where(Sessao.token_hash == hash_token(token), Sessao.expira_em > agora, Usuario.ativo)
+            ).first()
+        return _publico(u) if u else None
+    except Exception:
+        # Nova tentativa rápida em caso de disputa concorrente transitória
+        with engine.connect() as conn:
+            u = conn.execute(
+                select(*COLUNAS_PUBLICAS)
+                .join(Sessao, Sessao.usuario_id == Usuario.id)
+                .where(Sessao.token_hash == hash_token(token), Sessao.expira_em > agora, Usuario.ativo)
+            ).first()
+        return _publico(u) if u else None
 
 
 def encerrar_sessao(engine: Engine, token: str) -> None:

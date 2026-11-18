@@ -5,6 +5,8 @@ from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 API_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = API_DIR.parent / "data"
+BANCO_PADRAO = f"sqlite:///{(DATA_DIR / 'dashboard_local.db').as_posix()}" if DATA_DIR.exists() else "sqlite:///:memory:"
 
 
 class Settings(BaseSettings):
@@ -20,7 +22,7 @@ class Settings(BaseSettings):
     siafe_ug: str = "530100"
     siafe_consulta: str = "1"
 
-    database_url: SecretStr = SecretStr("sqlite:///:memory:")
+    database_url: SecretStr = SecretStr(BANCO_PADRAO)
 
     siafe_timeout_seconds: float = 60.0
 
