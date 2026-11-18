@@ -12,6 +12,21 @@ export function useBuscaSalva(): string {
   return useContext(ContextoBuscaSalva)
 }
 
+export interface OrigemNavegacao {
+  rota: string
+  rotulo: string
+}
+
+export const ContextoOrigemSalva = createContext<OrigemNavegacao>({
+  rota: '/convenios',
+  rotulo: 'Convênios',
+})
+
+/** Retorna a tela de origem salva (ex.: '/tomada-de-contas', '/convenios') antes de abrir o detalhe. */
+export function useOrigemSalva(): OrigemNavegacao {
+  return useContext(ContextoOrigemSalva)
+}
+
 export const RECORTE_PADRAO: Recorte = '31'
 
 export interface Filtros extends FiltroApi {

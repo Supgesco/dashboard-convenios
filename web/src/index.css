@@ -255,6 +255,47 @@
   .tabela tbody tr:last-child > td {
     @apply border-b-0;
   }
+
+  /* Linhas clicáveis da tabela: hover uniforme em toda a linha */
+  .tabela tbody tr.linha-clicavel:hover,
+  .tabela tbody tr.linha-clicavel:focus-visible,
+  .tabela tbody tr.cursor-pointer:hover,
+  .tabela tbody tr.cursor-pointer:focus-visible {
+    background-color: var(--color-marca-50);
+  }
+
+  .tabela tbody tr.linha-clicavel:hover > td,
+  .tabela tbody tr.linha-clicavel:focus-visible > td,
+  .tabela tbody tr.cursor-pointer:hover > td,
+  .tabela tbody tr.cursor-pointer:focus-visible > td {
+    background-color: var(--color-marca-50) !important;
+  }
+
+  /* Modo escuro: azul Midnight Blue #103752 uniforme na linha inteira (sem quebras de cor) */
+  .dark .tabela tbody tr.linha-clicavel:hover,
+  .dark .tabela tbody tr.linha-clicavel:focus-visible,
+  .dark .tabela tbody tr.cursor-pointer:hover,
+  .dark .tabela tbody tr.cursor-pointer:focus-visible {
+    background-color: #103752 !important;
+  }
+
+  .dark .tabela tbody tr.linha-clicavel:hover > td,
+  .dark .tabela tbody tr.linha-clicavel:focus-visible > td,
+  .dark .tabela tbody tr.cursor-pointer:hover > td,
+  .dark .tabela tbody tr.cursor-pointer:focus-visible > td {
+    background-color: #103752 !important;
+  }
+
+  /* Linhas destacadas (verde esmeralda ao criar/editar) */
+  .tabela tbody tr.linha-destacada:hover > td,
+  .tabela tbody tr.linha-destacada:focus-visible > td {
+    background-color: #d1fae5 !important;
+  }
+
+  .dark .tabela tbody tr.linha-destacada:hover > td,
+  .dark .tabela tbody tr.linha-destacada:focus-visible > td {
+    background-color: rgba(6, 78, 59, 0.6) !important;
+  }
 }
 
 /* Mapa de municípios (Leaflet): fundo do OSM atenuado para não competir com as cores; dica em tinta slate. */

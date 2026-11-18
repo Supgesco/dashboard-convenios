@@ -7,7 +7,7 @@ import logoGioBranca from '../assets/LogoGioBranca.png'
 import oGio from '../assets/O-GIO.png'
 import oGioBranca from '../assets/O-GIOBranca.png'
 import { useAuth } from '../autenticacao'
-import { ContextoBuscaSalva, buscaGlobal, useFiltros } from '../filtros'
+import { ContextoBuscaSalva, ContextoOrigemSalva, buscaGlobal, useFiltros, type OrigemNavegacao } from '../filtros'
 import { BarraFiltros } from './BarraFiltros'
 
 const CHAVE_TEMA = 'sidebar-dark-mode'
@@ -176,6 +176,10 @@ export function Layout() {
     }
   })
   const [buscaSalva, setBuscaSalva] = useState('')
+  const [telaOrigemSalva, setTelaOrigemSalva] = useState<OrigemNavegacao>({
+    rota: '/convenios',
+    rotulo: 'Convênios',
+  })
   const comFiltros = TELAS_COM_FILTROS.includes(pathname)
   const exibirBarraFiltros = comFiltros || pathname === '/convenio'
   const buscaAtual = buscaGlobal(busca)
@@ -184,6 +188,19 @@ export function Layout() {
   const selecionadoPeloMapaOuFiltro = pathname === '/convenio' && !busca.has('numero')
   if ((comFiltros || selecionadoPeloMapaOuFiltro) && buscaSalva !== buscaAtual) {
     setBuscaSalva(buscaAtual)
+  }
+
+  // Memoriza a última tela de listagem de origem (Convênios, Tomada de Contas, Prestação de Contas ou Municípios)
+  if (comFiltros && pathname !== '/convenio' && telaOrigemSalva.rota !== pathname) {
+    const rotulo =
+      pathname === '/tomada-de-contas'
+        ? 'Tomada de Contas'
+        : pathname === '/prestacao-de-contas'
+          ? 'Prestação de Contas'
+          : pathname === '/municipios'
+            ? 'Municípios'
+            : 'Convênios'
+    setTelaOrigemSalva({ rota: pathname, rotulo })
   }
 
   // No detalhe, preserva os filtros (incluindo município e recorte) que estavam ativos na aba de convênios;
@@ -448,31 +465,33 @@ export function Layout() {
 
           <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
             <ContextoBuscaSalva.Provider value={buscaSalva}>
-              <div className="mx-auto max-w-7xl space-y-6">
-                {exibirBarraFiltros && <BarraFiltros />}
-                {comFiltros && filtros.erro ? (
-                  <div
-                    role="alert"
-                    className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-900 dark:border-red-800/60 dark:bg-red-950/50 dark:text-red-200"
-                  >
-                    <p className="font-medium">Filtro inválido na URL</p>
-                    <p className="mt-1">{filtros.erro}</p>
-                    <button type="button" className="botao-secundario mt-3" onClick={limpar}>
-                      Limpar filtros
-                    </button>
-                  </div>
-                ) : (
-                  // Cada troca de tela entra com um fade curto e uma leve subida.
-                  <motion.div
-                    key={pathname}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                  >
-                    <Outlet />
-                  </motion.div>
-                )}
-              </div>
+              <ContextoOrigemSalva.Provider value={telaOrigemSalva}>
+                <div className="mx-auto max-w-7xl space-y-6">
+                  {exibirBarraFiltros && <BarraFiltros />}
+                  {comFiltros && filtros.erro ? (
+                    <div
+                      role="alert"
+                      className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-900 dark:border-red-800/60 dark:bg-red-950/50 dark:text-red-200"
+                    >
+                      <p className="font-medium">Filtro inválido na URL</p>
+                      <p className="mt-1">{filtros.erro}</p>
+                      <button type="button" className="botao-secundario mt-3" onClick={limpar}>
+                        Limpar filtros
+                      </button>
+                    </div>
+                  ) : (
+                    // Cada troca de tela entra com um fade curto e uma leve subida.
+                    <motion.div
+                      key={pathname}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      <Outlet />
+                    </motion.div>
+                  )}
+                </div>
+              </ContextoOrigemSalva.Provider>
             </ContextoBuscaSalva.Provider>
           </main>
 

@@ -6,7 +6,7 @@ import { useConvenio, useConveniosMunicipio } from '../api/hooks'
 import type { DetalheConvenio, LinhaConvenio } from '../api/tipos'
 import { CaixaErro, Carregando } from '../componentes/Estados'
 import { GraficoSerie } from '../componentes/GraficoSerie'
-import { lerFiltros, useBuscaSalva, useMesReferencia } from '../filtros'
+import { lerFiltros, useBuscaSalva, useMesReferencia, useOrigemSalva } from '../filtros'
 import { AUSENTE, data, mesAno, moeda } from '../formato'
 import { NOME_RECORTE, ORDEM_EXIBICAO } from '../recortes'
 import { exportarPdfCompletoConvenio } from '../relatorioPdf'
@@ -117,12 +117,16 @@ function Identificacao({
   busca,
   conveniosMunicipio,
   veioDoMapa,
+  rotaRetorno,
+  rotuloRetorno,
 }: {
   d: DetalheConvenio
   buscaVoltar: string
   busca: URLSearchParams
   conveniosMunicipio: readonly LinhaConvenio[]
   veioDoMapa: boolean
+  rotaRetorno: string
+  rotuloRetorno: string
 }) {
   const recortes = ORDEM_EXIBICAO.filter((r) => d.recortes.includes(r))
   return (
@@ -144,13 +148,26 @@ function Identificacao({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-4">
             <Link
-              to={`/convenios${buscaVoltar}`}
+              to={`${rotaRetorno}${buscaVoltar}`}
               className="group inline-flex items-center gap-1 rounded-lg text-sm font-medium text-marca-100 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
               <Icone className="size-4 transition-transform group-hover:-translate-x-0.5">{ICONES.voltar}</Icone>
-              Convênios
+              {rotuloRetorno}
             </Link>
-            {veioDoMapa && (
+            {rotaRetorno !== '/convenios' && (
+              <>
+                <span aria-hidden="true" className="text-white/25">
+                  |
+                </span>
+                <Link
+                  to={`/convenios${buscaVoltar}`}
+                  className="group inline-flex items-center gap-1 text-sm font-medium text-marca-100/80 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                >
+                  Convênios
+                </Link>
+              </>
+            )}
+            {veioDoMapa && rotaRetorno !== '/municipios' && (
               <>
                 <span aria-hidden="true" className="text-white/25">
                   |
@@ -192,8 +209,8 @@ function Identificacao({
                 return (
                   <Link
                     key={c.numero_convenio}
-                    to={linkDetalhe(c.numero_convenio, d.municipio, busca)}
-                    state={veioDoMapa ? { veioDoMapa: true } : undefined}
+                    to={linkDetalhe(c.numero_convenio, d.municipio, busca, rotaRetorno)}
+                    state={{ origem: rotaRetorno, nomeOrigem: rotuloRetorno, veioDoMapa }}
                     aria-current={ativo ? 'page' : undefined}
                     className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-semibold transition-colors ${
                       ativo
@@ -342,8 +359,45 @@ export function TelaDetalhe() {
   // --- Leitura dos parâmetros da URL e estado de origem (mapa vs. listagens) ---
   const [busca] = useSearchParams()
   const { state } = useLocation()
-  const veioDoMapa = Boolean((state as { veioDoMapa?: boolean } | null)?.veioDoMapa)
   const buscaSalva = useBuscaSalva()
+  const origemSalva = useOrigemSalva()
+
+  const stateOrigem = state as { origem?: string; nomeOrigem?: string; veioDoMapa?: boolean } | null
+  const paramOrigem = busca.get('origem')
+  const veioDoMapa = Boolean(stateOrigem?.veioDoMapa || paramOrigem === 'mapa')
+
+  let rotaRetorno = '/convenios'
+  let rotuloRetorno = 'Convênios'
+
+  if (veioDoMapa) {
+    rotaRetorno = '/municipios'
+    rotuloRetorno = 'Voltar ao mapa'
+  } else if (stateOrigem?.origem) {
+    rotaRetorno = stateOrigem.origem.startsWith('/') ? stateOrigem.origem : `/${stateOrigem.origem}`
+    rotuloRetorno =
+      stateOrigem.nomeOrigem ??
+      (rotaRetorno === '/tomada-de-contas'
+        ? 'Tomada de Contas'
+        : rotaRetorno === '/prestacao-de-contas'
+          ? 'Prestação de Contas'
+          : rotaRetorno === '/municipios'
+            ? 'Municípios'
+            : 'Convênios')
+  } else if (paramOrigem) {
+    rotaRetorno = paramOrigem.startsWith('/') ? paramOrigem : `/${paramOrigem}`
+    rotuloRetorno =
+      rotaRetorno === '/tomada-de-contas'
+        ? 'Tomada de Contas'
+        : rotaRetorno === '/prestacao-de-contas'
+          ? 'Prestação de Contas'
+          : rotaRetorno === '/municipios'
+            ? 'Municípios'
+            : 'Convênios'
+  } else if (origemSalva.rota && origemSalva.rota !== '/convenios') {
+    rotaRetorno = origemSalva.rota
+    rotuloRetorno = origemSalva.rotulo
+  }
+
   const numeroUrl = busca.get('numero') ?? ''
   const municipio = busca.get('municipio') ?? ''
   const filtros = lerFiltros(busca)
@@ -363,8 +417,8 @@ export function TelaDetalhe() {
         </span>
         <h1 className="titulo-tela">Convênio não encontrado</h1>
         <p className="text-sm text-slate-600">Não há convênios cadastrados em {municipio}.</p>
-        <Link to={`/convenios${buscaSalva}`} className="botao-secundario mt-3 inline-block">
-          Ir para a lista de convênios
+        <Link to={`${rotaRetorno}${buscaSalva}`} className="botao-secundario mt-3 inline-block">
+          {rotaRetorno === '/convenios' ? 'Ir para a lista de convênios' : `Voltar para ${rotuloRetorno}`}
         </Link>
       </section>
     )
@@ -382,8 +436,8 @@ export function TelaDetalhe() {
           <p className="text-sm text-slate-600">
             Não há convênio {numero} em {municipio}.
           </p>
-          <Link to={`/convenios${buscaSalva}`} className="botao-secundario mt-3 inline-block">
-            Ir para a lista de convênios
+          <Link to={`${rotaRetorno}${buscaSalva}`} className="botao-secundario mt-3 inline-block">
+            {rotaRetorno === '/convenios' ? 'Ir para a lista de convênios' : `Voltar para ${rotuloRetorno}`}
           </Link>
         </section>
       )
@@ -391,8 +445,8 @@ export function TelaDetalhe() {
     return (
       <div className="space-y-3">
         <CaixaErro erro={erro} onTentar={() => void consulta.refetch()} titulo="Não foi possível abrir o convênio" />
-        <Link to={`/convenios${buscaSalva}`} className="botao-link">
-          Ir para a lista de convênios
+        <Link to={`${rotaRetorno}${buscaSalva}`} className="botao-link">
+          {rotaRetorno === '/convenios' ? 'Ir para a lista de convênios' : `Voltar para ${rotuloRetorno}`}
         </Link>
       </div>
     )
@@ -410,6 +464,8 @@ export function TelaDetalhe() {
         busca={busca}
         conveniosMunicipio={conveniosMun.data ?? []}
         veioDoMapa={veioDoMapa}
+        rotaRetorno={rotaRetorno}
+        rotuloRetorno={rotuloRetorno}
       />
 
       {d.codigo_compartilhado && <Compartilhado d={d} busca={busca} />}

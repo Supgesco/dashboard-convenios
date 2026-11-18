@@ -164,7 +164,11 @@ export function TelaTomadaContas() {
           ordem={filtros.ordem}
           onOrdem={(ordem) => mudar({ ordem, pagina: 1 })}
           onPagina={(pagina) => mudar({ pagina })}
-          onLinha={(i) => navegar(linkDetalhe(i.numero_convenio, i.municipio, busca))}
+          onLinha={(i) =>
+            navegar(linkDetalhe(i.numero_convenio, i.municipio, busca, '/tomada-de-contas'), {
+              state: { origem: '/tomada-de-contas', nomeOrigem: 'Tomada de Contas' },
+            })
+          }
           rotuloLinha={(i) => `Ver detalhe do convênio ${i.numero_convenio} de ${i.municipio}`}
           unidade={['processo', 'processos']}
           destacarLinha={(i) =>

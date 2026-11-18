@@ -250,9 +250,9 @@ export function TabelaPaginada<T>(p: Props<T>) {
                       style={{ animationDelay: `${Math.min(k, 10) * 30}ms` }}
                       className={`group animate-surgir transition-colors ${
                         destacada
-                          ? 'bg-emerald-50/90 shadow-[inset_3px_0_0_0_#10b981,0_2px_10px_-2px_rgba(16,185,129,0.22)] hover:bg-emerald-100/80 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/50'
+                          ? 'linha-destacada bg-emerald-50/90 shadow-[inset_3px_0_0_0_#10b981,0_2px_10px_-2px_rgba(16,185,129,0.22)] hover:bg-emerald-100/80 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/50'
                           : p.onLinha
-                            ? 'hover:bg-marca-50 focus-visible:bg-marca-50 dark:hover:bg-[#103752] dark:focus-visible:bg-[#103752]'
+                            ? 'linha-clicavel hover:bg-marca-50 focus-visible:bg-marca-50 dark:hover:bg-[#103752] dark:focus-visible:bg-[#103752]'
                             : ''
                       } ${
                         p.onLinha
@@ -277,9 +277,9 @@ export function TabelaPaginada<T>(p: Props<T>) {
                             c.numerica ? 'text-right tabular-nums' : ''
                           } ${
                             c.fixa
-                              ? `sticky left-0 z-[1] font-medium text-slate-900 transition-colors dark:text-slate-100 ${
+                              ? `coluna-fixa sticky left-0 z-[1] font-medium text-slate-900 transition-colors dark:text-slate-100 ${
                                   destacada
-                                    ? 'bg-emerald-50 shadow-[inset_3px_0_0_0_#10b981] group-hover:bg-emerald-100 dark:bg-emerald-950/40 dark:group-hover:bg-emerald-900/60'
+                                    ? 'coluna-destacada bg-emerald-50 shadow-[inset_3px_0_0_0_#10b981] group-hover:bg-emerald-100 dark:bg-emerald-950/40 dark:group-hover:bg-emerald-900/60'
                                     : `bg-white dark:bg-gray-900 ${
                                         p.onLinha
                                           ? 'group-hover:bg-marca-50 group-focus-visible:bg-marca-50 dark:group-hover:bg-[#103752] dark:group-focus-visible:bg-[#103752]'
@@ -303,9 +303,9 @@ export function TabelaPaginada<T>(p: Props<T>) {
                       ))}
                       {mostrarAcoes && (
                         <td
-                          className={`tabela-td sticky right-0 z-[1] text-right whitespace-nowrap transition-colors ${
+                          className={`tabela-td coluna-acoes sticky right-0 z-[1] text-right whitespace-nowrap transition-colors ${
                             destacada
-                              ? 'bg-emerald-50 group-hover:bg-emerald-100 dark:bg-emerald-950/40 dark:group-hover:bg-emerald-900/60'
+                              ? 'coluna-destacada bg-emerald-50 group-hover:bg-emerald-100 dark:bg-emerald-950/40 dark:group-hover:bg-emerald-900/60'
                               : `bg-white dark:bg-gray-900 ${
                                   p.onLinha
                                     ? 'group-hover:bg-marca-50 group-focus-visible:bg-marca-50 dark:group-hover:bg-[#103752] dark:group-focus-visible:bg-[#103752]'

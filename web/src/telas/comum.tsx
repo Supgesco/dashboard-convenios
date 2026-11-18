@@ -24,13 +24,17 @@ export const CAMPOS_CONTRATUAL = [
 ] as const
 
 /** Endereço do detalhe; o mês só vai junto se foi escolhido na URL (senão o detalhe usa o mesmo padrão). */
-export function linkDetalhe(numero: string, municipio: string, busca?: URLSearchParams): string {
+export function linkDetalhe(numero: string, municipio: string, busca?: URLSearchParams, origem?: string): string {
   const p = new URLSearchParams({ numero, municipio })
   const ano = busca?.get('ano')
   const mes = busca?.get('mes')
   if (ano && mes) {
     p.set('ano', ano)
     p.set('mes', mes)
+  }
+  const o = origem ?? busca?.get('origem')
+  if (o) {
+    p.set('origem', o)
   }
   return `/convenio?${p.toString()}`
 }

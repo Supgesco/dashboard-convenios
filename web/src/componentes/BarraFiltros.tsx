@@ -4,7 +4,16 @@ import { useLocation, useNavigate } from 'react-router'
 
 import { useContagemRecortes, useOpcoesMunicipios } from '../api/hooks'
 import type { Recorte } from '../api/tipos'
-import { aplicarMudanca, buscaGlobal, lerFiltros, useBuscaSalva, useFiltros, useMesReferencia, type Mudanca } from '../filtros'
+import {
+  aplicarMudanca,
+  buscaGlobal,
+  lerFiltros,
+  useBuscaSalva,
+  useOrigemSalva,
+  useFiltros,
+  useMesReferencia,
+  type Mudanca,
+} from '../filtros'
 import { inteiro } from '../formato'
 import { NOME_RECORTE, ORDEM_EXIBICAO, rotuloRecorte } from '../recortes'
 import { useExibirNovoConvenio } from '../telas/NovoConvenio'
@@ -328,6 +337,8 @@ export function BarraFiltros() {
   const navegar = useNavigate()
   const { filtros, busca, mudar } = useFiltros()
   const buscaSalva = useBuscaSalva()
+  const origemSalva = useOrigemSalva()
+  const { state } = useLocation()
   const filtrosSalvos = buscaSalva ? lerFiltros(new URLSearchParams(buscaSalva)) : null
   const recorteAtivo = pathname === '/convenio' && filtrosSalvos ? filtrosSalvos.recorte : filtros.recorte
   const selecionados =
@@ -348,7 +359,11 @@ export function BarraFiltros() {
       }
       const nova = aplicarMudanca(base, mudanca)
       const q = nova.toString()
-      navegar(`/convenios${q ? `?${q}` : ''}`)
+      const stateOrigem = (state as { origem?: string } | null)?.origem
+      const paramOrigem = busca.get('origem')
+      const rotaParam = paramOrigem ? (paramOrigem.startsWith('/') ? paramOrigem : `/${paramOrigem}`) : null
+      const rotaDestinoFiltro = stateOrigem ?? rotaParam ?? origemSalva.rota ?? '/convenios'
+      navegar(`${rotaDestinoFiltro}${q ? `?${q}` : ''}`)
       return
     }
     mudar(mudanca)

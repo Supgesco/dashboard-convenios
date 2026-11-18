@@ -199,7 +199,11 @@ export function TelaPrestacaoContas() {
           ordem={filtros.ordem}
           onOrdem={(ordem) => mudar({ ordem, pagina: 1 })}
           onPagina={(pagina) => mudar({ pagina })}
-          onLinha={(i) => navegar(linkDetalhe(i.numero_convenio, i.municipio, busca))}
+          onLinha={(i) =>
+            navegar(linkDetalhe(i.numero_convenio, i.municipio, busca, '/prestacao-de-contas'), {
+              state: { origem: '/prestacao-de-contas', nomeOrigem: 'Prestação de Contas' },
+            })
+          }
           rotuloLinha={(i) => `Ver detalhe do convênio ${i.numero_convenio} de ${i.municipio}`}
           unidade={['registro', 'registros']}
           destacarLinha={(i) =>
