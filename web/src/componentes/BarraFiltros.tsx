@@ -339,24 +339,34 @@ export function BarraFiltros() {
   const buscaSalva = useBuscaSalva()
   const origemSalva = useOrigemSalva()
   const { state } = useLocation()
-  const stateOrigem = state as { origem?: string; veioDoTop10?: boolean } | null
+  const stateOrigem = state as { origem?: string; veioDoTop10?: boolean; veioDoMapa?: boolean } | null
   const paramOrigem = busca.get('origem')
   const veioDoTop10 = Boolean(stateOrigem?.veioDoTop10 || paramOrigem === '/' || stateOrigem?.origem === '/')
+  const veioDoMapa = Boolean(stateOrigem?.veioDoMapa || paramOrigem === 'mapa')
 
-  const filtrosSalvos = !veioDoTop10 && buscaSalva ? lerFiltros(new URLSearchParams(buscaSalva)) : null
+  const filtrosSalvos = !veioDoTop10 && !veioDoMapa && buscaSalva ? lerFiltros(new URLSearchParams(buscaSalva)) : null
   const recorteAtivo = pathname === '/convenio' && filtrosSalvos ? filtrosSalvos.recorte : filtros.recorte
   const selecionados =
     pathname === '/convenio'
-      ? !veioDoTop10 && filtrosSalvos && filtrosSalvos.municipios.length > 0
-        ? filtrosSalvos.municipios
-        : filtros.municipios
+      ? veioDoMapa || veioDoTop10
+        ? []
+        : filtrosSalvos && filtrosSalvos.municipios.length > 0
+          ? filtrosSalvos.municipios
+          : filtros.municipios
       : filtros.municipios
   const { vaga, fixo, altura } = useFixarAoSair()
 
   const mudarFiltro = (mudanca: Mudanca) => {
     if (pathname === '/convenio' && (mudanca.recorte !== undefined || mudanca.municipios !== undefined)) {
       const base = new URLSearchParams(
-        (!veioDoTop10 && buscaSalva) || buscaGlobal(new URLSearchParams([...busca].filter(([k]) => k === 'ano' || k === 'mes'))),
+        (!veioDoTop10 && !veioDoMapa && buscaSalva) ||
+          buscaGlobal(
+            new URLSearchParams(
+              [...busca].filter(
+                ([k]) => k === 'ano' || k === 'mes' || (veioDoMapa ? k === 'recorte' : false),
+              ),
+            ),
+          ),
       )
       if (mudanca.municipios !== undefined && !base.has('municipio')) {
         for (const m of selecionados) base.append('municipio', m)
@@ -364,7 +374,9 @@ export function BarraFiltros() {
       const nova = aplicarMudanca(base, mudanca)
       const q = nova.toString()
       const rotaParam = paramOrigem ? (paramOrigem.startsWith('/') ? paramOrigem : `/${paramOrigem}`) : null
-      const rotaDestinoFiltro = (!veioDoTop10 && (stateOrigem?.origem ?? rotaParam ?? origemSalva.rota)) || '/convenios'
+      const rotaDestinoFiltro =
+        (!veioDoTop10 && !veioDoMapa && (stateOrigem?.origem ?? rotaParam ?? origemSalva.rota)) ||
+        (veioDoMapa ? '/municipios' : '/convenios')
       navegar(`${rotaDestinoFiltro}${q ? `?${q}` : ''}`)
       return
     }

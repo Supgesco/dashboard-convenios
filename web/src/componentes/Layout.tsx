@@ -184,14 +184,19 @@ export function Layout() {
   const exibirBarraFiltros = comFiltros || pathname === '/convenio'
   const buscaAtual = buscaGlobal(busca)
 
-  const stateNavegacao = state as { origem?: string; veioDoTop10?: boolean } | null
+  const stateNavegacao = state as { origem?: string; veioDoTop10?: boolean; veioDoMapa?: boolean } | null
+  const paramOrigem = busca.get('origem')
   const veioDoTop10 = Boolean(
-    stateNavegacao?.veioDoTop10 || busca.get('origem') === '/' || stateNavegacao?.origem === '/',
+    stateNavegacao?.veioDoTop10 || paramOrigem === '/' || stateNavegacao?.origem === '/',
+  )
+  const veioDoMapa = Boolean(
+    stateNavegacao?.veioDoMapa || paramOrigem === 'mapa' || (stateNavegacao?.origem === '/municipios' && stateNavegacao?.veioDoMapa),
   )
 
   // Preserva os filtros globais tanto nas telas de listagem quanto ao selecionar um município direto pelo mapa.
-  // Não preserva/memoriza quando o acesso for a partir do Top 10 municípios da Visão Geral.
-  const selecionadoPeloMapaOuFiltro = pathname === '/convenio' && !busca.has('numero') && !veioDoTop10
+  // Não preserva/memoriza quando o acesso for a partir do Top 10 municípios da Visão Geral nem quando for a partir do mapa.
+  const selecionadoPeloMapaOuFiltro =
+    pathname === '/convenio' && !busca.has('numero') && !veioDoTop10 && !veioDoMapa
   if ((comFiltros || selecionadoPeloMapaOuFiltro) && buscaSalva !== buscaAtual) {
     setBuscaSalva(buscaAtual)
   }
@@ -209,13 +214,23 @@ export function Layout() {
     setTelaOrigemSalva({ rota: pathname, rotulo })
   }
 
+  const buscaSalvaParaFilhos = veioDoTop10
+    ? ''
+    : veioDoMapa
+      ? buscaSalva
+        ? buscaGlobal(new URLSearchParams([...new URLSearchParams(buscaSalva)].filter(([k]) => k !== 'municipio')))
+        : buscaGlobal(new URLSearchParams([...busca].filter(([k]) => k !== 'municipio' && k !== 'origem' && k !== 'numero')))
+      : buscaSalva
+
   // No detalhe, preserva os filtros (incluindo município e recorte) que estavam ativos na aba de convênios;
-  // se o detalhe foi aberto diretamente sem filtros prévios ou pelo Top 10, não mantém filtros anteriores no menu.
+  // se o detalhe foi aberto diretamente sem filtros prévios, pelo Top 10 ou pelo mapa, não mantém filtros anteriores no menu.
   const buscaMenu =
     pathname === '/convenio'
       ? veioDoTop10
         ? ''
-        : buscaSalva || buscaGlobal(new URLSearchParams([...busca].filter(([k]) => k === 'ano' || k === 'mes')))
+        : veioDoMapa
+          ? buscaSalvaParaFilhos
+          : buscaSalva || buscaGlobal(new URLSearchParams([...busca].filter(([k]) => k === 'ano' || k === 'mes')))
       : buscaAtual
 
   /** Sincroniza a classe .dark no documento com o estado atual do tema. */
@@ -472,7 +487,7 @@ export function Layout() {
           </header>
 
           <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
-            <ContextoBuscaSalva.Provider value={veioDoTop10 ? '' : buscaSalva}>
+            <ContextoBuscaSalva.Provider value={buscaSalvaParaFilhos}>
               <ContextoOrigemSalva.Provider value={telaOrigemSalva}>
                 <div className="mx-auto max-w-7xl space-y-6">
                   {exibirBarraFiltros && <BarraFiltros />}

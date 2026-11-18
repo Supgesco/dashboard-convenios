@@ -82,19 +82,23 @@ describe('navegação', () => {
     expect(urlAtual().searchParams.getAll('municipio')).toEqual(['Paraty'])
   })
 
-  it('mantém o filtro após selecionar município pelo mapa e permite retornar ao mapa', async () => {
+  it('não mantém a permanência do filtro de município ao acessar pelo mapa e retornar', async () => {
     stubApi(await rotasPadrao())
     renderizar(<App />, '/municipios?recorte=89')
     const mapa = await screen.findByRole('list', { name: 'Mapa (dublê)' })
     await userEvent.click(within(mapa).getByRole('button', { name: /^Paraty/ }))
     expect(await screen.findByRole('heading', { name: /Convênio 901\/2020/ })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /^Municípios/ })).toHaveTextContent('1 selecionado')
+    expect(screen.getByRole('button', { name: /^Municípios/ })).toHaveTextContent('Todos')
+    expect(screen.queryByRole('button', { name: 'Remover Paraty' })).not.toBeInTheDocument()
     const id = screen.getByRole('region', { name: 'Identificação' })
-    expect(within(id).getByRole('link', { name: 'Convênios' })).toBeInTheDocument()
-    await userEvent.click(within(id).getByRole('link', { name: 'Voltar ao mapa' }))
+    const linkConvenios = within(id).getByRole('link', { name: 'Convênios' })
+    expect(linkConvenios).toHaveAttribute('href', '/convenios?recorte=89')
+    const linkVoltar = within(id).getByRole('link', { name: 'Voltar ao mapa' })
+    expect(linkVoltar).toHaveAttribute('href', '/municipios?recorte=89')
+    await userEvent.click(linkVoltar)
     expect(urlAtual().pathname).toBe('/municipios')
     expect(urlAtual().searchParams.get('recorte')).toBe('89')
-    expect(urlAtual().searchParams.getAll('municipio')).toEqual(['Paraty'])
+    expect(urlAtual().searchParams.has('municipio')).toBe(false)
   })
 
   it('não mantém filtro selecionado ao acessar o detalhe a partir do top 10', async () => {
