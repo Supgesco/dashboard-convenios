@@ -193,7 +193,19 @@ export function gerarPdfConvenio(d: DetalheConvenio, extras: DadosMunicipioPdf =
   )
 
   const refTexto = `Referência SIAFE: ${mesAno(d.referencia.ano, d.referencia.mes)}`
-  const statusTexto = [d.status, d.situacao_vigencia].filter(Boolean).join(' · ') || AUSENTE
+  const statusValores = [d.status, d.situacao_vigencia].filter((s, idx, arr): s is string => {
+    if (!s) return false
+    if (
+      idx > 0 &&
+      arr[0] &&
+      (s.trim().toLowerCase() === arr[0].trim().toLowerCase() ||
+        (s.toLowerCase().includes('tomada') && arr[0].toLowerCase().includes('tomada')))
+    ) {
+      return false
+    }
+    return true
+  })
+  const statusTexto = statusValores.join(' · ') || AUSENTE
   escrever(`${refTexto}   |   Status: ${statusTexto}`, MARGEM + 16, y - 60, 9, false, [0.85, 0.92, 0.99])
 
   y -= alturaCabecalho + 14
