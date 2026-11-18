@@ -241,15 +241,13 @@ function Identificacao({
               {d.municipio}
             </span>
           </h1>
-          {(d.status || d.situacao_vigencia) && (
+          {((d.status && !d.status.toLowerCase().includes('tomada')) ||
+            (d.situacao_vigencia && !d.situacao_vigencia.toLowerCase().includes('tomada'))) && (
             <div className="flex flex-wrap gap-2 pt-1.5">
-              {d.status && <SeloStatus status={d.status} />}
+              {d.status && !d.status.toLowerCase().includes('tomada') && <SeloStatus status={d.status} />}
               {d.situacao_vigencia &&
-                d.situacao_vigencia.trim().toLowerCase() !== d.status?.trim().toLowerCase() &&
-                !(
-                  d.status?.toLowerCase().includes('tomada') &&
-                  d.situacao_vigencia.toLowerCase().includes('tomada')
-                ) && (
+                !d.situacao_vigencia.toLowerCase().includes('tomada') &&
+                d.situacao_vigencia.trim().toLowerCase() !== d.status?.trim().toLowerCase() && (
                   <span className="selo bg-white/10 text-marca-50 ring-1 ring-white/20">{d.situacao_vigencia}</span>
                 )}
             </div>
