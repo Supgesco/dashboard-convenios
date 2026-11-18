@@ -339,11 +339,15 @@ export function BarraFiltros() {
   const buscaSalva = useBuscaSalva()
   const origemSalva = useOrigemSalva()
   const { state } = useLocation()
-  const filtrosSalvos = buscaSalva ? lerFiltros(new URLSearchParams(buscaSalva)) : null
+  const stateOrigem = state as { origem?: string; veioDoTop10?: boolean } | null
+  const paramOrigem = busca.get('origem')
+  const veioDoTop10 = Boolean(stateOrigem?.veioDoTop10 || paramOrigem === '/' || stateOrigem?.origem === '/')
+
+  const filtrosSalvos = !veioDoTop10 && buscaSalva ? lerFiltros(new URLSearchParams(buscaSalva)) : null
   const recorteAtivo = pathname === '/convenio' && filtrosSalvos ? filtrosSalvos.recorte : filtros.recorte
   const selecionados =
     pathname === '/convenio'
-      ? filtrosSalvos && filtrosSalvos.municipios.length > 0
+      ? !veioDoTop10 && filtrosSalvos && filtrosSalvos.municipios.length > 0
         ? filtrosSalvos.municipios
         : filtros.municipios
       : filtros.municipios
@@ -352,17 +356,15 @@ export function BarraFiltros() {
   const mudarFiltro = (mudanca: Mudanca) => {
     if (pathname === '/convenio' && (mudanca.recorte !== undefined || mudanca.municipios !== undefined)) {
       const base = new URLSearchParams(
-        buscaSalva || buscaGlobal(new URLSearchParams([...busca].filter(([k]) => k === 'ano' || k === 'mes'))),
+        (!veioDoTop10 && buscaSalva) || buscaGlobal(new URLSearchParams([...busca].filter(([k]) => k === 'ano' || k === 'mes'))),
       )
       if (mudanca.municipios !== undefined && !base.has('municipio')) {
         for (const m of selecionados) base.append('municipio', m)
       }
       const nova = aplicarMudanca(base, mudanca)
       const q = nova.toString()
-      const stateOrigem = (state as { origem?: string } | null)?.origem
-      const paramOrigem = busca.get('origem')
       const rotaParam = paramOrigem ? (paramOrigem.startsWith('/') ? paramOrigem : `/${paramOrigem}`) : null
-      const rotaDestinoFiltro = stateOrigem ?? rotaParam ?? origemSalva.rota ?? '/convenios'
+      const rotaDestinoFiltro = (!veioDoTop10 && (stateOrigem?.origem ?? rotaParam ?? origemSalva.rota)) || '/convenios'
       navegar(`${rotaDestinoFiltro}${q ? `?${q}` : ''}`)
       return
     }

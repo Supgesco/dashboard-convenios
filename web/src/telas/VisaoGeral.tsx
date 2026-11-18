@@ -152,6 +152,7 @@ function Status() {
 }
 
 function TopMunicipios() {
+  const navegar = useNavigate()
   const consulta = useRankingRecorte(CADASTRADOS, 10, '-convenios')
   if (consulta.isError) {
     return (
@@ -166,6 +167,12 @@ function TopMunicipios() {
       subtitulo="Com mais convênios cadastrados"
       itens={itens}
       vazio="Nenhum município com convênio."
+      onItem={(item) => {
+        if (!item.rotulo) return
+        navegar(linkDetalhe('', item.rotulo, undefined, '/', CADASTRADOS), {
+          state: { origem: '/', nomeOrigem: 'Visão Geral', veioDoTop10: true },
+        })
+      }}
     />
   )
 }

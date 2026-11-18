@@ -266,6 +266,20 @@ describe('BarrasHorizontais', () => {
     expect(screen.getByRole('region', { name: 'Top 10' })).toHaveTextContent('Nenhum município.')
     expect(screen.queryByRole('listitem')).not.toBeInTheDocument()
   })
+
+  it('chama onItem ao clicar em item com rótulo', async () => {
+    const onItem = vi.fn()
+    render(
+      <BarrasHorizontais
+        titulo="Top 10"
+        itens={[{ rotulo: 'Niterói', valor: 30 }]}
+        onItem={onItem}
+      />,
+    )
+    const item = screen.getByRole('listitem')
+    await userEvent.click(item)
+    expect(onItem).toHaveBeenCalledWith({ rotulo: 'Niterói', valor: 30 })
+  })
 })
 
 describe('agruparTop', () => {

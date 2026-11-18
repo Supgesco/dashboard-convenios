@@ -94,6 +94,35 @@ describe('navegação', () => {
     expect(urlAtual().searchParams.get('recorte')).toBe('89')
     expect(urlAtual().searchParams.getAll('municipio')).toEqual(['Paraty'])
   })
+
+  it('não mantém filtro selecionado ao acessar o detalhe a partir do top 10', async () => {
+    stubApi(await rotasPadrao())
+    renderizar(<App />, '/convenios?recorte=89&municipio=Paraty')
+    await screen.findByRole('row', { name: /901\/2020 de Paraty/ })
+
+    const linkGeral = within(screen.getByRole('navigation', { name: 'Telas' })).getByRole('link', { name: 'Visão geral' })
+    await userEvent.click(linkGeral)
+    expect(urlAtual().pathname).toBe('/')
+
+    const top = await screen.findByRole('region', { name: 'Top 10 municípios' })
+    const [primeiro] = within(top).getAllByRole('listitem')
+    await userEvent.click(primeiro)
+
+    expect(urlAtual().pathname).toBe('/convenio')
+    expect(urlAtual().searchParams.get('municipio')).toBe('Angra dos Reis')
+
+    expect(screen.queryByRole('button', { name: 'Remover Paraty' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Municípios/ })).toHaveTextContent('Municípios')
+
+    const linkMenu = within(screen.getByRole('navigation', { name: 'Telas' })).getByRole('link', { name: 'Convênios' })
+    expect(linkMenu).toHaveAttribute('href', '/convenios')
+
+    const linkVoltar = within(await screen.findByRole('region', { name: 'Identificação' })).getByRole('link', {
+      name: 'Visão Geral',
+    })
+    await userEvent.click(linkVoltar)
+    expect(urlAtual().pathname).toBe('/')
+  })
 })
 
 describe('barra de filtros', () => {

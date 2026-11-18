@@ -385,7 +385,9 @@ export function TelaDetalhe() {
           ? 'Prestação de Contas'
           : rotaRetorno === '/municipios'
             ? 'Municípios'
-            : 'Convênios')
+            : rotaRetorno === '/'
+              ? 'Visão Geral'
+              : 'Convênios')
   } else if (paramOrigem) {
     rotaRetorno = paramOrigem.startsWith('/') ? paramOrigem : `/${paramOrigem}`
     rotuloRetorno =
@@ -395,7 +397,9 @@ export function TelaDetalhe() {
           ? 'Prestação de Contas'
           : rotaRetorno === '/municipios'
             ? 'Municípios'
-            : 'Convênios'
+            : rotaRetorno === '/'
+              ? 'Visão Geral'
+              : 'Convênios'
   } else if (origemSalva.rota && origemSalva.rota !== '/convenios') {
     rotaRetorno = origemSalva.rota
     rotuloRetorno = origemSalva.rotulo

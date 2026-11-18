@@ -162,7 +162,7 @@ const ID_MENU = 'menu-telas'
 
 /** Moldura principal do painel no padrão visual GIO: sidebar clara/escura, fundo blueprint e área da tela ativa. */
 export function Layout() {
-  const { pathname } = useLocation()
+  const { pathname, state } = useLocation()
   const { filtros, busca, limpar } = useFiltros()
   const { usuario, logout } = useAuth()
   const navegar = useNavigate()
@@ -184,8 +184,14 @@ export function Layout() {
   const exibirBarraFiltros = comFiltros || pathname === '/convenio'
   const buscaAtual = buscaGlobal(busca)
 
+  const stateNavegacao = state as { origem?: string; veioDoTop10?: boolean } | null
+  const veioDoTop10 = Boolean(
+    stateNavegacao?.veioDoTop10 || busca.get('origem') === '/' || stateNavegacao?.origem === '/',
+  )
+
   // Preserva os filtros globais tanto nas telas de listagem quanto ao selecionar um município direto pelo mapa.
-  const selecionadoPeloMapaOuFiltro = pathname === '/convenio' && !busca.has('numero')
+  // Não preserva/memoriza quando o acesso for a partir do Top 10 municípios da Visão Geral.
+  const selecionadoPeloMapaOuFiltro = pathname === '/convenio' && !busca.has('numero') && !veioDoTop10
   if ((comFiltros || selecionadoPeloMapaOuFiltro) && buscaSalva !== buscaAtual) {
     setBuscaSalva(buscaAtual)
   }
@@ -204,10 +210,12 @@ export function Layout() {
   }
 
   // No detalhe, preserva os filtros (incluindo município e recorte) que estavam ativos na aba de convênios;
-  // se o detalhe foi aberto diretamente sem filtros prévios, leva apenas o mês.
+  // se o detalhe foi aberto diretamente sem filtros prévios ou pelo Top 10, não mantém filtros anteriores no menu.
   const buscaMenu =
     pathname === '/convenio'
-      ? buscaSalva || buscaGlobal(new URLSearchParams([...busca].filter(([k]) => k === 'ano' || k === 'mes')))
+      ? veioDoTop10
+        ? ''
+        : buscaSalva || buscaGlobal(new URLSearchParams([...busca].filter(([k]) => k === 'ano' || k === 'mes')))
       : buscaAtual
 
   /** Sincroniza a classe .dark no documento com o estado atual do tema. */
@@ -464,7 +472,7 @@ export function Layout() {
           </header>
 
           <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
-            <ContextoBuscaSalva.Provider value={buscaSalva}>
+            <ContextoBuscaSalva.Provider value={veioDoTop10 ? '' : buscaSalva}>
               <ContextoOrigemSalva.Provider value={telaOrigemSalva}>
                 <div className="mx-auto max-w-7xl space-y-6">
                   {exibirBarraFiltros && <BarraFiltros />}

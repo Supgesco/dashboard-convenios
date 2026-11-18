@@ -143,6 +143,16 @@ describe('Visão geral', () => {
     expect(Object.fromEntries(pedido?.params ?? [])).toEqual({ recorte: '342', tamanho: '10', ordem: '-convenios' })
   })
 
+  it('clique em um município do top 10 abre os detalhes do município', async () => {
+    await rotasCarteira()
+    renderizar(<App />, '/')
+    const top = await screen.findByRole('region', { name: 'Top 10 municípios' })
+    const [primeiro] = within(top).getAllByRole('listitem')
+    await userEvent.click(primeiro)
+    expect(urlAtual().pathname).toBe('/convenio')
+    expect(urlAtual().searchParams.get('municipio')).toBe('Niterói')
+  })
+
   it('lista dos vigentes por valor total decrescente; o clique abre o detalhe sem mês', async () => {
     const a = await rotasCarteira({
       'GET /painel/convenios': () => ok(f.convenios([f.linhaConvenio('143/2014', 'Paraty')])),
