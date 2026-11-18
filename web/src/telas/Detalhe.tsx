@@ -119,6 +119,7 @@ function Identificacao({
   veioDoMapa,
   rotaRetorno,
   rotuloRetorno,
+  veioDoTop10,
 }: {
   d: DetalheConvenio
   buscaVoltar: string
@@ -127,8 +128,10 @@ function Identificacao({
   veioDoMapa: boolean
   rotaRetorno: string
   rotuloRetorno: string
+  veioDoTop10: boolean
 }) {
   const recortes = ORDEM_EXIBICAO.filter((r) => d.recortes.includes(r))
+  const podeVoltarConvenios = !veioDoTop10 && (veioDoMapa || rotaRetorno === '/municipios')
   return (
     <section
       aria-label="Identificação"
@@ -154,7 +157,7 @@ function Identificacao({
               <Icone className="size-4 transition-transform group-hover:-translate-x-0.5">{ICONES.voltar}</Icone>
               {rotuloRetorno}
             </Link>
-            {rotaRetorno !== '/convenios' && (
+            {podeVoltarConvenios && (
               <>
                 <span aria-hidden="true" className="text-white/25">
                   |
@@ -210,7 +213,7 @@ function Identificacao({
                   <Link
                     key={c.numero_convenio}
                     to={linkDetalhe(c.numero_convenio, d.municipio, busca, rotaRetorno)}
-                    state={{ origem: rotaRetorno, nomeOrigem: rotuloRetorno, veioDoMapa }}
+                    state={{ origem: rotaRetorno, nomeOrigem: rotuloRetorno, veioDoMapa, veioDoTop10 }}
                     aria-current={ativo ? 'page' : undefined}
                     className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-semibold transition-colors ${
                       ativo
@@ -365,9 +368,15 @@ export function TelaDetalhe() {
   const buscaSalva = useBuscaSalva()
   const origemSalva = useOrigemSalva()
 
-  const stateOrigem = state as { origem?: string; nomeOrigem?: string; veioDoMapa?: boolean } | null
+  const stateOrigem = state as {
+    origem?: string
+    nomeOrigem?: string
+    veioDoMapa?: boolean
+    veioDoTop10?: boolean
+  } | null
   const paramOrigem = busca.get('origem')
   const veioDoMapa = Boolean(stateOrigem?.veioDoMapa || paramOrigem === 'mapa')
+  const veioDoTop10 = Boolean(stateOrigem?.veioDoTop10 || paramOrigem === '/' || stateOrigem?.origem === '/')
 
   let rotaRetorno = '/convenios'
   let rotuloRetorno = 'Convênios'
@@ -473,6 +482,7 @@ export function TelaDetalhe() {
         veioDoMapa={veioDoMapa}
         rotaRetorno={rotaRetorno}
         rotuloRetorno={rotuloRetorno}
+        veioDoTop10={veioDoTop10}
       />
 
       {d.codigo_compartilhado && <Compartilhado d={d} busca={busca} />}

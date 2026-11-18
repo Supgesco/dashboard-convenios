@@ -89,7 +89,9 @@ describe('navegação', () => {
     await userEvent.click(within(mapa).getByRole('button', { name: /^Paraty/ }))
     expect(await screen.findByRole('heading', { name: /Convênio 901\/2020/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^Municípios/ })).toHaveTextContent('1 selecionado')
-    await userEvent.click(within(screen.getByRole('region', { name: 'Identificação' })).getByRole('link', { name: 'Voltar ao mapa' }))
+    const id = screen.getByRole('region', { name: 'Identificação' })
+    expect(within(id).getByRole('link', { name: 'Convênios' })).toBeInTheDocument()
+    await userEvent.click(within(id).getByRole('link', { name: 'Voltar ao mapa' }))
     expect(urlAtual().pathname).toBe('/municipios')
     expect(urlAtual().searchParams.get('recorte')).toBe('89')
     expect(urlAtual().searchParams.getAll('municipio')).toEqual(['Paraty'])
@@ -117,9 +119,12 @@ describe('navegação', () => {
     const linkMenu = within(screen.getByRole('navigation', { name: 'Telas' })).getByRole('link', { name: 'Convênios' })
     expect(linkMenu).toHaveAttribute('href', '/convenios')
 
-    const linkVoltar = within(await screen.findByRole('region', { name: 'Identificação' })).getByRole('link', {
+    const identificacao = await screen.findByRole('region', { name: 'Identificação' })
+    const linkVoltar = within(identificacao).getByRole('link', {
       name: 'Visão Geral',
     })
+    expect(within(identificacao).queryByRole('link', { name: 'Convênios' })).not.toBeInTheDocument()
+
     await userEvent.click(linkVoltar)
     expect(urlAtual().pathname).toBe('/')
   })
